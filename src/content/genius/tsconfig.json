@@ -1,0 +1,17 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        // JSX in here is built by Genius's React. The shim this points
+        // at also declares the `JSX` namespace TypeScript checks these
+        // files against, so a borrowed `PageComponent` is a valid tag
+        // and its props are still checked.
+        "jsxImportSource": "@page-react",
+        "paths": {
+            "@/*": ["../../*"],
+            "@page-react/jsx-runtime": ["./reactHost/jsxRuntime.ts"],
+            "@page-react/jsx-dev-runtime": ["./reactHost/jsxRuntime.ts"]
+        }
+    },
+    "include": ["."],
+    "exclude": []
+}

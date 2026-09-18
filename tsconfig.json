@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2023", "DOM", "DOM.Iterable"],
+        "module": "Preserve",
+        "moduleDetection": "force",
+        "jsx": "react-jsx",
+
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noFallthroughCasesInSwitch": true,
+        "exactOptionalPropertyTypes": false,
+
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "noEmit": true,
+
+        "types": ["chrome", "node"],
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": ["src", "rspack.config.ts", "types"],
+
+    // `src/content/genius` compiles JSX against the page's React, not
+    // ours, so it needs a different `jsxImportSource` and gets its own
+    // config. `pnpm typecheck` runs both.
+    "exclude": ["src/content/genius"]
+}
