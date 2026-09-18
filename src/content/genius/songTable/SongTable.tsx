@@ -8,7 +8,6 @@ import {
     type PageElement,
     type PageReactDom,
     type SelectOption,
-    type UsePusherHook,
 } from "@/bindings";
 import { log } from "@/utilities/log";
 import { describeError } from "@/utilities/result";
@@ -38,7 +37,8 @@ import {
     type StashedRow,
     writeStash,
 } from "../draftStash";
-import { Button, react } from "../geniusComponents";
+import { Button, theme } from "../geniusComponents";
+import { hasUsePusher, useLanguageOptions } from "../geniusHooks";
 import {
     describeLoadFailure,
     loadAlbumMetadata,
@@ -48,7 +48,7 @@ import {
 import { optionFor, optionLabel } from "../options";
 import type { AlbumSeed } from "../pageState";
 import { canEdit } from "../permissions";
-import { host } from "../reactHost/host";
+import { useCallback, useEffect, useRef, useState } from "../reactHost/react";
 import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
 import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
 import {
@@ -88,10 +88,6 @@ export interface SongTableProps {
     readonly album: AlbumSeed;
     /** From `GET /tags/home`; may be empty if the call failed. */
     readonly primaryTagOptions: readonly SelectOption[];
-    /** Called during render: it reads the i18next store. */
-    readonly useLanguageOptions: () => readonly SelectOption[];
-    /** Genius's Pusher hook, or `null` when its chunk moved. */
-    readonly usePusher: UsePusherHook | null;
 }
 
 /** Long enough to coalesce a burst of typing, short enough to survive it. */
@@ -211,63 +207,55 @@ const initialLoads = (album: AlbumSeed): Readonly<Record<number, RowLoad>> => {
 };
 
 const renderSongTable = (props: SongTableProps): PageElement => {
-    const { album, primaryTagOptions, useLanguageOptions, usePusher } = props;
+    const { album, primaryTagOptions } = props;
     const albumId = album.albumId;
 
-    const [loads, setLoads] = react.useState<Readonly<Record<number, RowLoad>>>(
-        () => initialLoads(album),
+    const [loads, setLoads] = useState<Readonly<Record<number, RowLoad>>>(() =>
+        initialLoads(album),
     );
     /**
      * Every row's staged edit, held here rather than in the row. The table
      * outlives the modal, so closing it can no longer unmount an edit.
      */
-    const [rows, setRows] = react.useState<Readonly<Record<number, RowState>>>(
-        {},
-    );
-    const [message, setMessage] = react.useState<string | null>(null);
-    const [open, setOpen] = react.useState(false);
+    const [rows, setRows] = useState<Readonly<Record<number, RowState>>>({});
+    const [message, setMessage] = useState<string | null>(null);
+    const [open, setOpen] = useState(false);
     /** Latches on first open; the album is never fetched before. */
-    const [opened, setOpened] = react.useState(false);
-    const [Modal, setModal] = react.useState<PageComponent<ModalProps> | null>(
-        null,
-    );
-    const [slot, setSlot] = react.useState<ToolbarSlot | null>(null);
-    const [saves, setSaves] = react.useState<Readonly<Record<number, RowSave>>>(
-        {},
-    );
+    const [opened, setOpened] = useState(false);
+    const [Modal, setModal] = useState<PageComponent<ModalProps> | null>(null);
+    const [slot, setSlot] = useState<ToolbarSlot | null>(null);
+    const [saves, setSaves] = useState<Readonly<Record<number, RowSave>>>({});
     /** Non-null only while the confirmation modal is open. */
-    const [plan, setPlan] = react.useState<SavePlan | null>(null);
-    const [saving, setSaving] = react.useState(false);
+    const [plan, setPlan] = useState<SavePlan | null>(null);
+    const [saving, setSaving] = useState(false);
     /** Every queued bulk task still to be heard from, one channel each. */
-    const [pending, setPending] = react.useState<readonly PendingTask[]>([]);
-    const [reactDom, setReactDom] = react.useState<PageReactDom | null>(null);
+    const [pending, setPending] = useState<readonly PendingTask[]>([]);
+    const [reactDom, setReactDom] = useState<PageReactDom | null>(null);
 
     /** Read once, at mount: what a lost page left behind for this album. */
-    const [stashed] = react.useState<Readonly<Record<number, StashedRow>>>(
+    const [stashed] = useState<Readonly<Record<number, StashedRow>>>(
         () => readStash(albumId)?.rows ?? {},
     );
-    const [notice, setNotice] = react.useState(
-        () => Object.keys(stashed).length > 0,
-    );
+    const [notice, setNotice] = useState(() => Object.keys(stashed).length > 0);
 
     /** The rows as of the last commit, for the debounce and the unload guard. */
-    const rowsRef = react.useRef<Readonly<Record<number, RowState>>>({});
-    const dirtyRef = react.useRef(0);
+    const rowsRef = useRef<Readonly<Record<number, RowState>>>({});
+    const dirtyRef = useRef(0);
     /** Set once the user throws a restore away, so it is never carried on. */
-    const dropped = react.useRef(false);
+    const dropped = useRef(false);
     /** Cleared after the first commit, which stages nothing of its own. */
-    const armed = react.useRef(false);
-    const stashTimer = react.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const armed = useRef(false);
+    const stashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     /** Non-null only while the column fill dialog is open. */
-    const [fillTarget, setFillTarget] = react.useState<{
+    const [fillTarget, setFillTarget] = useState<{
         readonly column: ColumnSpec;
         readonly mode: FillMode;
     } | null>(null);
     /** A scratch draft the fill dialog's editor writes one field of. */
-    const [fillDraft, setFillDraft] = react.useState<SongDraft>(EMPTY_DRAFT);
+    const [fillDraft, setFillDraft] = useState<SongDraft>(EMPTY_DRAFT);
 
-    const persist = react.useCallback((): void => {
+    const persist = useCallback((): void => {
         const next: Record<number, StashedRow> = {};
         let known = 0;
 
@@ -304,14 +292,14 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         }
     }, [albumId, stashed]);
 
-    const cancelStash = react.useCallback((): void => {
+    const cancelStash = useCallback((): void => {
         if (stashTimer.current !== null) {
             clearTimeout(stashTimer.current);
             stashTimer.current = null;
         }
     }, []);
 
-    const scheduleStash = react.useCallback((): void => {
+    const scheduleStash = useCallback((): void => {
         cancelStash();
         stashTimer.current = setTimeout(() => {
             stashTimer.current = null;
@@ -320,7 +308,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     }, [cancelStash, persist]);
 
     // The rows a debounced write will read, published before it is armed.
-    react.useEffect(() => {
+    useEffect(() => {
         rowsRef.current = rows;
 
         // Merely visiting the page must not refresh the stash's own clock.
@@ -333,7 +321,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
 
     // A client side navigation unmounts this tree without any warning,
     // so a pending debounce has to land before the table goes.
-    react.useEffect(
+    useEffect(
         () => () => {
             if (stashTimer.current !== null) {
                 clearTimeout(stashTimer.current);
@@ -345,11 +333,11 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     );
 
     // Only covers a reload or a tab close; the stash covers the rest.
-    react.useEffect(() => guardUnload(() => dirtyRef.current > 0), []);
+    useEffect(() => guardUnload(() => dirtyRef.current > 0), []);
 
-    react.useEffect(() => observeToolbarSlot(setSlot), []);
+    useEffect(() => observeToolbarSlot(setSlot), []);
 
-    react.useEffect(() => {
+    useEffect(() => {
         let live = true;
 
         void getReactDom().then((found) => {
@@ -363,7 +351,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         };
     }, []);
 
-    react.useEffect(() => {
+    useEffect(() => {
         let live = true;
 
         void getModal().then((found) => {
@@ -389,21 +377,18 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     // The hook rebuilds its array each render, which a memoised row would
     // read as a new prop every time.
     const [languageOptions, setLanguageOptions] =
-        react.useState(freshLanguageOptions);
+        useState(freshLanguageOptions);
 
     if (languageOptions.length !== freshLanguageOptions.length) {
         setLanguageOptions(freshLanguageOptions);
     }
 
-    const record = react.useCallback(
-        (songId: number, result: RowLoad): void => {
-            setLoads((previous) => ({ ...previous, [songId]: result }));
-        },
-        [],
-    );
+    const record = useCallback((songId: number, result: RowLoad): void => {
+        setLoads((previous) => ({ ...previous, [songId]: result }));
+    }, []);
 
     // `album` never changes while this tree is mounted, so it is no dep.
-    react.useEffect(() => {
+    useEffect(() => {
         if (!opened) {
             return;
         }
@@ -434,7 +419,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         };
     }, [opened, record]);
 
-    const onRetry = react.useCallback(
+    const onRetry = useCallback(
         (songId: number): void => {
             record(songId, LOADING);
 
@@ -574,11 +559,11 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     const busy = saving || pending.length > 0;
 
     // Read at navigation time by the unload guard, which has no render.
-    react.useEffect(() => {
+    useEffect(() => {
         dirtyRef.current = dirtyCount;
     }, [dirtyCount]);
 
-    const onPatch = react.useCallback(
+    const onPatch = useCallback(
         (songId: number, next: Partial<SongDraft>): void => {
             setRows((previous) => {
                 const row = previous[songId];
@@ -591,7 +576,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         [],
     );
 
-    const onRevert = react.useCallback((songId: number): void => {
+    const onRevert = useCallback((songId: number): void => {
         setRows((previous) => {
             const row = previous[songId];
 
@@ -601,12 +586,12 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         });
     }, []);
 
-    const mark = react.useCallback((songId: number, next: RowSave): void => {
+    const mark = useCallback((songId: number, next: RowSave): void => {
         setSaves((previous) => ({ ...previous, [songId]: next }));
     }, []);
 
     /** Folds stored fields into the baseline, so the row reads clean. */
-    const adopt = react.useCallback(
+    const adopt = useCallback(
         (
             songId: number,
             draft: SongDraft,
@@ -628,7 +613,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     );
 
     /** Drops a task once it can say nothing more, which unsubscribes it. */
-    const forget = react.useCallback((entry: PendingTask): void => {
+    const forget = useCallback((entry: PendingTask): void => {
         setPending((previous) => previous.filter((other) => other !== entry));
     }, []);
 
@@ -637,7 +622,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
      * Their channel may be shared, so an event carrying another task's id is
      * not ours, and only the ids this task carried can be answered here.
      */
-    const onTaskEvent = react.useCallback(
+    const onTaskEvent = useCallback(
         (entry: PendingTask, event: BulkEvent): void => {
             if (event.taskId !== null && event.taskId !== entry.task.taskId) {
                 return;
@@ -677,7 +662,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     );
 
     /** Nothing arrived, so the row keeps saying so rather than guessing. */
-    const onTaskTimeout = react.useCallback(
+    const onTaskTimeout = useCallback(
         (entry: PendingTask): void => {
             for (const song of entry.songs) {
                 mark(song.songId, {
@@ -735,6 +720,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         );
     };
 
+    /** The loaded rows, which are the only ones an import can stage onto. */
     const headers = [
         <th className="gp-pin-track" key="track">
             #
@@ -860,7 +846,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
             };
             /** Both have to hold, or nothing will ever answer this task. */
             const channel =
-                usePusher === null || task === null ? null : task.channel;
+                !hasUsePusher() || task === null ? null : task.channel;
 
             if (task !== null && channel !== null) {
                 setPending((previous) => [
@@ -893,7 +879,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
 
     // Genius ships a separate mobile layout; this table is desktop only.
     // Read late, so a re-primed host is what decides after a restart.
-    if (host.theme.deviceType === "mobile") {
+    if (theme().deviceType === "mobile") {
         return <span hidden />;
     }
 
@@ -987,7 +973,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
 
     return (
         <>
-            {usePusher === null
+            {!hasUsePusher()
                 ? null
                 : pending.map((entry) => (
                       <TaskWatch
@@ -995,7 +981,6 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                           onEvent={onTaskEvent}
                           onTimeout={onTaskTimeout}
                           pending={entry}
-                          usePusher={usePusher}
                       />
                   ))}
             {slot === null || reactDom === null ? (

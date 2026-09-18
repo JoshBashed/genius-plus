@@ -1,4 +1,24 @@
-/** Genius's `Spinner`, shown while a row's metadata loads. */
-import { host } from "../reactHost/host";
+/** Genius's `Spinner`, their inline busy indicator. */
+import {
+    asPageValue,
+    type PageComponent,
+    type PageElement,
+    type SpinnerProps,
+} from "@/bindings";
+import { slot } from "../reactHost/binding";
+import { createElement } from "../reactHost/react";
 
-export const Spinner = host.Spinner;
+const spinner = slot<PageComponent<SpinnerProps>>("Genius's Spinner");
+
+export const setSpinner = spinner.set;
+
+/** Whether this page bound it at all. */
+export const hasSpinner = (): boolean => spinner.peek() !== null;
+
+/**
+ * Their component, read at render rather than at import.
+ * @throws If nothing bound it; a component cannot return a `Result`.
+ */
+export const Spinner = asPageValue<PageComponent<SpinnerProps>>(
+    (props: SpinnerProps): PageElement => createElement(spinner.get(), props),
+);

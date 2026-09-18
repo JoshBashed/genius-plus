@@ -1,22 +1,16 @@
-/** Bindings snapshotted at module evaluation, not read through a bag. */
+/** Every borrowed component, each read at render rather than at import. */
 
-// Every module here reads `host` in its module body, which throws unless
-// `primeReactHost()` has already run, so only the eagerly imported
-// `songTable` subtree may import this folder. A static import from
-// `mount.ts` or a content script entry is hoisted above the prime and
-// fails at load with no obvious cause.
-//
-// `theme` is deliberately absent: `deviceType` changes on a resize and
-// `restartAlbumTable()` re-primes, while a module body is evaluated once
-// per document, so it has to stay a late `host.theme` read.
+// Safe to import from anywhere now: a module here holds a slot and reads
+// nothing until something renders it, so importing one name no longer
+// evaluates a binding that this page never installed.
 
-export { Button } from "./Button";
-export { DateInput } from "./DateInput";
-export { Dropdown } from "./Dropdown";
-export { react } from "./react";
-export { SelectInput } from "./SelectInput";
-export { SmallButton } from "./SmallButton";
-export { Spinner } from "./Spinner";
-export { styled } from "./styled";
-export { TagInput } from "./TagInput";
-export { TextInput } from "./TextInput";
+export { Button, hasButton, setButton } from "./Button";
+export { DateInput, hasDateInput, setDateInput } from "./DateInput";
+export { Dropdown, hasDropdown, setDropdown } from "./Dropdown";
+export * from "./react";
+export { hasSelectInput, SelectInput, setSelectInput } from "./SelectInput";
+export { hasSmallButton, SmallButton, setSmallButton } from "./SmallButton";
+export { hasSpinner, Spinner, setSpinner } from "./Spinner";
+export { setStyled, setTheme, styled, theme } from "./styled";
+export { hasTagInput, setTagInput, TagInput } from "./TagInput";
+export { hasTextInput, setTextInput, TextInput } from "./TextInput";

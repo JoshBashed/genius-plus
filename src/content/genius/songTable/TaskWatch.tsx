@@ -1,10 +1,11 @@
 /** One queued bulk task's Pusher subscription. It renders nothing. */
-import type { PageElement, UsePusherHook } from "@/bindings";
+import type { PageElement } from "@/bindings";
 import { log } from "@/utilities/log";
 import { describeError } from "@/utilities/result";
 import { type BulkEvent, parseBulkEvent } from "../bulkStatus";
 import type { SongDraft } from "../draft";
-import { react } from "../geniusComponents";
+import { usePusher } from "../geniusHooks";
+import { useCallback, useEffect } from "../reactHost/react";
 import type { BulkTask, FieldConflict } from "../write";
 
 /** Their event name for every bulk update task's status. */
@@ -38,7 +39,6 @@ export interface PendingTask {
 export interface TaskWatchProps {
     readonly pending: PendingTask;
     /** Genius's own hook, which builds and shares the connection itself. */
-    readonly usePusher: UsePusherHook;
     readonly onEvent: (pending: PendingTask, event: BulkEvent) => void;
     readonly onTimeout: (pending: PendingTask) => void;
 }
@@ -52,9 +52,8 @@ export const TaskWatch = ({
     onEvent,
     onTimeout,
     pending,
-    usePusher,
 }: TaskWatchProps): PageElement => {
-    const callback = react.useCallback(
+    const callback = useCallback(
         (payload: unknown): void => {
             const event = parseBulkEvent(payload);
 
@@ -75,7 +74,7 @@ export const TaskWatch = ({
         eventName: EVENT_NAME,
     });
 
-    react.useEffect(() => {
+    useEffect(() => {
         const timer = setTimeout(() => {
             onTimeout(pending);
         }, TASK_TIMEOUT_MS);

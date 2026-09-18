@@ -2,33 +2,19 @@
 import {
     describeMarkers,
     detectPage,
-    getButton,
-    getDateInput,
-    getDropdown,
-    getReact,
-    getReactDomClient,
-    getSelectInput,
-    getSmallButton,
-    getSpinner,
-    getStyledComponents,
-    getTagInput,
-    getTextInput,
-    getUseLanguageOptions,
-    getUsePusher,
     type PageRoot,
     resetBindings,
-    type SelectOption,
 } from "@/bindings";
 import { type AppError, describeError } from "@/utilities/result";
 import { loadPrimaryTagOptions } from "./options";
-import {
-    capturePageContexts,
-    pageTheme,
-    withPageContexts,
-} from "./pageContext";
+import { withPageContexts } from "./pageContext";
 import { isAlbumUrl, readAlbumSeed } from "./pageState";
-import { primeReactHost } from "./reactHost/host";
-import { primeJsxRuntime } from "./reactHost/jsxRuntime";
+import {
+    installComponents,
+    installExtras,
+    installRuntime,
+} from "./reactHost/install";
+import { createElement } from "./reactHost/react";
 import { postStatus } from "./relay";
 
 const CONTAINER_ID = "genius-plus-album-table";
@@ -166,135 +152,39 @@ const buildAlbumTable = async (era: number): Promise<boolean> => {
         return false;
     }
 
-    // Started together, awaited one at a time: each narrows separately.
-    const pending = {
-        button: getButton(),
-        dateInput: getDateInput(),
-        dom: getReactDomClient(),
-        dropdown: getDropdown(),
-        primaryTags: loadPrimaryTagOptions(),
-        react: getReact(),
-        selectInput: getSelectInput(),
-        smallButton: getSmallButton(),
-        spinner: getSpinner(),
-        jsxRuntime: primeJsxRuntime(),
-        styled: getStyledComponents(),
-        tagInput: getTagInput(),
-        textInput: getTextInput(),
-        useLanguageOptions: getUseLanguageOptions(),
-        usePusher: getUsePusher(),
-    };
+    const runtime = await installRuntime();
 
-    const react = await pending.react;
-    if (react.isErr()) {
-        fail(react.error);
+    if (runtime.isErr()) {
+        fail(runtime.error);
         return false;
     }
 
-    const dom = await pending.dom;
-    if (dom.isErr()) {
-        fail(dom.error);
+    const components = await installComponents([
+        "button",
+        "dateInput",
+        "selectInput",
+        "smallButton",
+        "spinner",
+        "tagInput",
+        "textInput",
+    ]);
+
+    if (components.isErr()) {
+        fail(components.error);
         return false;
     }
 
-    // Every JSX expression below reads this runtime synchronously.
-    const jsxRuntime = await pending.jsxRuntime;
-    if (jsxRuntime.isErr()) {
-        fail(jsxRuntime.error);
-        return false;
-    }
+    await installExtras();
 
-    const styled = await pending.styled;
-    if (styled.isErr()) {
-        fail(styled.error);
-        return false;
-    }
-
-    const textInput = await pending.textInput;
-    if (textInput.isErr()) {
-        fail(textInput.error);
-        return false;
-    }
-
-    const tagInput = await pending.tagInput;
-    if (tagInput.isErr()) {
-        fail(tagInput.error);
-        return false;
-    }
-
-    const selectInput = await pending.selectInput;
-    if (selectInput.isErr()) {
-        fail(selectInput.error);
-        return false;
-    }
-
-    const dateInput = await pending.dateInput;
-    if (dateInput.isErr()) {
-        fail(dateInput.error);
-        return false;
-    }
-
-    const button = await pending.button;
-    if (button.isErr()) {
-        fail(button.error);
-        return false;
-    }
-
-    const smallButton = await pending.smallButton;
-    if (smallButton.isErr()) {
-        fail(smallButton.error);
-        return false;
-    }
-
-    const spinner = await pending.spinner;
-    if (spinner.isErr()) {
-        fail(spinner.error);
-        return false;
-    }
-
-    // Non-fatal: without it the column header menus simply do not render.
-    const dropdown = await pending.dropdown;
-
-    const captured = capturePageContexts();
-    const theme = pageTheme(captured, styled.value.ThemeContext);
-
-    if (theme.isErr()) {
-        fail(theme.error);
-        return false;
-    }
-
-    // A missing language list costs that column its choices, nothing more.
-    const languageHook = await pending.useLanguageOptions;
-    const useLanguageOptions: () => readonly SelectOption[] =
-        languageHook.isOk() ? languageHook.value : () => [];
-
-    // Without it a queued bulk write is never confirmed, so the table says
-    // so rather than claiming an outcome it cannot see.
-    const pusherHook = await pending.usePusher;
-    const usePusher = pusherHook.isOk() ? pusherHook.value : null;
-
-    const primaryTagOptions = await pending.primaryTags;
+    const primaryTagOptions = await loadPrimaryTagOptions();
 
     // A restart while those loaded: these are the old document's chunks.
     if (era !== generation) {
         return false;
     }
 
-    primeReactHost({
-        Button: button.value,
-        DateInput: dateInput.value,
-        Dropdown: dropdown.isOk() ? dropdown.value : null,
-        react: react.value,
-        SelectInput: selectInput.value,
-        SmallButton: smallButton.value,
-        Spinner: spinner.value,
-        styled: styled.value.styled,
-        TagInput: tagInput.value,
-        TextInput: textInput.value,
-        theme: theme.value,
-    });
-
-    // Eager, so it stays in this bundle but evaluates only once primed.
+    // Eager, so it stays in this bundle but evaluates only once the
+    // styles module below it has a `styled` to build with.
     const { SongTable } = await import(
         /* webpackMode: "eager" */ "./songTable"
     );
@@ -304,22 +194,19 @@ const buildAlbumTable = async (era: number): Promise<boolean> => {
     }
 
     const tree = withPageContexts(
-        react.value,
-        captured,
+        runtime.value.contexts,
         // Belt and braces, in case the walk missed their provider.
-        react.value.createElement(
-            styled.value.ThemeProvider,
-            { theme: theme.value },
-            react.value.createElement(SongTable, {
+        createElement(
+            runtime.value.styled.ThemeProvider,
+            { theme: runtime.value.theme },
+            createElement(SongTable, {
                 album: seed.value,
                 primaryTagOptions,
-                useLanguageOptions,
-                usePusher,
             }),
         ),
     );
 
-    root = dom.value.createRoot(ensureContainer());
+    root = runtime.value.dom.createRoot(ensureContainer());
     root.render(tree);
     postStatus("rendered", `${seed.value.tracks.length} songs`);
     return true;

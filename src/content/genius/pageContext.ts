@@ -7,9 +7,9 @@ import {
     type PageContext,
     type PageElement,
     type PageNode,
-    type PageReact,
 } from "@/bindings";
 import type { AppResult } from "@/utilities/result";
+import { createElement } from "./reactHost/react";
 
 const PROVIDER = Symbol.for("react.provider");
 const CONTEXT = Symbol.for("react.context");
@@ -47,14 +47,8 @@ const contextOf = (type: unknown): unknown => {
     return type.$$typeof === CONTEXT ? type : null;
 };
 
-const rootFiber = (): Fiber | null => {
-    const container = document.querySelector("#application");
-
-    if (container === null) {
-        return null;
-    }
-
-    // Only the prefix is stable; the value is the host root fiber.
+/** Only the prefix is stable; the value is the host root fiber. */
+const fiberOf = (container: Element): Fiber | null => {
     const key = Object.keys(container).find((name) =>
         name.startsWith("__reactContainer$"),
     );
@@ -67,17 +61,56 @@ const rootFiber = (): Fiber | null => {
     return objectLike(found) ? (found as unknown as Fiber) : null;
 };
 
+/** A page with no app root still has one, so the scan is bounded. */
+const ELEMENT_BUDGET = 8000;
+
+/**
+ * Every React root in the document, app root first.
+ *
+ * The album page mounts one tree under `#application`. A page Genius
+ * answers with a 404 has no app root at all, only the islands it renders
+ * its own nav and footer with, and those carry the theme just the same.
+ */
+const rootFibers = (): readonly Fiber[] => {
+    const roots: Fiber[] = [];
+    const app = document.querySelector("#application");
+    const appFiber = app === null ? null : fiberOf(app);
+
+    if (appFiber !== null) {
+        roots.push(appFiber);
+    }
+
+    const all = document.querySelectorAll("*");
+    const limit = Math.min(all.length, ELEMENT_BUDGET);
+
+    for (let index = 0; index < limit; index += 1) {
+        const element = all[index];
+
+        if (element === undefined || element === app) {
+            continue;
+        }
+
+        const fiber = fiberOf(element);
+
+        if (fiber !== null) {
+            roots.push(fiber);
+        }
+    }
+
+    return roots;
+};
+
 /** Breadth-first, so the first provider seen is the outermost one. */
 export const capturePageContexts = (): readonly CapturedContext[] => {
-    const root = rootFiber();
+    const roots = rootFibers();
 
-    if (root === null) {
+    if (roots.length === 0) {
         return [];
     }
 
     const captured: CapturedContext[] = [];
     const seen = new Set<unknown>();
-    const queue: Fiber[] = [root];
+    const queue: Fiber[] = [...roots];
     let visited = 0;
 
     while (queue.length > 0 && visited < NODE_BUDGET) {
@@ -174,7 +207,6 @@ const providerOf = (
 
 /** Wraps `children` in every captured provider, outermost first. */
 export const withPageContexts = (
-    react: PageReact,
     captured: readonly CapturedContext[],
     children: PageElement,
 ): PageElement => {
@@ -182,7 +214,7 @@ export const withPageContexts = (
 
     // Innermost first, so the shallowest provider ends up outermost.
     for (const entry of [...captured].reverse()) {
-        wrapped = react.createElement(
+        wrapped = createElement(
             providerOf(entry.context),
             { value: entry.value },
             wrapped,

@@ -1,4 +1,14 @@
-/** The page's React, which every borrowed component renders through. */
-import { host } from "../reactHost/host";
-
-export const react = host.react;
+/** Re-exported so the components' own folder stays the one import site. */
+export {
+    cloneElement,
+    createElement,
+    default as React,
+    Fragment,
+    memo,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "../reactHost/react";

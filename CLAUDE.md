@@ -53,16 +53,21 @@ Editor tooling for Genius. Not a lyrics viewer for listeners.
 - **JSX there compiles to Genius's runtime** through
   `@page-react/jsx-runtime`, aliased in `rspack.config.ts` to
   `reactHost/jsxRuntime.ts`.
-- **`mount.ts` primes, then eagerly imports the table.** `import(/*
-  webpackMode: "eager" */ "./songTable")` keeps it in the same bundle, which
-  a content script requires, while deferring evaluation until after
-  `primeReactHost()`.
-- **`geniusComponents/` may only be imported from inside that subtree.** Its
-  modules snapshot their binding at module evaluation, which is legal only
-  because the subtree evaluates after priming.
-- **Never add `geniusComponents/theme.ts`.** A re-prime does not re-evaluate
-  a cached module, and `deviceType` changes on resize, so theme must stay a
-  late `host.theme.…` read.
+- **Borrowed things live in slots, read at the call.** Each module in
+  `geniusComponents/` and `geniusHooks/` holds a `slot()` and exports a
+  `setX` beside a wrapper that reads it when something renders or calls
+  it. So they import like ordinary React (`import { TagInput }`,
+  `import { usePusher }`), the barrel is safe, import order does not
+  matter, and a re-prime reaches modules that were already imported.
+- `mount.ts` fills the slots with `installAll([installs(getX, setX)])`,
+  and `installOptional` for the ones a page can do without.
+- **`styled` is the exception.** `styled("div")` has to return a
+  component at module evaluation, so a styles module still has to be
+  imported after the binding is installed. That is the only reason
+  `mount.ts` reaches the table through `import(/* webpackMode: "eager"
+  */ "./songTable")`.
+- `theme()` is a call, never a stored value: `deviceType` changes on a
+  resize and a re-prime replaces it without re-evaluating a module.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone. Different comment, different job.
 - Chunk URLs and export names are read from the live `<head>` every load.

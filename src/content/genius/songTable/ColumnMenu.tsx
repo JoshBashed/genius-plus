@@ -1,7 +1,8 @@
 /** The header menu that stages one value across a whole column. */
 import type { PageElement, PageNode } from "@/bindings";
 import { FIELD_LABELS } from "../draft";
-import { Dropdown, react } from "../geniusComponents";
+import { Dropdown, hasDropdown } from "../geniusComponents";
+import { useEffect, useRef } from "../reactHost/react";
 import type { ColumnSpec } from "./columns";
 import { MenuPanel } from "./styles";
 
@@ -34,9 +35,9 @@ interface PanelProps {
 }
 
 const Panel = ({ children }: PanelProps): PageElement => {
-    const panel = react.useRef<HTMLDivElement | null>(null);
+    const panel = useRef<HTMLDivElement | null>(null);
 
-    react.useEffect(() => {
+    useEffect(() => {
         const host = panel.current?.parentElement ?? null;
 
         if (host !== null) {
@@ -65,7 +66,7 @@ export const ColumnMenu = ({
     column,
     onPick,
 }: ColumnMenuProps): PageElement => {
-    if (Dropdown === null) {
+    if (!hasDropdown()) {
         return <span hidden />;
     }
 

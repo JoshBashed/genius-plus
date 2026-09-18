@@ -7,10 +7,11 @@ import {
 } from "@/bindings";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
 import { FIELD_LABELS, type SongDraft } from "../draft";
-import { react, SmallButton, Spinner } from "../geniusComponents";
+import { SmallButton, Spinner } from "../geniusComponents";
 import type { SongMetadata } from "../metadata";
 import type { TrackSeed } from "../pageState";
 import { canEdit, permissionsKnown } from "../permissions";
+import { memo, useCallback, useMemo } from "../reactHost/react";
 import { type FieldConflict, invalidFields, type SaveStage } from "../write";
 import { ColumnEditor, withCurrent } from "./ColumnEditor";
 import { COLUMNS } from "./columns";
@@ -69,7 +70,7 @@ const renderSongRow = (props: RowProps): PageElement => {
     const { load, onPatch, onRetry, onRevert, row, save, track } = props;
 
     /** Only changed fields matter: an untouched field is never sent. */
-    const problems = react.useMemo(
+    const problems = useMemo(
         () =>
             row === null
                 ? []
@@ -80,7 +81,7 @@ const renderSongRow = (props: RowProps): PageElement => {
     );
 
     /** The cleaned form, only when it differs from what is staged. */
-    const dirtyUrl = react.useMemo(() => {
+    const dirtyUrl = useMemo(() => {
         const raw = row?.draft.soundcloudUrl ?? null;
 
         if (raw === null) {
@@ -92,7 +93,7 @@ const renderSongRow = (props: RowProps): PageElement => {
         return cleaned === raw ? null : cleaned;
     }, [row]);
 
-    const patch = react.useCallback(
+    const patch = useCallback(
         (next: Partial<SongDraft>): void => {
             onPatch(track.songId, next);
         },
@@ -262,6 +263,6 @@ const renderSongRow = (props: RowProps): PageElement => {
  * Memoised: the table owns every row's edit, so one keystroke re-renders it.
  * Every prop but `row` is shared and stable, so only the edited row repaints.
  */
-export const SongRow = react.memo(
+export const SongRow = memo(
     asPageValue<PageComponent<RowProps>>(renderSongRow),
 );
