@@ -30,12 +30,13 @@ export type RowLoad =
     | { readonly status: "error"; readonly message: string }
     | { readonly status: "ready"; readonly metadata: SongMetadata };
 
-/** The write mark's classes: green when queued, accent when refused. */
+/** The write mark's classes: green when queued, accent when nothing landed. */
 const stageClass = (stage: SaveStage): string => {
     switch (stage) {
         case "saved":
         case "queued":
             return "gp-row-note gp-queued";
+        case "canceled":
         case "conflict":
         case "failed":
             return "gp-row-note gp-error";

@@ -135,3 +135,23 @@ export const getUseCurrentUser =
  */
 export const getUseLanguageOptions =
     bindHook<() => readonly SelectOption[]>("useLanguageOptions");
+
+/** What `usePusher` destructures; it builds the connection itself. */
+export interface UsePusherOptions {
+    readonly channelName: string;
+    readonly eventName: string;
+    /** Must be stable: it is one of the effect's dependencies. */
+    readonly callback: (payload: unknown) => void;
+    readonly disabled?: boolean;
+    /** `false` leaves the payload's own snake_case keys alone. */
+    readonly camelize?: boolean;
+}
+
+/** One channel and event, bound for as long as the caller is mounted. */
+export type UsePusherHook = (options: UsePusherOptions) => void;
+
+/**
+ * Their Pusher subscription hook, which needs no key and no auth of ours.
+ * @returns The hook, or a `binding` error if the chunk moved.
+ */
+export const getUsePusher = bindHook<UsePusherHook>("usePusher");

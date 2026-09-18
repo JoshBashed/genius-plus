@@ -349,14 +349,29 @@ export const describeSaveFailure = (error: AppError): string => {
     }
 };
 
-/** Where one song's write has got to; `queued` means accepted, not applied. */
+/**
+ * Where one song's write has got to; `queued` means accepted, not applied.
+ * `canceled` is Genius dropping the task, which stores nothing either.
+ */
 export type SaveStage =
     | "checking"
     | "saving"
     | "saved"
     | "queued"
+    | "canceled"
     | "conflict"
     | "failed";
+
+/** A queued bulk task, and everything needed to hear how it ended. */
+export interface BulkTask {
+    readonly taskId: string;
+    /** Its Pusher channel, or `null` when the response named none. */
+    readonly channel: string | null;
+    /** The songs it carried, so another task's event cannot land here. */
+    readonly songIds: readonly number[];
+    /** The fields it sent, which only a confirmation may call written. */
+    readonly fields: readonly DraftField[];
+}
 
 /** One field someone else changed while the table sat open. */
 export interface FieldConflict {
@@ -377,8 +392,10 @@ export interface SaveProgress {
     readonly draft: SongDraft;
     /** Fields held back because Genius moved under us, never written. */
     readonly conflicts: readonly FieldConflict[];
-    /** Fields an endpoint accepted, which the row's baseline may advance to. */
+    /** Fields an endpoint stored, which the row's baseline may advance to. */
     readonly written: readonly DraftField[];
+    /** The bulk task still to be heard from, whose fields are not written. */
+    readonly task: BulkTask | null;
 }
 
 /** Receives every stage change, on the caller's thread, as it happens. */
@@ -397,16 +414,37 @@ export interface SaveOutcome {
 /** Three at a time: quick enough to feel live, gentle on a shared API. */
 const CONCURRENCY = 3;
 
-const taskId = (response: Record<string, unknown>): string | null => {
+const channelOf = (
+    task: Readonly<Record<string, unknown>>,
+    response: Record<string, unknown>,
+): string | null => {
+    for (const value of [task.pusher_channel, response.pusher_channel]) {
+        if (typeof value === "string" && value !== "") {
+            return value;
+        }
+    }
+
+    return null;
+};
+
+/** The accepted task: its id, and the channel its verdict arrives on. */
+const queuedTask = (
+    response: Record<string, unknown>,
+): { readonly id: string; readonly channel: string | null } | null => {
     const task = response.bulk_song_update_task;
 
     if (typeof task !== "object" || task === null) {
         return null;
     }
 
-    const id = (task as { task_id?: unknown }).task_id;
+    const fields = task as Readonly<Record<string, unknown>>;
+    const id = fields.task_id;
 
-    return typeof id === "number" || typeof id === "string" ? String(id) : null;
+    if (typeof id !== "number" && typeof id !== "string") {
+        return null;
+    }
+
+    return { channel: channelOf(fields, response), id: String(id) };
 };
 
 /**
@@ -414,16 +452,31 @@ const taskId = (response: Record<string, unknown>): string | null => {
  * Its nine descriptor keys are the server's whole permitted set, not just what
  * their UI exposes: `soundcloud_url` here answers 422 "Unknown scalar field",
  * so the media fields have to go through `PUT /songs/:id`.
+ * @returns The queued task, or `null` when the 2xx carried none.
  */
 const putBulk = async (
     albumId: number,
     body: BulkUpdateBody,
-): Promise<AppResult<boolean>> => {
+    fields: readonly DraftField[],
+): Promise<AppResult<BulkTask | null>> => {
     const response = await apiPut(`/albums/${albumId}/bulk_update_songs`, body);
 
-    return response.isErr()
-        ? response
-        : Result.ok(taskId(response.value) !== null);
+    if (response.isErr()) {
+        return response;
+    }
+
+    const task = queuedTask(response.value);
+
+    return Result.ok(
+        task === null
+            ? null
+            : {
+                  channel: task.channel,
+                  fields,
+                  songIds: body.song_ids,
+                  taskId: task.id,
+              },
+    );
 };
 
 /** This one is synchronous: a 2xx carrying the song means it is stored. */
@@ -505,8 +558,10 @@ interface RowResult {
     readonly stage: SaveStage;
     readonly message: string;
     readonly conflicts: readonly FieldConflict[];
-    /** Fields an endpoint accepted; empty whenever nothing went through. */
+    /** Fields Genius has stored; empty whenever nothing went through. */
     readonly written: readonly DraftField[];
+    /** The task whose fields are only accepted, never yet stored. */
+    readonly task: BulkTask | null;
 }
 
 const fieldNames = (fields: readonly DraftField[]): string =>
@@ -534,6 +589,7 @@ const sendRow = async (
             )}`,
             conflicts: [],
             written: [],
+            task: null,
         });
     }
 
@@ -547,23 +603,28 @@ const sendRow = async (
             message: `Not sent, changed on Genius: ${conflictNames(conflicts)}`,
             conflicts,
             written: [],
+            task: null,
         });
     }
 
     const { bulk, song } = buildBodies(write, sendable);
+    const bulkFields = sendable.filter((field) => !isSongField(field));
+    const songFields = sendable.filter(isSongField);
     const failures: AppError[] = [];
 
     /** `null` while the endpoint has not answered, or was never called. */
     let bulkQueued: boolean | null = null;
     let songSaved: boolean | null = null;
+    let task: BulkTask | null = null;
 
     if (bulk !== null) {
-        const sent = await putBulk(albumId, bulk);
+        const sent = await putBulk(albumId, bulk, bulkFields);
 
         if (sent.isErr()) {
             failures.push(sent.error);
         } else {
-            bulkQueued = sent.value;
+            bulkQueued = sent.value !== null;
+            task = sent.value;
         }
     }
 
@@ -577,33 +638,32 @@ const sendRow = async (
         }
     }
 
-    const bulkFields = sendable.filter((field) => !isSongField(field));
-    const songFields = sendable.filter(isSongField);
-    const written = [
-        ...(bulkQueued === true ? bulkFields : []),
-        ...(songSaved === true ? songFields : []),
-    ];
+    // Only this endpoint's 2xx means stored; the bulk task is still pending.
+    const written = songSaved === true ? songFields : [];
+    const queued = task === null ? [] : bulkFields;
+    const through = [...written, ...queued];
     // A 2xx that queued no task, or answered with no song, applied nothing.
     const stalled = [
         ...(bulkQueued === false ? bulkFields : []),
         ...(songSaved === false ? songFields : []),
     ];
     /** Only one endpoint can be the one that went through here. */
-    const partly = bulkQueued === true ? "Queued" : "Saved";
+    const partly = queued.length > 0 ? "Queued" : "Saved";
     const first = failures[0];
 
     if (first !== undefined) {
         // One endpoint going through is news the row still has to carry,
         // whichever of the two it was.
-        return written.length === 0
+        return through.length === 0
             ? Result.err(first)
             : Result.ok({
                   stage: "failed",
                   message: `${partly} ${fieldNames(
-                      written,
+                      through,
                   )}, but the rest failed: ${describeSaveFailure(first)}`,
                   conflicts,
                   written,
+                  task,
               });
     }
 
@@ -611,24 +671,25 @@ const sendRow = async (
         return Result.ok({
             stage: "failed",
             message:
-                written.length === 0
+                through.length === 0
                     ? "Genius accepted the request but stored no update"
-                    : `${partly} ${fieldNames(written)}, but Genius stored ` +
+                    : `${partly} ${fieldNames(through)}, but Genius stored ` +
                       `no update for ${fieldNames(stalled)}`,
             conflicts,
             written,
+            task,
         });
     }
 
     // Queued beats saved: a row is only saved when nothing about it is pending.
     const settled =
-        bulkQueued === null && songSaved === true
+        task === null && songSaved === true
             ? { stage: "saved" as const, message: "Saved" }
             : { stage: "queued" as const, message: "Queued" };
 
     return Result.ok(
         conflicts.length === 0
-            ? { ...settled, conflicts, written }
+            ? { ...settled, conflicts, written, task }
             : {
                   ...settled,
                   message: `${settled.message}, except ${conflictNames(
@@ -636,6 +697,7 @@ const sendRow = async (
                   )}`,
                   conflicts,
                   written,
+                  task,
               },
     );
 };
@@ -669,6 +731,7 @@ export const runSave = async (
             draft: write.draft,
             conflicts: [],
             written: [],
+            task: null,
         });
 
         const result = await sendRow(albumId, write);
@@ -682,6 +745,7 @@ export const runSave = async (
                 draft: write.draft,
                 conflicts: [],
                 written: [],
+                task: null,
             });
             return;
         }

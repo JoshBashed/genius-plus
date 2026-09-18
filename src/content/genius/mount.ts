@@ -14,6 +14,7 @@ import {
     getTagInput,
     getTextInput,
     getUseLanguageOptions,
+    getUsePusher,
     type PageRoot,
     resetBindings,
     type SelectOption,
@@ -181,6 +182,7 @@ const buildAlbumTable = async (era: number): Promise<boolean> => {
         tagInput: getTagInput(),
         textInput: getTextInput(),
         useLanguageOptions: getUseLanguageOptions(),
+        usePusher: getUsePusher(),
     };
 
     const react = await pending.react;
@@ -266,6 +268,11 @@ const buildAlbumTable = async (era: number): Promise<boolean> => {
     const useLanguageOptions: () => readonly SelectOption[] =
         languageHook.isOk() ? languageHook.value : () => [];
 
+    // Without it a queued bulk write is never confirmed, so the table says
+    // so rather than claiming an outcome it cannot see.
+    const pusherHook = await pending.usePusher;
+    const usePusher = pusherHook.isOk() ? pusherHook.value : null;
+
     const primaryTagOptions = await pending.primaryTags;
 
     // A restart while those loaded: these are the old document's chunks.
@@ -307,6 +314,7 @@ const buildAlbumTable = async (era: number): Promise<boolean> => {
                 album: seed.value,
                 primaryTagOptions,
                 useLanguageOptions,
+                usePusher,
             }),
         ),
     );

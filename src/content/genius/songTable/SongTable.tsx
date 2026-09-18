@@ -8,10 +8,22 @@ import {
     type PageElement,
     type PageReactDom,
     type SelectOption,
+    type UsePusherHook,
 } from "@/bindings";
 import { log } from "@/utilities/log";
 import { describeError } from "@/utilities/result";
 import {
+    type BulkEvent,
+    describeVerdict,
+    isTerminal,
+    pendingLine,
+    progressLine,
+    type SongVerdict,
+    timedOutLine,
+    verdictFor,
+} from "../bulkStatus";
+import {
+    type DraftField,
     EMPTY_DRAFT,
     FIELD_LABELS,
     fieldPatch,
@@ -40,11 +52,13 @@ import { host } from "../reactHost/host";
 import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
 import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
 import {
+    type FieldConflict,
     planSave,
     restoreConflicts,
     runSave,
     type SaveOutcome,
     type SavePlan,
+    type SaveStage,
 } from "../write";
 import { withCurrent } from "./ColumnEditor";
 import { ColumnMenu, type FillMode } from "./ColumnMenu";
@@ -63,6 +77,12 @@ import {
 } from "./rowState";
 import { type RowLoad, type RowSave, SongRow } from "./SongRow";
 import { Launch, Root } from "./styles";
+import {
+    type PendingSong,
+    type PendingTask,
+    TASK_TIMEOUT_MS,
+    TaskWatch,
+} from "./TaskWatch";
 
 export interface SongTableProps {
     readonly album: AlbumSeed;
@@ -70,6 +90,8 @@ export interface SongTableProps {
     readonly primaryTagOptions: readonly SelectOption[];
     /** Called during render: it reads the i18next store. */
     readonly useLanguageOptions: () => readonly SelectOption[];
+    /** Genius's Pusher hook, or `null` when its chunk moved. */
+    readonly usePusher: UsePusherHook | null;
 }
 
 /** Long enough to coalesce a burst of typing, short enough to survive it. */
@@ -108,12 +130,75 @@ const describeOutcome = (outcome: SaveOutcome): string => {
         return "Nothing was sent";
     }
 
+    // A queued row is the other reason to look: only it says how it ended.
     const detail =
-        outcome.failed > 0 || outcome.conflicted > 0
+        outcome.failed > 0 || outcome.conflicted > 0 || outcome.queued > 0
             ? "; see the Row column"
             : "";
 
     return `Genius ${parts.join(", ")}${detail}`;
+};
+
+/** What a verdict makes of the row, with uncertainty left as queued. */
+const VERDICT_STAGES: Readonly<Record<SongVerdict["kind"], SaveStage>> = {
+    canceled: "canceled",
+    failed: "failed",
+    saved: "saved",
+    unknown: "queued",
+};
+
+/** The clause a queued note already carries, kept by its successor. */
+const exceptClause = (conflicts: readonly FieldConflict[]): string =>
+    conflicts.length === 0
+        ? ""
+        : `, except ${conflicts
+              .map((entry) => FIELD_LABELS[entry.field])
+              .join(", ")}`;
+
+/** The same verdict, added to a row the other endpoint already failed. */
+const verdictClause = (verdict: SongVerdict): string => {
+    switch (verdict.kind) {
+        case "saved":
+            return ", and the queued fields did land";
+        case "failed":
+            return verdict.reasons.length === 0
+                ? ", and Genius rejected the queued fields too"
+                : `, and Genius rejected the queued fields: ${verdict.reasons.join(
+                      "; ",
+                  )}`;
+        case "canceled":
+            return ", and Genius canceled the task, so they did not land";
+        case "unknown":
+            return ", and the task ended without naming this song";
+    }
+};
+
+/** A row that failed for its other endpoint stays failed, whatever lands. */
+const holdingStage = (song: PendingSong): SaveStage =>
+    song.failed ? "failed" : "queued";
+
+/** One song's line once its task ended; it claims no more than it knows. */
+const verdictNote = (verdict: SongVerdict, song: PendingSong): RowSave => {
+    if (song.failed) {
+        return {
+            conflicts: song.conflicts,
+            edited: song.edited,
+            message: `${song.queued}${verdictClause(verdict)}`,
+            stage: "failed",
+        };
+    }
+
+    const line = describeVerdict(verdict, song.queued);
+
+    return {
+        conflicts: song.conflicts,
+        edited: song.edited,
+        message:
+            verdict.kind === "saved"
+                ? `${line}${exceptClause(song.conflicts)}`
+                : line,
+        stage: VERDICT_STAGES[verdict.kind],
+    };
 };
 
 const initialLoads = (album: AlbumSeed): Readonly<Record<number, RowLoad>> => {
@@ -126,7 +211,7 @@ const initialLoads = (album: AlbumSeed): Readonly<Record<number, RowLoad>> => {
 };
 
 const renderSongTable = (props: SongTableProps): PageElement => {
-    const { album, primaryTagOptions, useLanguageOptions } = props;
+    const { album, primaryTagOptions, useLanguageOptions, usePusher } = props;
     const albumId = album.albumId;
 
     const [loads, setLoads] = react.useState<Readonly<Record<number, RowLoad>>>(
@@ -153,6 +238,8 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     /** Non-null only while the confirmation modal is open. */
     const [plan, setPlan] = react.useState<SavePlan | null>(null);
     const [saving, setSaving] = react.useState(false);
+    /** Every queued bulk task still to be heard from, one channel each. */
+    const [pending, setPending] = react.useState<readonly PendingTask[]>([]);
     const [reactDom, setReactDom] = react.useState<PageReactDom | null>(null);
 
     /** Read once, at mount: what a lost page left behind for this album. */
@@ -482,6 +569,9 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     const dirtyCount = album.tracks.filter(
         (track) => (rows[track.songId]?.changed.length ?? 0) > 0,
     ).length;
+    // A task nobody has heard back from is still a write in flight, and
+    // sending the same row again while it runs is how a lost update starts.
+    const busy = saving || pending.length > 0;
 
     // Read at navigation time by the unload guard, which has no render.
     react.useEffect(() => {
@@ -510,6 +600,98 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                 : { ...previous, [songId]: revertedRow(row) };
         });
     }, []);
+
+    const mark = react.useCallback((songId: number, next: RowSave): void => {
+        setSaves((previous) => ({ ...previous, [songId]: next }));
+    }, []);
+
+    /** Folds stored fields into the baseline, so the row reads clean. */
+    const adopt = react.useCallback(
+        (
+            songId: number,
+            draft: SongDraft,
+            fields: readonly DraftField[],
+        ): void => {
+            if (fields.length === 0) {
+                return;
+            }
+
+            setRows((previous) => {
+                const row = previous[songId];
+
+                return row === undefined
+                    ? previous
+                    : { ...previous, [songId]: savedRow(row, draft, fields) };
+            });
+        },
+        [],
+    );
+
+    /** Drops a task once it can say nothing more, which unsubscribes it. */
+    const forget = react.useCallback((entry: PendingTask): void => {
+        setPending((previous) => previous.filter((other) => other !== entry));
+    }, []);
+
+    /**
+     * Resolves every song a terminal event names, and no song it does not.
+     * Their channel may be shared, so an event carrying another task's id is
+     * not ours, and only the ids this task carried can be answered here.
+     */
+    const onTaskEvent = react.useCallback(
+        (entry: PendingTask, event: BulkEvent): void => {
+            if (event.taskId !== null && event.taskId !== entry.task.taskId) {
+                return;
+            }
+
+            const terminal = isTerminal(event.status);
+
+            for (const song of entry.songs) {
+                if (!entry.task.songIds.includes(song.songId)) {
+                    continue;
+                }
+
+                if (!terminal) {
+                    mark(song.songId, {
+                        conflicts: song.conflicts,
+                        edited: song.edited,
+                        message: progressLine(song.queued, event.percent),
+                        stage: holdingStage(song),
+                    });
+                    continue;
+                }
+
+                const verdict = verdictFor(event, song.songId);
+
+                if (verdict.kind === "saved") {
+                    adopt(song.songId, song.draft, entry.task.fields);
+                }
+
+                mark(song.songId, verdictNote(verdict, song));
+            }
+
+            if (terminal) {
+                forget(entry);
+            }
+        },
+        [adopt, forget, mark],
+    );
+
+    /** Nothing arrived, so the row keeps saying so rather than guessing. */
+    const onTaskTimeout = react.useCallback(
+        (entry: PendingTask): void => {
+            for (const song of entry.songs) {
+                mark(song.songId, {
+                    conflicts: song.conflicts,
+                    edited: song.edited,
+                    message: timedOutLine(song.queued, TASK_TIMEOUT_MS / 1000),
+                    stage: holdingStage(song),
+                });
+            }
+
+            forget(entry);
+        },
+        [forget, mark],
+    );
 
     /** Opens the dialog that collects the one value the column will take. */
     const onPick = (column: ColumnSpec, mode: FillMode): void => {
@@ -585,10 +767,6 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         setOpened(true);
     };
 
-    const mark = (songId: number, next: RowSave): void => {
-        setSaves((previous) => ({ ...previous, [songId]: next }));
-    };
-
     /** Throws away every staged edit, the stash with them. */
     const revertAll = (): void => {
         cancelStash();
@@ -639,7 +817,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     const onSave = (): void => {
         const edits = editedRows();
 
-        if (edits.length === 0) {
+        if (busy || edits.length === 0) {
             return;
         }
 
@@ -664,29 +842,40 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         setMessage(`Sending ${count} ${plural(count)} to Genius…`);
 
         void runSave(album.albumId, confirmed, (progress) => {
-            // A field Genius has taken is Genius's value now, so it stops
-            // being an edit and the next save never re-plans it.
-            if (progress.written.length > 0) {
-                setRows((previous) => {
-                    const row = previous[progress.songId];
+            const edited = pinned.get(progress.songId) ?? 0;
+            const { task } = progress;
 
-                    return row === undefined
-                        ? previous
-                        : {
-                              ...previous,
-                              [progress.songId]: savedRow(
-                                  row,
-                                  progress.draft,
-                                  progress.written,
-                              ),
-                          };
-                });
+            // A field Genius has stored is Genius's value now, so it stops
+            // being an edit and the next save never re-plans it. A queued
+            // task has stored nothing yet, so its fields wait for Pusher.
+            adopt(progress.songId, progress.draft, progress.written);
+
+            const song: PendingSong = {
+                conflicts: progress.conflicts,
+                draft: progress.draft,
+                edited,
+                failed: progress.stage === "failed",
+                queued: progress.message,
+                songId: progress.songId,
+            };
+            /** Both have to hold, or nothing will ever answer this task. */
+            const channel =
+                usePusher === null || task === null ? null : task.channel;
+
+            if (task !== null && channel !== null) {
+                setPending((previous) => [
+                    ...previous,
+                    { channel, songs: [song], task },
+                ]);
             }
 
             mark(progress.songId, {
                 conflicts: progress.conflicts,
-                edited: pinned.get(progress.songId) ?? 0,
-                message: progress.message,
+                edited,
+                message:
+                    task === null
+                        ? progress.message
+                        : pendingLine(progress.message, channel !== null),
                 stage: progress.stage,
             });
         }).then((outcome) => {
@@ -798,6 +987,17 @@ const renderSongTable = (props: SongTableProps): PageElement => {
 
     return (
         <>
+            {usePusher === null
+                ? null
+                : pending.map((entry) => (
+                      <TaskWatch
+                          key={entry.task.taskId}
+                          onEvent={onTaskEvent}
+                          onTimeout={onTaskTimeout}
+                          pending={entry}
+                          usePusher={usePusher}
+                      />
+                  ))}
             {slot === null || reactDom === null ? (
                 <Launch>
                     <Button onClick={launch} type="button">
@@ -819,7 +1019,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
             {Modal === null || !open ? null : (
                 <Modal
                     bodyWidth="min(96vw, 1180px)"
-                    isSaveActive={dirtyCount > 0 && !saving}
+                    isSaveActive={dirtyCount > 0 && !busy}
                     onClose={() => setOpen(false)}
                     onSave={onSave}
                     position="center"
