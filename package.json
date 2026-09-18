@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "description": "Editor tooling for Genius: clean SoundCloud links and full quality PNG artwork from Apple Music and SoundCloud",
+    "license": "MIT",
     "type": "module",
     "packageManager": "pnpm@10.0.0",
     "engines": {
