@@ -36,12 +36,11 @@ export const createManifest = (
         manifest_version: 3,
         name: isDev ? "Genius+ (dev)" : "Genius+",
         version,
-        // Names what it writes, not only what it reads: an undisclosed
-        // write feature is a listing rejection.
+        // What a reader gets, in the 132 characters the store allows.
         description:
-            "Editor toolkit for Genius: album metadata editor with " +
-            "Apple Music import, clean SoundCloud links, and full " +
-            "quality PNG artwork.",
+            "Edit a whole Genius album's credits in one table, import " +
+            "songs and credits from Apple Music, and save artwork full " +
+            "size.",
         icons: {
             16: "icons/icon-16.png",
             32: "icons/icon-32.png",
