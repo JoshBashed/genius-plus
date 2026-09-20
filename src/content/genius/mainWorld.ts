@@ -3,12 +3,13 @@ import { resetBindings } from "@/bindings";
 import { observeLocation } from "@/utilities/dom";
 import { log } from "@/utilities/log";
 import { albumTableLoader } from "./loaders/albumTable";
+import { importPageLoader } from "./loaders/importPage";
 import { installEverything } from "./reactHost/install";
 import { type Mounted, mountLoaders } from "./reactHost/mount";
 import { postStatus, readEnabled } from "./relay";
 
 /** Every page this extension puts something on. */
-const LOADERS = [albumTableLoader];
+const LOADERS = [albumTableLoader, importPageLoader];
 
 let enabled = false;
 let watching: (() => void) | null = null;
