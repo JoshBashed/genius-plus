@@ -43,6 +43,30 @@ body shape, and record what it said.
 - Emitted `dist/` filenames are referenced by `src/manifest.ts`. Renaming
   a source file must not move them.
 
+## Commits
+
+- **[Conventional Commits](https://www.conventionalcommits.org), subject
+  line only.** `feat:`, `fix:`, `chore:`, `docs:`, `build:`, `ci:`,
+  `refactor:`.
+- **Incremental, never one big one.** A commit is one coherent step: the
+  Apple Music reader, then the thing that reads with it, then the page
+  that shows it. Slice until each step stands on its own.
+- **One large commit is the last resort**, for a change that genuinely
+  cannot be split, such as deleting a type every module imports. Having
+  written the work in one go is not a reason; split it afterwards.
+- **No body unless the commit earns one.** A small or obvious change is
+  a subject and nothing else. A body is for a commit that had to be
+  large, saying what a reader cannot get from the diff. Never a bulleted
+  list of small things that should have been separate commits.
+- Every commit passes `pnpm format`, `pnpm typecheck` and `pnpm build`
+  on its own. Check each one out and run them rather than assuming.
+- **A fix folds into the commit that introduced it**, while that commit
+  is still on an unmerged branch. Never stack a fix on top for a
+  reviewer to meet three commits later. Rewriting merged `main` is a
+  different matter: ask first.
+- Author is Claude, committer is Josh, one `Co-authored-by: Josh`
+  trailer, and nothing else. No session or model trailer.
+
 ## Style
 
 - 80 columns, 4 space indent, double quotes, semicolons, trailing commas.
