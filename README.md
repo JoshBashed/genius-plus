@@ -26,6 +26,31 @@ dropdown with an option for the "Genius+ Metadata Editor". This opens a table of
 all tracks on the album, with editable fields for each track's title, artist,
 and other metadata.
 
+## 4. Apple Music import
+
+Inside the metadata editor, "Import from Apple Music" takes an album link and
+stages Apple's metadata onto the matching rows: title, primary artists,
+featured artists, release date, and a primary tag derived from the genre.
+Tracks are matched to existing songs by title first, then by track number.
+
+Every name Apple gives is mapped to a real Genius artist in a popup before
+anything is staged. A credit is only split on its separators once Genius has
+been asked about the whole string, so "Earth, Wind & Fire" stays one artist
+while "Nicki Minaj & Ice Spice" becomes two. A name with no exact match is
+left empty on purpose: the import never invents an artist by itself.
+
+Apple exposes no writers or producers, so those columns are never touched.
+
+If the album is missing songs Apple lists, the import creates them. That step
+writes immediately rather than staging, because a song has to exist before
+anything can be staged onto it, so it asks first. Afterwards the album is read
+back from Genius, the new rows appear in the table without a reload, and their
+metadata is staged along with everything else in the same pass.
+
+A song Genius has just created carries the album's artists, so the import
+overwrites the new rows rather than only filling their empty fields. Without
+that, every track on a compilation would stay credited to "Various Artists".
+
 ## Architecture
 
 ```
@@ -37,6 +62,7 @@ src/
     soundcloud/            link cleaning (isolated + main world) + artwork
     appleMusic/            artwork
     genius/                bindings host for the album tools
+      albumImport/         Apple lookup, credit resolution, staging
   utilities/               result types, messaging, settings, URL rules
   popup/                   settings UI
 ```
