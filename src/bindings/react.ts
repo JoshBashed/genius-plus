@@ -1,7 +1,7 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
+import type { BindingError, ChunkError } from "./errors";
 import { findByKeys, missingKeys } from "./finders";
-import { loadChunk, memoBinding } from "./loader";
+import { type Binding, loadChunk, memoBinding } from "./loader";
 import {
     asPageValue,
     type ModuleNamespace,
@@ -89,7 +89,7 @@ export interface PageJsxRuntime {
 }
 
 /** React, react-dom, and the jsx runtime share one manual chunk. */
-const loadVendor = (): Promise<AppResult<ModuleNamespace>> =>
+const loadVendor = (): Promise<Result<ModuleNamespace, ChunkError>> =>
     loadChunk("react-vendor");
 
 const REACT_KEYS = [
@@ -109,7 +109,7 @@ const complete = <T>(
     value: unknown,
     target: string,
     keys: readonly string[],
-): AppResult<T> => {
+): Result<T, BindingError> => {
     const missing = missingKeys(value, keys);
 
     if (missing.length > 0) {
@@ -127,7 +127,7 @@ const complete = <T>(
  * The page's own React instance (cached).
  * @returns The module, or a `binding` error if the chunk moved.
  */
-export const getReact = memoBinding(async (): Promise<AppResult<PageReact>> => {
+export const getReact: Binding<PageReact> = memoBinding(async () => {
     const vendor = await loadVendor();
 
     if (vendor.isErr()) {
@@ -151,36 +151,34 @@ export const getReact = memoBinding(async (): Promise<AppResult<PageReact>> => {
  * The page's own `react-dom` (cached).
  * @returns The module, or a `binding` error if the chunk moved.
  */
-export const getReactDom = memoBinding(
-    async (): Promise<AppResult<PageReactDom>> => {
-        const vendor = await loadVendor();
+export const getReactDom: Binding<PageReactDom> = memoBinding(async () => {
+    const vendor = await loadVendor();
 
-        if (vendor.isErr()) {
-            return vendor;
-        }
+    if (vendor.isErr()) {
+        return vendor;
+    }
 
-        const found = findByKeys(
-            vendor.value,
-            "react-dom",
-            ["createPortal", "flushSync", "version"],
-            ["default"],
-        );
+    const found = findByKeys(
+        vendor.value,
+        "react-dom",
+        ["createPortal", "flushSync", "version"],
+        ["default"],
+    );
 
-        return found.isOk()
-            ? complete<PageReactDom>(found.value, "react-dom", [
-                  "createPortal",
-                  "flushSync",
-              ])
-            : found;
-    },
-);
+    return found.isOk()
+        ? complete<PageReactDom>(found.value, "react-dom", [
+              "createPortal",
+              "flushSync",
+          ])
+        : found;
+});
 
 /**
  * The page's own `react-dom/client` (cached).
  * @returns The module, or a `binding` error if the chunk moved.
  */
-export const getReactDomClient = memoBinding(
-    async (): Promise<AppResult<PageReactDomClient>> => {
+export const getReactDomClient: Binding<PageReactDomClient> = memoBinding(
+    async () => {
         const vendor = await loadVendor();
 
         if (vendor.isErr()) {
@@ -207,26 +205,24 @@ export const getReactDomClient = memoBinding(
  * The page's own `react/jsx-runtime` (cached).
  * @returns The module, or a `binding` error if the chunk moved.
  */
-export const getJsxRuntime = memoBinding(
-    async (): Promise<AppResult<PageJsxRuntime>> => {
-        const vendor = await loadVendor();
+export const getJsxRuntime: Binding<PageJsxRuntime> = memoBinding(async () => {
+    const vendor = await loadVendor();
 
-        if (vendor.isErr()) {
-            return vendor;
-        }
+    if (vendor.isErr()) {
+        return vendor;
+    }
 
-        const found = findByKeys(
-            vendor.value,
-            "react/jsx-runtime",
-            ["jsx", "jsxs", "Fragment"],
-            ["createElement"],
-        );
+    const found = findByKeys(
+        vendor.value,
+        "react/jsx-runtime",
+        ["jsx", "jsxs", "Fragment"],
+        ["createElement"],
+    );
 
-        return found.isOk()
-            ? complete<PageJsxRuntime>(found.value, "react/jsx-runtime", [
-                  "jsx",
-                  "jsxs",
-              ])
-            : found;
-    },
-);
+    return found.isOk()
+        ? complete<PageJsxRuntime>(found.value, "react/jsx-runtime", [
+              "jsx",
+              "jsxs",
+          ])
+        : found;
+});

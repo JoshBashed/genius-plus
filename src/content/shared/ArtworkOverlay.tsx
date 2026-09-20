@@ -3,11 +3,11 @@ import { type GlassOptions, GlassSurface } from "@/components/GlassSurface";
 import { usePressGlass } from "@/components/usePressGlass";
 import { type SpringChannel, useSpring } from "@/components/useSpring";
 import {
+    describeImageError,
     resolveArtwork,
     sanitizeFilename,
     saveBlob,
 } from "@/utilities/artwork";
-import { describeError } from "@/utilities/result";
 import type { Store } from "@/utilities/store";
 import type { HoverTarget } from "./hover";
 
@@ -190,7 +190,7 @@ export const ArtworkOverlay = ({ store }: ArtworkOverlayProps) => {
         if (artwork.isErr()) {
             setStatus({
                 kind: "error",
-                note: describeError(artwork.error),
+                note: describeImageError(artwork.error),
             });
             return;
         }

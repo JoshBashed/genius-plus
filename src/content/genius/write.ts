@@ -1,9 +1,9 @@
 /** The writes: `bulk_update_songs` for the bulk fields, `PUT /songs/:id` else. */
 import { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
-import type { AppError, AppResult } from "@/utilities/result";
+import { describeRequestError } from "@/utilities/http";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
-import { apiPut, csrfToken } from "./api";
+import { apiPut, csrfToken, type WriteFailure } from "./api";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -14,11 +14,60 @@ import {
     FIELD_PAYLOAD_KEYS,
     type SongDraft,
 } from "./draft";
-import { loadSongMetadata, type SongMetadata } from "./metadata";
+import {
+    describeMetadataFailure,
+    loadSongMetadata,
+    type MetadataFailure,
+    type SongMetadata,
+} from "./metadata";
 import { optionToRef } from "./options";
 import { canCreate, canEdit, gateFor } from "./permissions";
 import { drain } from "./pool";
 import type { SongEdit } from "./saveAdapter";
+
+/**
+ * Every way a save stops, whether at one row or before the run starts.
+ *
+ * Flat by design: nothing here forwards the API layer's own error, and
+ * each variant carries only what the row's one line has to say.
+ */
+export type SaveFailure =
+    /** It never reached Genius. */
+    | { readonly kind: "networkError" }
+    /** Genius refused it, in its own words. */
+    | { readonly kind: "refused"; readonly message: string }
+    /** Genius answered in a shape this cannot read. */
+    | { readonly kind: "unreadable" }
+    /** Nothing was sent: there is no token to sign a write with. */
+    | { readonly kind: "noToken"; readonly reason: string };
+
+/** The per-row summary a failed write shows, kept short enough to fit. */
+export const describeSaveFailure = (error: SaveFailure): string => {
+    switch (error.kind) {
+        case "networkError":
+            return "The request did not get through";
+        case "refused":
+            return error.message;
+        case "unreadable":
+            return "Genius answered in a shape we could not read";
+        case "noToken":
+            return error.reason;
+    }
+};
+
+/** Flattens a write failure into what a row actually needs. */
+const asFailure = (error: WriteFailure): SaveFailure => {
+    switch (error.kind) {
+        case "network":
+            return { kind: "networkError" };
+        case "http":
+            return { kind: "refused", message: describeRequestError(error) };
+        case "auth":
+            return { kind: "noToken", reason: error.reason };
+        case "decode":
+            return { kind: "unreadable" };
+    }
+};
 
 /** Whole-set replace, which is what a single-song update always builds. */
 interface ArrayFieldUpdate {
@@ -333,22 +382,6 @@ export const describePlan = (plan: SavePlan): string => {
     return `${plan.writes.length} ${songs}, ${names}`;
 };
 
-/** The per-row summary a failed write shows, kept short enough to fit. */
-export const describeSaveFailure = (error: AppError): string => {
-    switch (error.kind) {
-        case "http":
-            return `Genius refused it (${error.status})`;
-        case "network":
-            return "The request did not get through";
-        case "decode":
-            return "Genius answered in a shape we could not read";
-        case "auth":
-            return error.reason;
-        default:
-            return "Could not save";
-    }
-};
-
 /**
  * Where one song's write has got to; `queued` means accepted, not applied.
  * `canceled` is Genius dropping the task, which stores nothing either.
@@ -458,11 +491,11 @@ const putBulk = async (
     albumId: number,
     body: BulkUpdateBody,
     fields: readonly DraftField[],
-): Promise<AppResult<BulkTask | null>> => {
+): Promise<Result<BulkTask | null, SaveFailure>> => {
     const response = await apiPut(`/albums/${albumId}/bulk_update_songs`, body);
 
     if (response.isErr()) {
-        return response;
+        return Result.err(asFailure(response.error));
     }
 
     const task = queuedTask(response.value);
@@ -483,11 +516,11 @@ const putBulk = async (
 const putSong = async (
     songId: number,
     body: SongUpdateBody,
-): Promise<AppResult<boolean>> => {
+): Promise<Result<boolean, SaveFailure>> => {
     const response = await apiPut(`/songs/${songId}`, body);
 
     if (response.isErr()) {
-        return response;
+        return Result.err(asFailure(response.error));
     }
 
     const { song } = response.value;
@@ -501,7 +534,7 @@ const putSong = async (
  */
 const findConflicts = async (
     write: SongWrite,
-): Promise<AppResult<readonly FieldConflict[]>> => {
+): Promise<Result<readonly FieldConflict[], MetadataFailure>> => {
     const fresh = await loadSongMetadata(write.songId);
 
     if (fresh.isErr()) {
@@ -577,14 +610,14 @@ const conflictNames = (conflicts: readonly FieldConflict[]): string =>
 const sendRow = async (
     albumId: number,
     write: SongWrite,
-): Promise<AppResult<RowResult>> => {
+): Promise<Result<RowResult, SaveFailure>> => {
     const found = await findConflicts(write);
 
     // Unverified is not the same as unchanged, so nothing goes out.
     if (found.isErr()) {
         return Result.ok({
             stage: "failed",
-            message: `Not sent, could not re-read the song first: ${describeSaveFailure(
+            message: `Not sent, could not re-read the song first: ${describeMetadataFailure(
                 found.error,
             )}`,
             conflicts: [],
@@ -610,7 +643,7 @@ const sendRow = async (
     const { bulk, song } = buildBodies(write, sendable);
     const bulkFields = sendable.filter((field) => !isSongField(field));
     const songFields = sendable.filter(isSongField);
-    const failures: AppError[] = [];
+    const failures: SaveFailure[] = [];
 
     /** `null` while the endpoint has not answered, or was never called. */
     let bulkQueued: boolean | null = null;
@@ -711,11 +744,11 @@ export const runSave = async (
     albumId: number,
     plan: SavePlan,
     sink: SaveSink,
-): Promise<AppResult<SaveOutcome>> => {
+): Promise<Result<SaveOutcome, SaveFailure>> => {
     const token = csrfToken();
 
     if (token.isErr()) {
-        return token;
+        return Result.err(asFailure(token.error));
     }
 
     let saved = 0;

@@ -1,8 +1,9 @@
 /** The ten editable fields, fetched because the page carries none. */
 import { Result } from "@resulted/results";
+import { z } from "zod";
 import type { DateComponents } from "@/bindings";
-import type { AppError, AppResult } from "@/utilities/result";
-import { apiGet } from "./api";
+import { decode, decodeOr } from "@/utilities/decode";
+import { apiGet, type ReadFailure } from "./api";
 import { drain } from "./pool";
 
 /** A credit; `id` is `null` for a value Genius has never seen. */
@@ -37,126 +38,144 @@ export const EMPTY_DATE: DateComponents = {
     day: null,
 };
 
-const record = (value: unknown): Record<string, unknown> | null =>
-    typeof value === "object" && value !== null && !Array.isArray(value)
-        ? (value as Record<string, unknown>)
-        : null;
+/** A credit; Genius omits `id` for a value it has never seen. */
+const refSchema = z.object({
+    id: z.number().nullish(),
+    name: z.string(),
+});
 
-const namedRef = (value: unknown): NamedRef | null => {
-    const entry = record(value);
-    const name = entry?.name;
-    const id = entry?.id;
+const dateSchema = z
+    .object({
+        day: z.number().nullish(),
+        month: z.number().nullish(),
+        year: z.number().nullish(),
+    })
+    .nullish();
 
-    if (typeof name !== "string") {
-        return null;
-    }
+/** Blank is how their API says absent, so it reads as absent here. */
+const presentString = z
+    .string()
+    .nullish()
+    .transform((value) => (value === undefined || value === "" ? null : value));
 
-    return { id: typeof id === "number" ? id : null, name };
-};
+const refs = z
+    .array(z.unknown())
+    .default([])
+    .transform((rows) =>
+        rows.flatMap((row): readonly NamedRef[] => {
+            const ref = decodeOr(refSchema, row);
 
-const namedRefs = (value: unknown): readonly NamedRef[] => {
-    if (!Array.isArray(value)) {
-        return [];
-    }
+            return ref === null ? [] : [{ id: ref.id ?? null, name: ref.name }];
+        }),
+    );
 
-    return value.flatMap((entry: unknown) => {
-        const ref = namedRef(entry);
-        return ref === null ? [] : [ref];
-    });
-};
+const songSchema = z.object({
+    current_user_metadata: z
+        .object({ permissions: z.array(z.string()).nullish() })
+        .nullish(),
+    featured_artists: refs,
+    id: z.number(),
+    language: presentString,
+    primary_artists: refs,
+    primary_tag: refSchema.nullish(),
+    producer_artists: refs,
+    published: z.boolean().nullish(),
+    release_date_components: dateSchema,
+    soundcloud_url: presentString,
+    tags: refs,
+    title: z.string(),
+    writer_artists: refs,
+    youtube_url: presentString,
+});
 
-const datePart = (value: unknown): number | null =>
-    typeof value === "number" && Number.isFinite(value) ? value : null;
+const answerSchema = z.object({ song: z.unknown() });
 
-const dateComponents = (value: unknown): DateComponents => {
-    const parts = record(value);
-
-    if (parts === null) {
-        return EMPTY_DATE;
-    }
+const asMetadata = (song: z.output<typeof songSchema>): SongMetadata => {
+    const permissions = song.current_user_metadata?.permissions ?? [];
 
     return {
-        year: datePart(parts.year),
-        month: datePart(parts.month),
-        day: datePart(parts.day),
+        featuredArtists: song.featured_artists,
+        // The album wide call ships the key with nothing in it, and an
+        // empty list means unknown rather than denied.
+        permissions: permissions.length === 0 ? null : permissions,
+        primaryArtists: song.primary_artists,
+        primaryTag:
+            song.primary_tag == null
+                ? null
+                : {
+                      id: song.primary_tag.id ?? null,
+                      name: song.primary_tag.name,
+                  },
+        producerArtists: song.producer_artists,
+        // Only an explicit `true` locks: absent means unknown, not locked.
+        published: song.published === true,
+        releaseDate: {
+            day: song.release_date_components?.day ?? null,
+            month: song.release_date_components?.month ?? null,
+            year: song.release_date_components?.year ?? null,
+        },
+        songId: song.id,
+        soundcloudUrl: song.soundcloud_url,
+        tags: song.tags,
+        title: song.title,
+        writerArtists: song.writer_artists,
+        youtubeUrl: song.youtube_url,
+        language: song.language,
     };
 };
 
 /**
- * `song.current_user_metadata.permissions`, the array Genius gates on.
- * @returns `null` when absent or empty, both of which mean unknown, not denied.
+ * Every way one song's record fails to arrive.
+ *
+ * Flat by design: nothing here forwards the API layer's own error, and
+ * each variant carries only what the row's one line has to say.
  */
-const readPermissions = (value: unknown): readonly string[] | null => {
-    const permissions = record(value)?.permissions;
+export type MetadataFailure =
+    /** It never reached Genius. */
+    | { readonly kind: "networkError" }
+    /** Genius answered, and what it answered was a refusal. */
+    | { readonly kind: "refused"; readonly status: number }
+    /** Genius answered with something that is not a song. */
+    | { readonly kind: "unreadable" };
 
-    if (!Array.isArray(permissions)) {
-        return null;
+/** The per-field summary a failed row shows, kept short enough to fit. */
+export const describeMetadataFailure = (error: MetadataFailure): string => {
+    switch (error.kind) {
+        case "networkError":
+            return "The request did not get through";
+        case "refused":
+            return `Genius answered ${error.status}`;
+        case "unreadable":
+            return "The answer was not the shape we expected";
     }
-
-    const names = permissions.filter(
-        (entry: unknown): entry is string => typeof entry === "string",
-    );
-
-    // The album-wide call ships the key with nothing in it.
-    return names.length === 0 ? null : names;
 };
 
-const readSong = (value: unknown): SongMetadata | null => {
-    const song = record(value);
-    const songId = song?.id;
-    const title = song?.title;
-
-    if (typeof songId !== "number" || typeof title !== "string") {
-        return null;
-    }
-
-    const language = song?.language;
-    const soundcloudUrl = song?.soundcloud_url;
-    const youtubeUrl = song?.youtube_url;
-    const published = song?.published;
-
-    return {
-        songId,
-        title,
-        primaryArtists: namedRefs(song?.primary_artists),
-        featuredArtists: namedRefs(song?.featured_artists),
-        writerArtists: namedRefs(song?.writer_artists),
-        producerArtists: namedRefs(song?.producer_artists),
-        releaseDate: dateComponents(song?.release_date_components),
-        language: typeof language === "string" ? language : null,
-        primaryTag: namedRef(song?.primary_tag),
-        tags: namedRefs(song?.tags),
-        soundcloudUrl:
-            typeof soundcloudUrl === "string" && soundcloudUrl !== ""
-                ? soundcloudUrl
-                : null,
-        youtubeUrl:
-            typeof youtubeUrl === "string" && youtubeUrl !== ""
-                ? youtubeUrl
-                : null,
-        permissions: readPermissions(song?.current_user_metadata),
-        // Only an explicit `true` locks: absent means unknown, not locked.
-        published: published === true,
-    };
-};
+/** Flattens a read failure into what a row actually needs. */
+const asFailure = (error: ReadFailure): MetadataFailure =>
+    error.kind === "network"
+        ? { kind: "networkError" }
+        : error.kind === "http"
+          ? { kind: "refused", status: error.status }
+          : { kind: "unreadable" };
 
 export const loadSongMetadata = async (
     songId: number,
-): Promise<AppResult<SongMetadata>> => {
+): Promise<Result<SongMetadata, MetadataFailure>> => {
     const response = await apiGet(`/songs/${songId}`);
 
     if (response.isErr()) {
-        return response;
+        return Result.err(asFailure(response.error));
     }
 
-    const song = readSong(response.value.song);
+    const body = decode(answerSchema, response.value, `song ${songId}`);
 
-    return song === null
-        ? Result.err({
-              kind: "decode",
-              reason: `song ${songId} came back without the fields we need`,
-          })
-        : Result.ok(song);
+    if (body.isErr()) {
+        return Result.err({ kind: "unreadable" });
+    }
+
+    return decode(songSchema, body.value.song, `song ${songId}`)
+        .map(asMetadata)
+        .mapErr((): MetadataFailure => ({ kind: "unreadable" }));
 };
 
 /** Four at a time: enough to hide the latency, polite enough to ship. */
@@ -164,7 +183,7 @@ const CONCURRENCY = 4;
 
 export type MetadataSink = (
     songId: number,
-    result: AppResult<SongMetadata>,
+    result: Result<SongMetadata, MetadataFailure>,
 ) => void;
 
 /**
@@ -185,18 +204,4 @@ export const loadAlbumMetadata = async (
             sink(songId, result);
         });
     });
-};
-
-/** The per-field summary a failed row shows, kept short enough to fit. */
-export const describeLoadFailure = (error: AppError): string => {
-    switch (error.kind) {
-        case "http":
-            return `Genius answered ${error.status}`;
-        case "network":
-            return "The request did not get through";
-        case "decode":
-            return "The answer was not the shape we expected";
-        default:
-            return "Could not load";
-    }
 };

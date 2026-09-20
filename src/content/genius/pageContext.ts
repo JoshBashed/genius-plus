@@ -2,13 +2,13 @@
 import { Result } from "@resulted/results";
 import {
     asPageValue,
+    type BindingError,
     type GeniusTheme,
     type PageComponent,
     type PageContext,
     type PageElement,
     type PageNode,
 } from "@/bindings";
-import type { AppResult } from "@/utilities/result";
 import { createElement } from "./reactHost/react";
 
 const PROVIDER = Symbol.for("react.provider");
@@ -172,7 +172,7 @@ const isTheme = (value: unknown): value is GeniusTheme => {
 export const pageTheme = (
     captured: readonly CapturedContext[],
     themeContext: PageContext<GeniusTheme | undefined>,
-): AppResult<GeniusTheme> => {
+): Result<GeniusTheme, BindingError> => {
     const exact = captured.find((entry) => entry.context === themeContext);
 
     if (exact !== undefined && isTheme(exact.value)) {

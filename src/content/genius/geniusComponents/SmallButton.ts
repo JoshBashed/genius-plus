@@ -8,14 +8,15 @@ import {
 import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
 
-const smallButton = slot<PageComponent<SmallButtonProps>>(
+/** Exported whole so an install can record why a lookup failed. */
+export const smallButtonSlot = slot<PageComponent<SmallButtonProps>>(
     "Genius's SmallButton",
 );
 
-export const setSmallButton = smallButton.set;
+export const setSmallButton = smallButtonSlot.set;
 
 /** Whether this page bound it at all. */
-export const hasSmallButton = (): boolean => smallButton.peek() !== null;
+export const hasSmallButton = (): boolean => smallButtonSlot.peek() !== null;
 
 /**
  * Their component, read at render rather than at import.
@@ -23,5 +24,5 @@ export const hasSmallButton = (): boolean => smallButton.peek() !== null;
  */
 export const SmallButton = asPageValue<PageComponent<SmallButtonProps>>(
     (props: SmallButtonProps): PageElement =>
-        createElement(smallButton.get(), props),
+        createElement(smallButtonSlot.get(), props),
 );

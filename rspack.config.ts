@@ -42,6 +42,7 @@ export default defineConfig({
         "content/soundcloud": "./src/content/soundcloud/index.tsx",
         "content/soundcloud-main": "./src/content/soundcloud/mainWorld.ts",
         "content/apple-music": "./src/content/appleMusic/index.tsx",
+        "content/genius-early": "./src/content/genius/early.ts",
         popup: "./src/popup/index.tsx",
     },
     output: {

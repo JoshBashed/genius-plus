@@ -1,6 +1,5 @@
 /** The clipboard exports, kept beside the real write as secondary actions. */
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -11,6 +10,12 @@ import {
     type SongDraft,
 } from "./draft";
 import type { SongMetadata } from "./metadata";
+
+/** Nothing to export, or a clipboard the browser would not write to. */
+export interface ExportError {
+    readonly kind: "unsupported";
+    readonly reason: string;
+}
 
 export interface SongEdit {
     readonly songId: number;
@@ -30,10 +35,12 @@ export interface SaveAdapter {
     readonly id: string;
     readonly label: string;
     /** Resolves to the line shown to the user on success. */
-    readonly run: (edits: readonly SongEdit[]) => Promise<AppResult<string>>;
+    readonly run: (
+        edits: readonly SongEdit[],
+    ) => Promise<Result<string, ExportError>>;
 }
 
-const copy = async (text: string): Promise<AppResult<null>> => {
+const copy = async (text: string): Promise<Result<null, ExportError>> => {
     const written = await Result.try(navigator.clipboard.writeText(text));
 
     return written.isErr()
@@ -46,7 +53,7 @@ const copy = async (text: string): Promise<AppResult<null>> => {
         : Result.ok(null);
 };
 
-const nothingToDo = (): AppResult<string> =>
+const nothingToDo = (): Result<string, ExportError> =>
     Result.err({ kind: "unsupported", reason: "No rows have been edited yet" });
 
 /** Per song: the changed fields, under the API's key names, from and to. */

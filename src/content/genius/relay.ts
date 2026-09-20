@@ -1,4 +1,8 @@
 /** The `postMessage` channel between the two Genius content scripts. */
+import { Result, type ResultBase } from "@resulted/results";
+import type { NetworkError } from "@/utilities/http";
+import type { DeliveryError, ErrorMap } from "@/utilities/messaging";
+import { reviveResult, sendMessage } from "@/utilities/messaging";
 
 export const GENIUS_CHANNEL = "genius-plus:genius";
 
@@ -93,5 +97,159 @@ export const readStatus = (event: MessageEvent): StatusReport | null => {
     return {
         status: status as GeniusStatus,
         detail: typeof detail === "string" ? detail : null,
+    };
+};
+
+/**
+ * Asking the worker for a page, from the world that cannot reach it.
+ *
+ * The main half has the page's React but no `chrome.*`, and Apple
+ * answers a cross origin read with a 403, so a fetch has to go main to
+ * isolated to worker and back.
+ */
+const REQUEST = "to-isolated-fetch";
+const ANSWER = "to-main-fetch";
+
+/** What the worker answered with, or this channel's own timeout. */
+export type CreditsError =
+    | ErrorMap["apple:credits"]
+    | DeliveryError
+    | NetworkError;
+
+/** Counted, not random: only uniqueness within one document matters. */
+let nextId = 0;
+
+const waiting = new Map<
+    number,
+    (result: Result<unknown, CreditsError>) => void
+>();
+
+/** Long enough for a slow page, short enough to stop a caller hanging. */
+const FETCH_TIMEOUT_MS = 20_000;
+
+let listening = false;
+
+const listenForAnswers = (): void => {
+    if (listening) {
+        return;
+    }
+
+    listening = true;
+    addEventListener("message", (event) => {
+        const envelope = envelopeOf(event);
+
+        if (envelope === null || envelope.direction !== ANSWER) {
+            return;
+        }
+
+        const { id, result } = event.data as {
+            id?: unknown;
+            result?: unknown;
+        };
+
+        if (typeof id !== "number") {
+            return;
+        }
+
+        const settle = waiting.get(id);
+
+        if (settle === undefined) {
+            return;
+        }
+
+        waiting.delete(id);
+        settle(reviveResult(result as ResultBase<unknown, CreditsError>));
+    });
+};
+
+/**
+ * Main → isolated: ask the worker for one song's credits.
+ *
+ * The main half has the page's React but no `chrome.*`, and Apple's
+ * catalogue wants a token and no CORS, so the request goes main to
+ * isolated to worker and the answer comes back the same way.
+ */
+export const fetchSongCredits = (
+    storefront: string,
+    trackId: number,
+): Promise<Result<unknown, CreditsError>> => {
+    listenForAnswers();
+
+    const id = nextId;
+    nextId += 1;
+
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+            waiting.delete(id);
+            resolve(Result.err({ kind: "network", url: "apple:credits" }));
+        }, FETCH_TIMEOUT_MS);
+
+        waiting.set(id, (result) => {
+            clearTimeout(timer);
+            resolve(result);
+        });
+
+        postMessage(
+            {
+                channel: GENIUS_CHANNEL,
+                direction: REQUEST,
+                id,
+                storefront,
+                trackId,
+            },
+            location.origin,
+        );
+    });
+};
+
+/**
+ * Isolated: answers those requests, and nothing else.
+ * @returns A function that stops answering.
+ */
+export const serveCreditRequests = (): (() => void) => {
+    const onRequest = (event: MessageEvent): void => {
+        const envelope = envelopeOf(event);
+
+        if (envelope === null || envelope.direction !== REQUEST) {
+            return;
+        }
+
+        const { id, storefront, trackId } = event.data as {
+            id?: unknown;
+            storefront?: unknown;
+            trackId?: unknown;
+        };
+
+        if (
+            typeof id !== "number" ||
+            typeof storefront !== "string" ||
+            typeof trackId !== "number"
+        ) {
+            return;
+        }
+
+        void sendMessage({
+            storefront,
+            trackId,
+            type: "apple:credits",
+        }).then((result) => {
+            postMessage(
+                {
+                    channel: GENIUS_CHANNEL,
+                    direction: ANSWER,
+                    id,
+                    result: result.isOk()
+                        ? { type: "ok", value: result.value }
+                        : { type: "err", error: result.error },
+                },
+                location.origin,
+            );
+        });
+    };
+
+    addEventListener("message", onRequest);
+
+    return () => {
+        removeEventListener("message", onRequest);
     };
 };

@@ -1,17 +1,16 @@
 /**
  * Genius's react runtime.
  */
+import type { Result } from "@resulted/results";
 import {
+    type BindingError,
+    type ChunkError,
+    describeBindingError,
     getJsxRuntime,
     type PageElement,
     type PageJsxRuntime,
     type PageNode,
 } from "@/bindings";
-import {
-    type AppError,
-    type AppResult,
-    describeError,
-} from "@/utilities/result";
 
 let runtime: PageJsxRuntime | null = null;
 
@@ -19,7 +18,9 @@ let runtime: PageJsxRuntime | null = null;
  * Resolves the page's `react/jsx-runtime` (cached).
  * @returns A `Result` with the page's `PageJsxRuntime`.
  */
-export const primeJsxRuntime = async (): Promise<AppResult<PageJsxRuntime>> => {
+export const primeJsxRuntime = async (): Promise<
+    Result<PageJsxRuntime, ChunkError>
+> => {
     const found = await getJsxRuntime();
 
     if (found.isOk()) {
@@ -34,13 +35,13 @@ void primeJsxRuntime();
 
 /** @throws Always: a JSX expression cannot return a `Result`. */
 const unresolved = (): never => {
-    const error: AppError = {
+    const error: BindingError = {
         kind: "binding",
         target: "react/jsx-runtime",
         reason: "JSX was evaluated before primeJsxRuntime() resolved",
     };
 
-    throw new Error(describeError(error));
+    throw new Error(describeBindingError(error));
 };
 
 export const jsx = (

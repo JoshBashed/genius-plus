@@ -8,12 +8,14 @@ import {
 import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
 
-const dateInput = slot<PageComponent<DateInputProps>>("Genius's DateInput");
+/** Exported whole so an install can record why a lookup failed. */
+export const dateInputSlot =
+    slot<PageComponent<DateInputProps>>("Genius's DateInput");
 
-export const setDateInput = dateInput.set;
+export const setDateInput = dateInputSlot.set;
 
 /** Whether this page bound it at all. */
-export const hasDateInput = (): boolean => dateInput.peek() !== null;
+export const hasDateInput = (): boolean => dateInputSlot.peek() !== null;
 
 /**
  * Their component, read at render rather than at import.
@@ -21,5 +23,5 @@ export const hasDateInput = (): boolean => dateInput.peek() !== null;
  */
 export const DateInput = asPageValue<PageComponent<DateInputProps>>(
     (props: DateInputProps): PageElement =>
-        createElement(dateInput.get(), props),
+        createElement(dateInputSlot.get(), props),
 );

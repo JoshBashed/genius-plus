@@ -1,5 +1,5 @@
 import { Result } from "@resulted/results";
-import type { AppError, AppResult } from "@/utilities/result";
+import type { BindingError } from "./errors";
 import type { ModuleNamespace } from "./types";
 
 /** Structural export finders; nothing here looks an export up by name. */
@@ -8,7 +8,7 @@ const MEMO = Symbol.for("react.memo");
 const FORWARD_REF = Symbol.for("react.forward_ref");
 const CONTEXT = Symbol.for("react.context");
 
-const bindingError = (target: string, reason: string): AppError => ({
+const bindingError = (target: string, reason: string): BindingError => ({
     kind: "binding",
     target,
     reason,
@@ -127,7 +127,7 @@ export const selectExport = (
     ns: ModuleNamespace,
     target: string,
     predicate: (value: unknown) => boolean,
-): AppResult<unknown> => {
+): Result<unknown, BindingError> => {
     const test = safely(predicate);
     const matches: { key: string; value: unknown }[] = [];
 
@@ -176,7 +176,7 @@ export const selectExport = (
 export const findByDisplayName = (
     ns: ModuleNamespace,
     name: string,
-): AppResult<unknown> =>
+): Result<unknown, BindingError> =>
     selectExport(ns, `${name} (displayName)`, (value) => {
         const found = displayNameOf(value);
         return found !== null && normaliseDisplayName(found) === name;
@@ -190,7 +190,7 @@ export const findByDisplayName = (
 export const findByStyledNamespace = (
     ns: ModuleNamespace,
     file: string,
-): AppResult<unknown> =>
+): Result<unknown, BindingError> =>
     selectExport(ns, `${file} (styled statics named ${file}__*)`, (value) => {
         const owner = unwrapMemo(value);
 
@@ -217,7 +217,7 @@ export const findByPropTypes = (
     ns: ModuleNamespace,
     target: string,
     required: readonly string[],
-): AppResult<unknown> =>
+): Result<unknown, BindingError> =>
     selectExport(ns, `${target} (propTypes ${required.join("+")})`, (value) => {
         const owner = unwrapMemo(value);
         const propTypes =
@@ -250,7 +250,7 @@ const HOOK_CALL = /\buse[A-Z]\w*\s*\(/;
 export const findHook = (
     ns: ModuleNamespace,
     target: string,
-): AppResult<unknown> => {
+): Result<unknown, BindingError> => {
     const values = Object.values(ns);
     const sole = values.length === 1 ? values[0] : undefined;
 
@@ -280,7 +280,8 @@ export const findHook = (
 export const findContext = (
     ns: ModuleNamespace,
     target: string,
-): AppResult<unknown> => selectExport(ns, `${target} (context)`, isContext);
+): Result<unknown, BindingError> =>
+    selectExport(ns, `${target} (context)`, isContext);
 
 /**
  * Device pairs share a displayName; probing `attrs` separates them.
@@ -290,7 +291,7 @@ export const findContext = (
 export const findDeviceComponent = (
     ns: ModuleNamespace,
     file: string,
-): AppResult<unknown> =>
+): Result<unknown, BindingError> =>
     selectExport(ns, `${file} (responsive pair)`, (value) => {
         if (!isStyled(value)) {
             return false;
@@ -332,7 +333,7 @@ export const findByKeys = (
     target: string,
     required: readonly string[],
     forbidden: readonly string[] = [],
-): AppResult<unknown> =>
+): Result<unknown, BindingError> =>
     selectExport(ns, `${target} (${required.join("+")})`, (value) => {
         if (!isObjectLike(value)) {
             return false;

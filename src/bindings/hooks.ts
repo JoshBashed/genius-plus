@@ -1,13 +1,11 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
-import type { SelectOption } from "./components";
-import { findHook } from "./finders";
-import { loadChunk, memoBinding } from "./loader";
+import { findHook, selectExport } from "./finders";
+import { type Binding, loadChunk, memoBinding } from "./loader";
 import type { GeniusTheme } from "./styled";
 import { asPageValue, type PageNode } from "./types";
 
 /** Borrowed hooks; callable only inside the page's own React tree. */
-const bindHook = <Fn>(chunk: string): (() => Promise<AppResult<Fn>>) =>
+const bindHook = <Fn>(chunk: string): Binding<Fn> =>
     memoBinding(async () => {
         const ns = await loadChunk(chunk);
 
@@ -22,6 +20,24 @@ const bindHook = <Fn>(chunk: string): (() => Promise<AppResult<Fn>>) =>
         }
 
         return Result.ok(asPageValue<Fn>(found.value));
+    });
+
+/** Borrowed hooks; callable only inside the page's own React tree. */
+const bindWith = <Fn>(
+    chunk: string,
+    target: string,
+    predicate: (value: unknown) => boolean,
+): Binding<Fn> =>
+    memoBinding(async () => {
+        const ns = await loadChunk(chunk);
+
+        if (ns.isErr()) {
+            return ns;
+        }
+
+        const found = selectExport(ns.value, target, predicate);
+
+        return found.isErr() ? found : Result.ok(asPageValue<Fn>(found.value));
     });
 
 /** Options `useEntityForm` destructures; names read from the chunk. */
@@ -63,6 +79,12 @@ export interface UseEntityFormResult {
     readonly isNotClean: boolean;
 }
 
+/** What `useGoogleReCaptcha` hands back to a component. */
+export interface UseGoogleReCaptchaResult {
+    readonly initRecaptcha: () => void;
+    readonly executeRecaptcha: (action: string) => Promise<string>;
+}
+
 /**
  * Their form controller: react-hook-form plus submission and errors.
  * @returns The hook, or a `binding` error if the chunk moved.
@@ -92,6 +114,23 @@ export const getUseFormValidationState = bindHook<
  * @returns The hook, or a `binding` error if the chunk moved.
  */
 export const getUseTheme = bindHook<() => GeniusTheme | undefined>("useTheme");
+
+/**
+ * Genius's own Google ReCaptcha hook, which needs no key and no auth of ours.
+ */
+export const getUseGoogleReCaptcha = bindWith<() => UseGoogleReCaptchaResult>(
+    "useGoogleReCaptcha",
+    "useGoogleReCaptcha",
+    (value) => {
+        if (typeof value !== "function") return false;
+
+        const source = Result.trySync(() =>
+            Function.prototype.toString.call(value),
+        );
+
+        return source.isOk() && source.value.includes("executeRecaptcha");
+    },
+);
 
 /** Options the toast action accepts alongside its message. */
 export interface ToastOptions {
@@ -129,12 +168,35 @@ export interface CurrentUser {
 export const getUseCurrentUser =
     bindHook<() => CurrentUser | undefined>("useCurrentUser");
 
+/** What `useTranslation` hands back; only the instance is ever read. */
+export interface UseTranslationResult {
+    /** An i18next instance, whose store is read through a schema. */
+    readonly i18n: unknown;
+}
+
 /**
- * Every language Genius accepts, read from the i18next store.
+ * react-i18next's own hook, which their bundle re-exports.
+ *
+ * Read from `useMixpanelEvent`, which every React page preloads, rather
+ * than from `useLanguageOptions`, which only song pages do. Their own
+ * language list is five lines over the store this hands back, and those
+ * five lines beat a chunk that half our pages do not carry.
+ *
  * @returns The hook, or a `binding` error if the chunk moved.
  */
-export const getUseLanguageOptions =
-    bindHook<() => readonly SelectOption[]>("useLanguageOptions");
+export const getUseTranslation = bindWith<() => UseTranslationResult>(
+    "useMixpanelEvent",
+    "useTranslation",
+    (value) => {
+        if (typeof value !== "function") return false;
+
+        const source = Result.trySync(() =>
+            Function.prototype.toString.call(value),
+        );
+
+        return source.isOk() && source.value.includes("reportNamespaces");
+    },
+);
 
 /** What `usePusher` destructures; it builds the connection itself. */
 export interface UsePusherOptions {

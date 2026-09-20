@@ -1,6 +1,7 @@
 /** The album table: its entry point, its modals, and its staged edits. */
 import {
     asPageValue,
+    describeBindingError,
     getModal,
     getReactDom,
     type ModalProps,
@@ -10,7 +11,6 @@ import {
     type SelectOption,
 } from "@/bindings";
 import { log } from "@/utilities/log";
-import { describeError } from "@/utilities/result";
 import {
     type BulkEvent,
     describeVerdict,
@@ -35,12 +35,15 @@ import {
     guardUnload,
     readStash,
     type StashedRow,
+    type StashedTask,
+    takeTasks,
     writeStash,
 } from "../draftStash";
 import { Button, theme } from "../geniusComponents";
 import { hasUsePusher, useLanguageOptions } from "../geniusHooks";
+import { dropEditorHash, EDITOR_HASH, importUrlFor } from "../importRoute";
 import {
-    describeLoadFailure,
+    describeMetadataFailure,
     loadAlbumMetadata,
     loadSongMetadata,
     type SongMetadata,
@@ -52,6 +55,7 @@ import { useCallback, useEffect, useRef, useState } from "../reactHost/react";
 import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
 import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
 import {
+    describeSaveFailure,
     type FieldConflict,
     planSave,
     restoreConflicts,
@@ -213,6 +217,8 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     const [loads, setLoads] = useState<Readonly<Record<number, RowLoad>>>(() =>
         initialLoads(album),
     );
+    /** The album's songs; creating one is the import page's job, not ours. */
+    const tracks = album.tracks;
     /**
      * Every row's staged edit, held here rather than in the row. The table
      * outlives the modal, so closing it can no longer unmount an edit.
@@ -237,6 +243,61 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         () => readStash(albumId)?.rows ?? {},
     );
     const [notice, setNotice] = useState(() => Object.keys(stashed).length > 0);
+    /**
+     * Taken once, at mount: bulk tasks another page queued and could not
+     * stay to hear. The import is the one that leaves them, because it
+     * navigates here the moment Genius accepts the write.
+     */
+    const [adopted] = useState<readonly StashedTask[]>(() =>
+        takeTasks(albumId),
+    );
+
+    // Their verdict arrives over Pusher, so without this nobody is
+    // listening and a rejected import row looks saved forever.
+    useEffect(() => {
+        if (adopted.length === 0 || !hasUsePusher()) {
+            return;
+        }
+
+        setPending((previous) => [
+            ...previous,
+            ...adopted.flatMap((one): readonly PendingTask[] => {
+                const songs = one.songIds.flatMap(
+                    (songId): readonly PendingSong[] => {
+                        const row = stashed[songId];
+
+                        return row === undefined
+                            ? []
+                            : [
+                                  {
+                                      conflicts: [],
+                                      draft: { ...row.baseline, ...row.patch },
+                                      edited: 0,
+                                      failed: false,
+                                      queued: one.queued,
+                                      songId,
+                                  },
+                              ];
+                    },
+                );
+
+                return songs.length === 0
+                    ? []
+                    : [
+                          {
+                              channel: one.channel,
+                              songs,
+                              task: {
+                                  channel: one.channel,
+                                  fields: one.fields,
+                                  songIds: one.songIds,
+                                  taskId: one.taskId,
+                              },
+                          },
+                      ];
+            }),
+        ]);
+    }, [adopted, stashed]);
 
     /** The rows as of the last commit, for the debounce and the unload guard. */
     const rowsRef = useRef<Readonly<Record<number, RowState>>>({});
@@ -288,7 +349,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         const wrote = writeStash(albumId, next);
 
         if (wrote.isErr()) {
-            log.warn("draft stash", describeError(wrote.error));
+            log.warn("draft stash", wrote.error.reason);
         }
     }, [albumId, stashed]);
 
@@ -335,6 +396,21 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     // Only covers a reload or a tab close; the stash covers the rest.
     useEffect(() => guardUnload(() => dirtyRef.current > 0), []);
 
+    // Not while it is opening: replacing the URL under their modal
+    // reads as a navigation and it closes itself. The hash is dropped
+    // on close instead, so a tree that remounts opens again rather
+    // than stranding the edits, and a reload after that is ordinary.
+    // The import sends the browser here with its edits already stashed,
+    // so the table opens itself rather than waiting to be asked.
+    useEffect(() => {
+        if (location.hash !== EDITOR_HASH) {
+            return;
+        }
+
+        setOpen(true);
+        setOpened(true);
+    }, []);
+
     useEffect(() => observeToolbarSlot(setSlot), []);
 
     useEffect(() => {
@@ -364,8 +440,10 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                 return;
             }
 
-            log.error("modal unavailable", describeError(found.error));
-            setMessage(describeError(found.error));
+            const line = describeBindingError(found.error);
+
+            log.error("modal unavailable", line);
+            setMessage(line);
         });
 
         return () => {
@@ -407,7 +485,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                     result.isOk()
                         ? { metadata: result.value, status: "ready" }
                         : {
-                              message: describeLoadFailure(result.error),
+                              message: describeMetadataFailure(result.error),
                               status: "error",
                           },
                 );
@@ -429,7 +507,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                     result.isOk()
                         ? { metadata: result.value, status: "ready" }
                         : {
-                              message: describeLoadFailure(result.error),
+                              message: describeMetadataFailure(result.error),
                               status: "error",
                           },
                 );
@@ -482,7 +560,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     };
 
     // Derived during render, so a row never paints against a stale baseline.
-    const stale = album.tracks.filter((track) => {
+    const stale = tracks.filter((track) => {
         const load = loads[track.songId];
 
         return (
@@ -530,7 +608,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     }
 
     const editedRows = (): readonly SongEdit[] =>
-        album.tracks.flatMap((track) => {
+        tracks.flatMap((track) => {
             const row = rows[track.songId];
 
             if (row === undefined || row.changed.length === 0) {
@@ -551,7 +629,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
             ];
         });
 
-    const dirtyCount = album.tracks.filter(
+    const dirtyCount = tracks.filter(
         (track) => (rows[track.songId]?.changed.length ?? 0) > 0,
     ).length;
     // A task nobody has heard back from is still a write in flight, and
@@ -695,7 +773,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         let filled = 0;
         let skipped = 0;
 
-        for (const track of album.tracks) {
+        for (const track of tracks) {
             const row = rows[track.songId];
 
             if (row === undefined || !canEdit(row.source, column.field)) {
@@ -745,8 +823,8 @@ const renderSongTable = (props: SongTableProps): PageElement => {
 
     const summary =
         dirtyCount === 0
-            ? `${album.tracks.length} songs`
-            : `${album.tracks.length} songs · ${dirtyCount} edited`;
+            ? `${tracks.length} songs`
+            : `${tracks.length} songs · ${dirtyCount} edited`;
 
     const launch = (): void => {
         setOpen(true);
@@ -773,7 +851,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         const cleared = clearStash(albumId);
 
         if (cleared.isErr()) {
-            log.warn("draft stash", describeError(cleared.error));
+            log.warn("draft stash", cleared.error.reason);
         }
     };
 
@@ -868,8 +946,10 @@ const renderSongTable = (props: SongTableProps): PageElement => {
             setSaving(false);
 
             if (outcome.isErr()) {
-                log.error("save refused", describeError(outcome.error));
-                setMessage(describeError(outcome.error));
+                const line = describeSaveFailure(outcome.error);
+
+                log.error("save refused", line);
+                setMessage(line);
                 return;
             }
 
@@ -892,6 +972,15 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                 <p className="gp-sub">{summary}</p>
                 <span className="gp-spacer" />
                 <div className="gp-actions">
+                    <Button
+                        onClick={() => {
+                            location.assign(importUrlFor(albumId));
+                        }}
+                        secondary
+                        type="button"
+                    >
+                        Import from Apple Music
+                    </Button>
                     {SAVE_ADAPTERS.map((adapter) => (
                         <Button
                             disabled={dirtyCount === 0 || saving}
@@ -903,7 +992,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                                         setMessage(
                                             outcome.isOk()
                                                 ? outcome.value
-                                                : describeError(outcome.error),
+                                                : outcome.error.reason,
                                         );
                                     });
                             }}
@@ -945,13 +1034,19 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                 </div>
             ) : null}
             {message === null ? null : <p className="gp-message">{message}</p>}
+            {tracks.length > 0 ? null : (
+                <p className="gp-message">
+                    This album has no songs yet. "Import from Apple Music" can
+                    add them.
+                </p>
+            )}
             <div className="gp-scroll">
                 <table>
                     <thead>
                         <tr>{headers}</tr>
                     </thead>
                     <tbody>
-                        {album.tracks.map((track) => (
+                        {tracks.map((track) => (
                             <SongRow
                                 key={track.songId}
                                 languageOptions={languageOptions}
@@ -1005,7 +1100,10 @@ const renderSongTable = (props: SongTableProps): PageElement => {
                 <Modal
                     bodyWidth="min(96vw, 1180px)"
                     isSaveActive={dirtyCount > 0 && !busy}
-                    onClose={() => setOpen(false)}
+                    onClose={() => {
+                        setOpen(false);
+                        dropEditorHash();
+                    }}
                     onSave={onSave}
                     position="center"
                     saveLabel="Save"

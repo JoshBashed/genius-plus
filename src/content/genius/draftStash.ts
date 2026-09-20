@@ -1,7 +1,12 @@
 /** Staged edits live in memory, so a stray navigation loses them all. */
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
-import type { SongDraft } from "./draft";
+import type { DraftField, SongDraft } from "./draft";
+
+/** The browser would not keep the stash, which is never worth stopping for. */
+export interface StashError {
+    readonly kind: "unsupported";
+    readonly reason: string;
+}
 
 const KEY = "genius-plus:drafts:";
 
@@ -31,7 +36,7 @@ export interface Stash {
 
 const keyFor = (albumId: number): string => `${KEY}${albumId}`;
 
-const failed = (reason: string): AppResult<void> =>
+const failed = (reason: string): Result<void, StashError> =>
     Result.err({ kind: "unsupported", reason });
 
 const isObject = (value: unknown): boolean =>
@@ -96,7 +101,7 @@ export const readStash = (albumId: number): Stash | null => {
 export const writeStash = (
     albumId: number,
     rows: Readonly<Record<number, StashedRow>>,
-): AppResult<void> => {
+): Result<void, StashError> => {
     if (Object.keys(rows).length === 0) {
         return clearStash(albumId);
     }
@@ -113,7 +118,7 @@ export const writeStash = (
         : Result.ok(undefined);
 };
 
-export const clearStash = (albumId: number): AppResult<void> => {
+export const clearStash = (albumId: number): Result<void, StashError> => {
     const removed = Result.trySync(() => {
         localStorage.removeItem(keyFor(albumId));
     });
@@ -121,6 +126,105 @@ export const clearStash = (albumId: number): AppResult<void> => {
     return removed.isErr()
         ? failed("this browser would not clear the draft")
         : Result.ok(undefined);
+};
+
+/** Where a queued task waits for whoever can hear its channel. */
+const TASK_KEY = "genius-plus:tasks:";
+
+const taskKeyFor = (albumId: number): string => `${TASK_KEY}${albumId}`;
+
+/**
+ * A bulk task queued by one page for another page to hear out.
+ *
+ * A bulk write is accepted, not applied, and its verdict arrives over
+ * Pusher. The import has navigated away by then, so it leaves the task
+ * here and the album's own table subscribes in its place.
+ */
+export interface StashedTask {
+    readonly taskId: string;
+    /** Only a task with a channel is worth keeping; nothing else answers. */
+    readonly channel: string;
+    readonly songIds: readonly number[];
+    readonly fields: readonly DraftField[];
+    /** The line the row settled on when Genius accepted the task. */
+    readonly queued: string;
+}
+
+interface TaskStash {
+    readonly version: number;
+    readonly savedAt: number;
+    readonly tasks: readonly StashedTask[];
+}
+
+const usableTask = (value: unknown): boolean => {
+    if (!isObject(value)) {
+        return false;
+    }
+
+    const task = value as Partial<StashedTask>;
+
+    return (
+        typeof task.taskId === "string" &&
+        typeof task.channel === "string" &&
+        Array.isArray(task.songIds)
+    );
+};
+
+/** Leaves queued tasks for the page that can subscribe to them. */
+export const writeTasks = (
+    albumId: number,
+    tasks: readonly StashedTask[],
+): Result<void, StashError> => {
+    if (tasks.length === 0) {
+        return Result.ok(undefined);
+    }
+
+    const stash: TaskStash = {
+        savedAt: Date.now(),
+        tasks,
+        version: VERSION,
+    };
+    const wrote = Result.trySync(() => {
+        localStorage.setItem(taskKeyFor(albumId), JSON.stringify(stash));
+    });
+
+    return wrote.isErr()
+        ? failed("this browser would not store the queued task")
+        : Result.ok(undefined);
+};
+
+/**
+ * Reads the queued tasks for one album and clears them.
+ * Taken rather than read: a task is worth subscribing to once, and a
+ * copy left behind would be watched again on every later visit.
+ */
+export const takeTasks = (albumId: number): readonly StashedTask[] => {
+    const raw = Result.trySync(() => localStorage.getItem(taskKeyFor(albumId)));
+
+    if (raw.isErr() || raw.value === null) {
+        return [];
+    }
+
+    Result.trySync(() => {
+        localStorage.removeItem(taskKeyFor(albumId));
+    });
+
+    const parsed = Result.trySync(
+        () => JSON.parse(raw.value ?? "") as TaskStash,
+    );
+
+    if (parsed.isErr()) {
+        return [];
+    }
+
+    const stash = parsed.value;
+    const usable =
+        stash?.version === VERSION &&
+        typeof stash.savedAt === "number" &&
+        Date.now() - stash.savedAt < MAX_AGE_MS &&
+        Array.isArray(stash.tasks);
+
+    return usable ? stash.tasks.filter(usableTask) : [];
 };
 
 /**

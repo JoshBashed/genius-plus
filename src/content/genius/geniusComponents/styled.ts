@@ -7,9 +7,9 @@ import type {
 } from "@/bindings";
 import { slot } from "../reactHost/binding";
 
-const factory = slot<PageStyledFactory>("styled-components");
+export const styledSlot = slot<PageStyledFactory>("styled-components");
 
-export const setStyled = factory.set;
+export const setStyled = styledSlot.set;
 
 /**
  * Their `styled`, called when a styles module is evaluated.
@@ -21,15 +21,15 @@ export const setStyled = factory.set;
  */
 export const styled = <Props>(
     tag: PageComponent<Props> | string,
-): PageStyledTag => factory.get()(tag);
+): PageStyledTag => styledSlot.get()(tag);
 
-const active = slot<GeniusTheme>("the page's active theme");
+export const themeSlot = slot<GeniusTheme>("the page's active theme");
 
-export const setTheme = active.set;
+export const setTheme = themeSlot.set;
 
 /**
  * The live theme.
  * Read late, never snapshotted: `deviceType` changes on a resize, and a
  * re-prime replaces it without re-evaluating a single module.
  */
-export const theme = (): GeniusTheme => active.get();
+export const theme = (): GeniusTheme => themeSlot.get();

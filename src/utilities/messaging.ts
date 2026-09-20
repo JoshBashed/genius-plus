@@ -1,16 +1,55 @@
 import { Result, type ResultBase } from "@resulted/results";
-import { type AppError, type AppResult, reviveResult } from "./result";
+import type { DecodeFailure } from "./decode";
+import type { HttpError, NetworkError } from "./http";
+
+/** Rebuilds a `Result` that lost its prototype crossing a boundary. */
+export const reviveResult = <Ok, Err>(
+    base: ResultBase<Ok, Err>,
+): Result<Ok, Err> =>
+    base.type === "ok" ? Result.ok(base.value) : Result.err(base.error);
+
+/** Nothing answered the message, which is the worker being replaced. */
+export interface NoReceiverError {
+    readonly kind: "no-receiver";
+}
+
+/** The worker is not an open proxy, and that URL is not one it fetches. */
+export interface ForbiddenHostError {
+    readonly kind: "unsupported";
+    readonly reason: string;
+}
 
 /** Everything a content script can ask the service worker to do. */
 export type Message =
     /** Fetch an image in the worker, which is not bound by page CORS. */
-    { readonly type: "image:fetch"; readonly url: string };
+    | { readonly type: "image:fetch"; readonly url: string }
+    /** Read one song's credits from Apple's catalogue, token and all. */
+    | {
+          readonly type: "apple:credits";
+          readonly storefront: string;
+          readonly trackId: number;
+      };
 
 /** The success value each message type resolves to. */
 export interface ResponseMap {
     /** A `data:` URL holding the untouched CDN bytes. */
     "image:fetch": string;
+    /** Apple's catalogue answer, parsed by the caller. */
+    "apple:credits": unknown;
 }
+
+/** What a handler for each message type can fail with. */
+export interface ErrorMap {
+    "image:fetch": NetworkError | HttpError | ForbiddenHostError;
+    "apple:credits": NetworkError | HttpError | DecodeFailure;
+}
+
+/**
+ * What the channel itself adds to a handler's own failures.
+ * A handler that throws is answered with a `decode` error, so every
+ * caller can see one whatever its own handler declares.
+ */
+export type DeliveryError = NoReceiverError | DecodeFailure;
 
 /** Narrows `Message` to the member whose `type` is `T`. */
 export type MessageOf<T extends Message["type"]> = Extract<
@@ -23,7 +62,7 @@ export type MessageHandlers = {
     readonly [T in Message["type"]]?: (
         message: MessageOf<T>,
         sender: chrome.runtime.MessageSender,
-    ) => Promise<AppResult<ResponseMap[T]>>;
+    ) => Promise<Result<ResponseMap[T], ErrorMap[T]>>;
 };
 
 const isMessage = (value: unknown): value is Message =>
@@ -31,7 +70,7 @@ const isMessage = (value: unknown): value is Message =>
     value !== null &&
     typeof (value as { type?: unknown }).type === "string";
 
-const isResultBase = (value: unknown): value is ResultBase<unknown, AppError> =>
+const isResultBase = (value: unknown): value is ResultBase<unknown, unknown> =>
     typeof value === "object" &&
     value !== null &&
     ((value as { type?: unknown }).type === "ok" ||
@@ -43,7 +82,9 @@ const isResultBase = (value: unknown): value is ResultBase<unknown, AppError> =>
  */
 export const sendMessage = async <M extends Message>(
     message: M,
-): Promise<AppResult<ResponseMap[M["type"]]>> => {
+): Promise<
+    Result<ResponseMap[M["type"]], ErrorMap[M["type"]] | DeliveryError>
+> => {
     const response = await Result.try(chrome.runtime.sendMessage(message));
 
     if (response.isErr()) {
@@ -55,7 +96,10 @@ export const sendMessage = async <M extends Message>(
     }
 
     return reviveResult(
-        response.value as ResultBase<ResponseMap[M["type"]], AppError>,
+        response.value as ResultBase<
+            ResponseMap[M["type"]],
+            ErrorMap[M["type"]] | DeliveryError
+        >,
     );
 };
 
@@ -73,7 +117,7 @@ export const onMessage = (handlers: MessageHandlers): void => {
             | ((
                   message: Message,
                   sender: chrome.runtime.MessageSender,
-              ) => Promise<AppResult<unknown>>)
+              ) => Promise<Result<unknown, unknown>>)
             | undefined;
 
         if (handler === undefined) {
@@ -84,7 +128,7 @@ export const onMessage = (handlers: MessageHandlers): void => {
             .then((result) => respond(result))
             .catch((error: unknown) => {
                 respond(
-                    Result.err<never, AppError>({
+                    Result.err<never, DecodeFailure>({
                         kind: "decode",
                         reason: String(error),
                     }),

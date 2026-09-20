@@ -1,5 +1,4 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
 import {
     type ChunkIndex,
     describeMarkers,
@@ -8,16 +7,23 @@ import {
     resolveChunk,
     resolveChunkMatching,
 } from "./discovery";
+import type { BindingError, ChunkError, UnsupportedPageError } from "./errors";
 import type { ModuleNamespace } from "./types";
 
-const loaded = new Map<string, Promise<AppResult<ModuleNamespace>>>();
+/** A memoised lookup of one borrowed value, and how it can fail. */
+export type Binding<Value> = () => Promise<Result<Value, ChunkError>>;
+
+const loaded = new Map<
+    string,
+    Promise<Result<ModuleNamespace, BindingError>>
+>();
 
 /** Bumped by every reset, so a load in flight cannot write back late. */
 let generation = 0;
 
 const importModule = async (
     url: string,
-): Promise<AppResult<ModuleNamespace>> => {
+): Promise<Result<ModuleNamespace, BindingError>> => {
     // Must stay a native `import()` of a runtime string.
     const imported = await Result.try(
         import(/* webpackIgnore: true */ url) as Promise<unknown>,
@@ -49,7 +55,7 @@ const importModule = async (
  */
 export const loadChunkUrl = (
     url: string,
-): Promise<AppResult<ModuleNamespace>> => {
+): Promise<Result<ModuleNamespace, BindingError>> => {
     const existing = loaded.get(url);
 
     if (existing !== undefined) {
@@ -76,7 +82,7 @@ let page: GeniusPage | null = null;
  * Cached on success only; a miss may just mean `<head>` is unfinished.
  * @returns The detected page, or whatever `detectPage` rejected with.
  */
-export const getPage = (): AppResult<GeniusPage> => {
+export const getPage = (): Result<GeniusPage, UnsupportedPageError> => {
     if (page !== null) {
         return Result.ok(page);
     }
@@ -90,7 +96,7 @@ export const getPage = (): AppResult<GeniusPage> => {
     return detected;
 };
 
-const requireChunks = (target: string): AppResult<ChunkIndex> => {
+const requireChunks = (target: string): Result<ChunkIndex, ChunkError> => {
     const current = getPage();
 
     if (current.isErr()) {
@@ -117,7 +123,7 @@ const requireChunks = (target: string): AppResult<ChunkIndex> => {
  */
 export const loadChunk = async (
     baseName: string,
-): Promise<AppResult<ModuleNamespace>> => {
+): Promise<Result<ModuleNamespace, ChunkError>> => {
     const target = `chunk "${baseName}"`;
     const chunks = requireChunks(target);
 
@@ -137,7 +143,7 @@ export const loadChunk = async (
 export const loadChunkMatching = async (
     pattern: RegExp,
     target: string,
-): Promise<AppResult<ModuleNamespace>> => {
+): Promise<Result<ModuleNamespace, ChunkError>> => {
     const chunks = requireChunks(target);
 
     if (chunks.isErr()) {
@@ -154,11 +160,11 @@ const resets: (() => void)[] = [];
  * Memoises a successful lookup only, so a miss can be retried.
  * @returns A wrapped `build` that `resetBindings` also clears.
  */
-export const memoBinding = <T>(
-    build: () => Promise<AppResult<T>>,
-): (() => Promise<AppResult<T>>) => {
-    let settled: AppResult<T> | null = null;
-    let pending: Promise<AppResult<T>> | null = null;
+export const memoBinding = <T, Err = ChunkError>(
+    build: () => Promise<Result<T, Err>>,
+): (() => Promise<Result<T, Err>>) => {
+    let settled: Result<T, Err> | null = null;
+    let pending: Promise<Result<T, Err>> | null = null;
 
     resets.push(() => {
         settled = null;

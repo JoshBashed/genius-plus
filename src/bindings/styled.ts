@@ -1,7 +1,6 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
 import { findContext, readProperty, selectExport } from "./finders";
-import { loadChunkMatching, memoBinding } from "./loader";
+import { type Binding, loadChunkMatching, memoBinding } from "./loader";
 import {
     asPageValue,
     type PageComponent,
@@ -121,8 +120,8 @@ const CHUNK = /^styled-components(\b|[.-])/;
  * Vendored, so its base name moves more readily than a component's.
  * @returns The exports we use, or a `binding` error naming the miss.
  */
-export const getStyledComponents = memoBinding(
-    async (): Promise<AppResult<PageStyledComponents>> => {
+export const getStyledComponents: Binding<PageStyledComponents> = memoBinding(
+    async () => {
         const chunk = await loadChunkMatching(CHUNK, "styled-components");
 
         if (chunk.isErr()) {

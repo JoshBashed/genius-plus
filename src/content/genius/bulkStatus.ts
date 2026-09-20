@@ -1,6 +1,7 @@
 /** Genius's `bulk-song-update-status` payload: the only word on a task. */
-import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
+import type { Result } from "@resulted/results";
+import { z } from "zod";
+import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
 import { DRAFT_FIELDS, FIELD_LABELS, FIELD_PAYLOAD_KEYS } from "./draft";
 
 /** Their five task statuses, the last three of which end the task. */
@@ -11,13 +12,13 @@ export type BulkStatus =
     | "failed"
     | "canceled";
 
-const STATUSES: readonly string[] = [
+const statusSchema = z.enum([
     "started",
     "progress",
     "completed",
     "failed",
     "canceled",
-];
+]);
 
 /** One song the task refused, and why. */
 export interface SongFailure {
@@ -45,11 +46,6 @@ export interface BulkEvent {
 export const isTerminal = (status: BulkStatus): boolean =>
     status === "completed" || status === "failed" || status === "canceled";
 
-const record = (value: unknown): Readonly<Record<string, unknown>> | null =>
-    typeof value === "object" && value !== null
-        ? (value as Readonly<Record<string, unknown>>)
-        : null;
-
 /** Ids arrive as numbers, but a JSON id is a string often enough. */
 const asNumber = (value: unknown): number | null => {
     if (typeof value === "number") {
@@ -61,22 +57,52 @@ const asNumber = (value: unknown): number | null => {
     }
 
     const parsed = Number(value);
+
     return Number.isFinite(parsed) ? parsed : null;
 };
 
-const idList = (value: unknown): readonly number[] =>
-    Array.isArray(value)
-        ? value.flatMap((entry: unknown) => {
-              const id = asNumber(entry);
+/** An id that will not read, which a row carrying one cannot be used. */
+const idSchema = z.unknown().transform((value, ctx) => {
+    const parsed = asNumber(value);
 
-              return id === null ? [] : [id];
-          })
-        : [];
+    if (parsed === null) {
+        ctx.addIssue({ code: "custom", message: "not a number" });
+        return z.NEVER;
+    }
 
-const isString = (value: unknown): value is string => typeof value === "string";
+    return parsed;
+});
 
-const messages = (value: unknown): readonly string[] =>
-    Array.isArray(value) ? value.filter(isString) : [];
+/** A count Genius may not have sent, which is not worth refusing over. */
+const countSchema = z.unknown().transform(asNumber);
+
+/** Their task id, which is only ever shown and compared as a string. */
+const taskIdSchema = z
+    .unknown()
+    .transform((value) =>
+        typeof value === "number" || typeof value === "string"
+            ? String(value)
+            : null,
+    );
+
+/** An id we cannot read is one song unaccounted for, not a bad event. */
+const idListSchema = z
+    .array(z.unknown())
+    .default([])
+    .transform((rows) =>
+        rows.flatMap((row) => {
+            const id = decodeOr(idSchema, row);
+
+            return id === null ? [] : [id];
+        }),
+    );
+
+const messagesSchema = z
+    .array(z.unknown())
+    .default([])
+    .transform((rows) =>
+        rows.filter((row): row is string => typeof row === "string"),
+    );
 
 /** Their payload keys are the API's, so a column can name itself. */
 const LABELS: ReadonlyMap<string, string> = new Map(
@@ -86,99 +112,75 @@ const LABELS: ReadonlyMap<string, string> = new Map(
     ]),
 );
 
+/** One refused song, whose `field_errors` are keyed by payload key. */
+const failedSongSchema = z.object({
+    errors: messagesSchema,
+    field_errors: z.record(z.string(), messagesSchema).default({}),
+    id: idSchema,
+});
+
+const eventSchema = z.object({
+    failed_songs: z.array(z.unknown()).default([]),
+    message: z.string().nullish(),
+    processed: countSchema,
+    skipped_song_ids: idListSchema,
+    status: statusSchema,
+    task_id: taskIdSchema,
+    total: countSchema,
+    updated_song_ids: idListSchema,
+});
+
 /** `{tags: ["is invalid"]}` becomes `Tags: is invalid`, their own wording. */
-const fieldReasons = (value: unknown): readonly string[] => {
-    const errors = record(value);
-
-    if (errors === null) {
-        return [];
-    }
-
-    return Object.entries(errors).flatMap(([key, list]) =>
-        messages(list).map((reason) => `${LABELS.get(key) ?? key}: ${reason}`),
+const asFailure = (song: z.output<typeof failedSongSchema>): SongFailure => {
+    const fields = Object.entries(song.field_errors).flatMap(([key, list]) =>
+        list.map((reason) => `${LABELS.get(key) ?? key}: ${reason}`),
     );
+
+    return {
+        reasons: fields.length > 0 ? fields : song.errors,
+        songId: song.id,
+    };
 };
 
-const failuresOf = (value: unknown): readonly SongFailure[] =>
-    Array.isArray(value)
-        ? value.flatMap((entry: unknown) => {
-              const song = record(entry);
-              const id = asNumber(song?.id);
-
-              if (song === null || id === null) {
-                  return [];
-              }
-
-              const fields = fieldReasons(song.field_errors);
-              const reasons =
-                  fields.length > 0 ? fields : messages(song.errors);
-
-              return [{ reasons, songId: id }];
-          })
-        : [];
-
 /** Their own parser's arithmetic: `started` is 0, `progress` is the ratio. */
-const percentOf = (
-    status: BulkStatus,
-    body: Readonly<Record<string, unknown>>,
-): number | null => {
-    if (status === "started") {
+const percentOf = (event: z.output<typeof eventSchema>): number | null => {
+    if (event.status === "started") {
         return 0;
     }
 
-    if (status !== "progress") {
+    const { processed, total } = event;
+
+    if (event.status !== "progress" || processed === null || total === null) {
         return null;
     }
 
-    const processed = asNumber(body.processed);
-    const total = asNumber(body.total);
-
-    if (processed === null || total === null || total <= 0) {
-        return null;
-    }
-
-    return Math.round((processed / total) * 100);
+    return total <= 0 ? null : Math.round((processed / total) * 100);
 };
 
 /**
  * Reads one status event, refusing anything whose status it does not know.
  * @returns The event, or a `decode` error naming what arrived instead.
  */
-export const parseBulkEvent = (payload: unknown): AppResult<BulkEvent> => {
-    const body = record(payload);
-    const status = body?.status;
+export const parseBulkEvent = (
+    payload: unknown,
+): Result<BulkEvent, DecodeFailure> =>
+    decode(eventSchema, payload, "a bulk update event").map((event) => ({
+        // A song we cannot read is one we cannot name, not a bad event.
+        failures: event.failed_songs.flatMap((row) => {
+            const song = decodeOr(failedSongSchema, row);
 
-    if (body === null || typeof status !== "string") {
-        return Result.err({
-            kind: "decode",
-            reason: "a bulk update event carried no status",
-        });
-    }
-
-    if (!STATUSES.includes(status)) {
-        return Result.err({
-            kind: "decode",
-            reason: `a bulk update event reported "${status}"`,
-        });
-    }
-
-    const known = status as BulkStatus;
-    const taskId = body.task_id;
-    const message = body.message;
-
-    return Result.ok({
-        failures: failuresOf(body.failed_songs),
-        message: typeof message === "string" && message !== "" ? message : null,
-        percent: percentOf(known, body),
-        skippedSongIds: idList(body.skipped_song_ids),
-        status: known,
-        taskId:
-            typeof taskId === "number" || typeof taskId === "string"
-                ? String(taskId)
-                : null,
-        updatedSongIds: idList(body.updated_song_ids),
-    });
-};
+            return song === null ? [] : [asFailure(song)];
+        }),
+        message:
+            event.message == null || event.message === ""
+                ? null
+                : event.message,
+        percent: percentOf(event),
+        skippedSongIds: event.skipped_song_ids,
+        status: event.status,
+        taskId: event.task_id,
+        updatedSongIds: event.updated_song_ids,
+    }));
 
 /** What a terminal event says about one song, and never more than that. */
 export type SongVerdict =

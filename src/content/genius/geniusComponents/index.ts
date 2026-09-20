@@ -4,13 +4,41 @@
 // nothing until something renders it, so importing one name no longer
 // evaluates a binding that this page never installed.
 
-export { Button, hasButton, setButton } from "./Button";
-export { DateInput, hasDateInput, setDateInput } from "./DateInput";
-export { Dropdown, hasDropdown, setDropdown } from "./Dropdown";
+export { Button, buttonSlot, hasButton, setButton } from "./Button";
+export { Checkbox, checkboxSlot, hasCheckbox, setCheckbox } from "./Checkbox";
+export {
+    DateInput,
+    dateInputSlot,
+    hasDateInput,
+    setDateInput,
+} from "./DateInput";
+export { Dropdown, dropdownSlot, hasDropdown, setDropdown } from "./Dropdown";
 export * from "./react";
-export { hasSelectInput, SelectInput, setSelectInput } from "./SelectInput";
-export { hasSmallButton, SmallButton, setSmallButton } from "./SmallButton";
-export { hasSpinner, Spinner, setSpinner } from "./Spinner";
-export { setStyled, setTheme, styled, theme } from "./styled";
-export { hasTagInput, setTagInput, TagInput } from "./TagInput";
-export { hasTextInput, setTextInput, TextInput } from "./TextInput";
+export {
+    hasSelectInput,
+    SelectInput,
+    selectInputSlot,
+    setSelectInput,
+} from "./SelectInput";
+export {
+    hasSmallButton,
+    SmallButton,
+    setSmallButton,
+    smallButtonSlot,
+} from "./SmallButton";
+export { hasSpinner, Spinner, setSpinner, spinnerSlot } from "./Spinner";
+export {
+    setStyled,
+    setTheme,
+    styled,
+    styledSlot,
+    theme,
+    themeSlot,
+} from "./styled";
+export { hasTagInput, setTagInput, TagInput, tagInputSlot } from "./TagInput";
+export {
+    hasTextInput,
+    setTextInput,
+    TextInput,
+    textInputSlot,
+} from "./TextInput";

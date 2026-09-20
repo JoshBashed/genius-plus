@@ -27,8 +27,16 @@ export const observeSubtree = (
     return () => observer.disconnect();
 };
 
+/** The page, without the fragment: what a mount actually depends on. */
+const pageOf = (href: string): string => href.split("#")[0] ?? href;
+
 /**
  * Polls `location.href`; an isolated world gets no other SPA signal.
+ *
+ * Hash-only changes are not navigations. Treating one as a navigation
+ * remounted the tree under whatever had just set it, which unsubscribed
+ * every queued task the album table was still listening for.
+ *
  * @param intervalMs How often to poll, in milliseconds.
  * @returns A function that stops watching.
  */
@@ -36,14 +44,16 @@ export const observeLocation = (
     callback: (href: string) => void,
     intervalMs = 400,
 ): (() => void) => {
-    let previous = location.href;
+    let previous = pageOf(location.href);
 
     const check = (): void => {
-        if (location.href === previous) {
+        const next = pageOf(location.href);
+
+        if (next === previous) {
             return;
         }
-        previous = location.href;
-        callback(previous);
+        previous = next;
+        callback(location.href);
     };
 
     const timer = setInterval(check, intervalMs);

@@ -3,21 +3,9 @@ import type { PageElement, SelectOption } from "@/bindings";
 import { FIELD_LABELS, type SongDraft } from "../draft";
 import { SelectInput, TagInput, TextInput } from "../geniusComponents";
 import { loadArtistOptions, loadTagOptions, optionFor } from "../options";
+import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
 import { type ColumnSpec, isSortable, type TagColumn } from "./columns";
 import { DateCell } from "./styles";
-
-/** react-select clips its menu inside the table's scroll container. */
-const PORTAL_PROPS: Readonly<Record<string, unknown>> = {
-    menuPortalTarget: document.body,
-    menuPosition: "fixed",
-};
-
-const MENU_STYLES: Readonly<Record<string, unknown>> = {
-    menuPortal: (base: Record<string, unknown>) => ({
-        ...base,
-        zIndex: 2147483000,
-    }),
-};
 
 export interface ColumnEditorProps {
     readonly column: ColumnSpec;

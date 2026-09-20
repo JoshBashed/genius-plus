@@ -1,25 +1,57 @@
 /** Option sources. An artist label is an object, a tag label a string. */
 
+import { Result } from "@resulted/results";
+import { z } from "zod";
 import type { SelectOption } from "@/bindings";
-import { apiGet } from "./api";
+import { decodeOr } from "@/utilities/decode";
+import { apiGet, type ReadFailure } from "./api";
 import type { NamedRef } from "./metadata";
 
 /** Genius debounces its own autocompletes by this much. Match it. */
 const DEBOUNCE_MS = 150;
 
-const record = (value: unknown): Record<string, unknown> | null =>
-    typeof value === "object" && value !== null && !Array.isArray(value)
-        ? (value as Record<string, unknown>)
-        : null;
+/** One artist hit, with the "AKA" alternate their own menu shows. */
+const artistSchema = z.object({
+    id: z.number(),
+    match_metadata: z
+        .object({ alternate_name: z.string().nullish() })
+        .nullish(),
+    name: z.string(),
+});
 
-const rows = (value: unknown): readonly Record<string, unknown>[] => {
-    if (!Array.isArray(value)) {
-        return [];
-    }
+const artistsSchema = z.object({
+    artists: z.array(z.unknown()).default([]),
+});
 
-    return value.flatMap((entry: unknown) => {
-        const row = record(entry);
-        return row === null ? [] : [row];
+/** One song hit: the title with features, the artists below it. */
+const songHitSchema = z.object({
+    result: z.object({
+        artist_names: z.string().nullish(),
+        id: z.number(),
+        title: z.string(),
+        title_with_featured: z.string().nullish(),
+    }),
+});
+
+const songsSchema = z.object({
+    sections: z
+        .array(z.object({ hits: z.array(z.unknown()).default([]) }))
+        .default([]),
+});
+
+/** Every tag list they answer with, whatever the endpoint. */
+const tagSchema = z.object({ id: z.number(), name: z.string() });
+
+const tagsSchema = z.object({ tags: z.array(z.unknown()).default([]) });
+
+/** A row that will not parse is one option missing, not a failed menu. */
+const tagOptions = (body: unknown): readonly SelectOption[] => {
+    const parsed = decodeOr(tagsSchema, body);
+
+    return (parsed?.tags ?? []).flatMap((row): readonly SelectOption[] => {
+        const tag = decodeOr(tagSchema, row);
+
+        return tag === null ? [] : [{ label: tag.name, value: tag.id }];
     });
 };
 
@@ -53,56 +85,109 @@ const debounced = (
         });
 };
 
-/** `GET /artists/autocomplete?q=`, with the "AKA" alternate below. */
-export const loadArtistOptions = debounced(async (input: string) => {
+/**
+ * `GET /artists/autocomplete?q=`, with the "AKA" alternate below.
+ *
+ * Undebounced, because the import resolves many names at once and the
+ * debounce settles every waiting caller on the last one's answer. The
+ * failure is the read's own, because a caller that splits a credit only
+ * once Genius has been asked has to tell a failed ask from an empty one.
+ */
+export const searchArtists = async (
+    input: string,
+): Promise<Result<readonly SelectOption[], ReadFailure>> => {
     const response = await apiGet("/artists/autocomplete", { q: input });
 
     if (response.isErr()) {
-        return [];
+        return Result.err(response.error);
     }
 
-    return rows(response.value.artists).flatMap(
-        (artist): readonly SelectOption[] => {
-            const id = artist.id;
-            const name = artist.name;
+    const parsed = decodeOr(artistsSchema, response.value);
+    const options = (parsed?.artists ?? []).flatMap(
+        (row): readonly SelectOption[] => {
+            const artist = decodeOr(artistSchema, row);
 
-            if (typeof id !== "number" || typeof name !== "string") {
+            if (artist === null) {
                 return [];
             }
 
-            const alternate = record(artist.match_metadata)?.alternate_name;
+            const alternate = artist.match_metadata?.alternate_name;
 
             return [
                 {
-                    value: id,
+                    value: artist.id,
                     label: {
-                        primary: name,
-                        ...(typeof alternate === "string"
-                            ? { secondary: alternate, secondaryPrefix: "AKA" }
-                            : {}),
+                        primary: artist.name,
+                        ...(alternate == null
+                            ? {}
+                            : {
+                                  secondary: alternate,
+                                  secondaryPrefix: "AKA",
+                              }),
                     },
                 },
             ];
         },
     );
+
+    return Result.ok(options);
+};
+
+/** The same search, paced for a field the user is typing into. */
+export const loadArtistOptions = debounced(async (input: string) => {
+    const found = await searchArtists(input);
+
+    return found.isOk() ? found.value : [];
 });
 
-/** `GET /tags/autocomplete?q=`. Tag labels are plain strings. */
-export const loadTagOptions = debounced(async (input: string) => {
-    const response = await apiGet("/tags/autocomplete", { q: input });
+/**
+ * `GET /search/song?q=`, the source their tracklist editor searches.
+ * Their own hit shape: the title with features, the artists below it.
+ */
+export const searchSongs = async (
+    input: string,
+): Promise<readonly SelectOption[]> => {
+    const response = await apiGet("/search/song", { q: input });
 
     if (response.isErr()) {
         return [];
     }
 
-    return rows(response.value.tags).flatMap((tag): readonly SelectOption[] => {
-        const id = tag.id;
-        const name = tag.name;
+    const parsed = decodeOr(songsSchema, response.value);
 
-        return typeof id === "number" && typeof name === "string"
-            ? [{ value: id, label: name }]
-            : [];
-    });
+    return (parsed?.sections[0]?.hits ?? []).flatMap(
+        (row): readonly SelectOption[] => {
+            const hit = decodeOr(songHitSchema, row);
+
+            if (hit === null) {
+                return [];
+            }
+
+            const { artist_names, id, title, title_with_featured } = hit.result;
+
+            return [
+                {
+                    value: id,
+                    label: {
+                        primary: title_with_featured ?? title,
+                        ...(artist_names == null
+                            ? {}
+                            : { secondary: artist_names }),
+                    },
+                },
+            ];
+        },
+    );
+};
+
+/** The same search, paced for a field the user is typing into. */
+export const loadSongOptions = debounced(searchSongs);
+
+/** `GET /tags/autocomplete?q=`. Tag labels are plain strings. */
+export const loadTagOptions = debounced(async (input: string) => {
+    const response = await apiGet("/tags/autocomplete", { q: input });
+
+    return response.isErr() ? [] : tagOptions(response.value);
 });
 
 /** `GET /tags/home`, a closed list. Empty is survivable. */
@@ -111,18 +196,7 @@ export const loadPrimaryTagOptions = async (): Promise<
 > => {
     const response = await apiGet("/tags/home");
 
-    if (response.isErr()) {
-        return [];
-    }
-
-    return rows(response.value.tags).flatMap((tag): readonly SelectOption[] => {
-        const id = tag.id;
-        const name = tag.name;
-
-        return typeof id === "number" && typeof name === "string"
-            ? [{ value: id, label: name }]
-            : [];
-    });
+    return response.isErr() ? [] : tagOptions(response.value);
 };
 
 /** A stored credit, as a chip. Mirrors their `transformForInput`. */
@@ -137,7 +211,8 @@ export const artistToOption = (ref: NamedRef): SelectOption =>
         ? { value: ref.name, label: { primary: ref.name }, __isNew__: true }
         : { value: ref.id, label: { primary: ref.name } };
 
-const labelText = (label: SelectOption["label"]): string => {
+/** An option's label as text, whichever of its three shapes it has. */
+export const optionLabel = (label: SelectOption["label"]): string => {
     if (typeof label === "string") {
         return label;
     }
@@ -147,14 +222,28 @@ const labelText = (label: SelectOption["label"]): string => {
 
 /** Back the other way, for the export. Mirrors `transformForForm`. */
 export const optionToRef = (option: SelectOption): NamedRef => {
-    const name = labelText(option.label);
+    const name = optionLabel(option.label);
 
     return option.__isNew__ === true || typeof option.value !== "number"
         ? { id: null, name }
         : { id: option.value, name };
 };
 
-export const optionLabel = labelText;
+/** The same options in order, with any later repeat of a value dropped. */
+export const uniqueOptions = (
+    options: readonly SelectOption[],
+): readonly SelectOption[] => {
+    const seen = new Set<string | number>();
+
+    return options.filter((option) => {
+        if (seen.has(option.value)) {
+            return false;
+        }
+
+        seen.add(option.value);
+        return true;
+    });
+};
 
 /** Finds the option matching a stored scalar, by value. */
 export const optionFor = (

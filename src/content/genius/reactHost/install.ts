@@ -1,8 +1,11 @@
 /** Filling the slots. Every entry point starts here, album page or not. */
 
+import type { Result } from "@resulted/results";
 import {
+    type ChunkError,
     type GeniusTheme,
     getButton,
+    getCheckbox,
     getDateInput,
     getDropdown,
     getReact,
@@ -13,25 +16,30 @@ import {
     getStyledComponents,
     getTagInput,
     getTextInput,
-    getUseLanguageOptions,
+    getUseGoogleReCaptcha,
     getUsePusher,
+    getUseTranslation,
     type PageReactDomClient,
     type PageStyledComponents,
 } from "@/bindings";
-import type { AppResult } from "@/utilities/result";
 import {
-    setButton,
-    setDateInput,
-    setDropdown,
-    setSelectInput,
-    setSmallButton,
-    setSpinner,
+    buttonSlot,
+    checkboxSlot,
+    dateInputSlot,
+    dropdownSlot,
+    selectInputSlot,
     setStyled,
-    setTagInput,
-    setTextInput,
     setTheme,
+    smallButtonSlot,
+    spinnerSlot,
+    tagInputSlot,
+    textInputSlot,
 } from "../geniusComponents";
-import { setUseLanguageOptions, setUsePusher } from "../geniusHooks";
+import {
+    useGoogleReCaptchaSlot,
+    usePusherSlot,
+    useTranslationSlot,
+} from "../geniusHooks";
 import {
     type CapturedContext,
     capturePageContexts,
@@ -39,7 +47,7 @@ import {
 } from "../pageContext";
 import { installAll, installOptional, installs } from "./binding";
 import { primeJsxRuntime } from "./jsxRuntime";
-import { setReact } from "./react";
+import { reactSlot } from "./react";
 
 /** What a page still has to hold, because it renders with it directly. */
 export interface Runtime {
@@ -56,8 +64,10 @@ export interface Runtime {
  * Nothing renders before these, so every entry point awaits it first,
  * and none of them has a reason to know how it is done.
  */
-export const installRuntime = async (): Promise<AppResult<Runtime>> => {
-    const react = await installAll([installs(getReact, setReact)]);
+export const installRuntime = async (): Promise<
+    Result<Runtime, ChunkError>
+> => {
+    const react = await installAll([installs(getReact, reactSlot)]);
 
     if (react.isErr()) {
         return react;
@@ -105,13 +115,14 @@ export const installRuntime = async (): Promise<AppResult<Runtime>> => {
 
 /** Every borrowed input, so a page installs only what it renders with. */
 const COMPONENTS = {
-    button: installs(getButton, setButton),
-    dateInput: installs(getDateInput, setDateInput),
-    selectInput: installs(getSelectInput, setSelectInput),
-    smallButton: installs(getSmallButton, setSmallButton),
-    spinner: installs(getSpinner, setSpinner),
-    tagInput: installs(getTagInput, setTagInput),
-    textInput: installs(getTextInput, setTextInput),
+    button: installs(getButton, buttonSlot),
+    checkbox: installs(getCheckbox, checkboxSlot),
+    dateInput: installs(getDateInput, dateInputSlot),
+    selectInput: installs(getSelectInput, selectInputSlot),
+    smallButton: installs(getSmallButton, smallButtonSlot),
+    spinner: installs(getSpinner, spinnerSlot),
+    tagInput: installs(getTagInput, tagInputSlot),
+    textInput: installs(getTextInput, textInputSlot),
 } as const;
 
 export type ComponentName = keyof typeof COMPONENTS;
@@ -123,7 +134,7 @@ export type ComponentName = keyof typeof COMPONENTS;
  */
 export const installComponents = (
     names: readonly ComponentName[],
-): Promise<AppResult<null>> =>
+): Promise<Result<null, ChunkError>> =>
     installAll(names.map((name) => COMPONENTS[name]));
 
 /**
@@ -133,7 +144,33 @@ export const installComponents = (
  */
 export const installExtras = (): Promise<void> =>
     installOptional([
-        installs(getDropdown, setDropdown),
-        installs(getUsePusher, setUsePusher),
-        installs(getUseLanguageOptions, setUseLanguageOptions),
+        installs(getDropdown, dropdownSlot),
+        installs(getUsePusher, usePusherSlot),
+        installs(getUseTranslation, useTranslationSlot),
+        installs(getUseGoogleReCaptcha, useGoogleReCaptchaSlot),
     ]);
+
+/**
+ * Everything, in one pass, for whatever page we are on.
+ *
+ * A loader asks for nothing: what a page carries decides what binds, and
+ * a component whose chunk is not here simply stays empty until something
+ * renders it, which throws naming it. That beats every page keeping its
+ * own list of what it thinks it needs.
+ */
+export const installEverything = async (): Promise<
+    Result<Runtime, ChunkError>
+> => {
+    const runtime = await installRuntime();
+
+    if (runtime.isErr()) {
+        return runtime;
+    }
+
+    // Best effort: a page that lacks one of these still mounts, and the
+    // slot says so at the point something reaches for it.
+    await installOptional(Object.values(COMPONENTS));
+    await installExtras();
+
+    return runtime;
+};

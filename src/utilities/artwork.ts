@@ -1,6 +1,35 @@
 import { Result } from "@resulted/results";
+import { describeRequestError, type RequestError } from "./http";
+import type { ForbiddenHostError, NoReceiverError } from "./messaging";
 import { sendMessage } from "./messaging";
-import type { AppError, AppResult } from "./result";
+
+/** The bytes arrived, and no decoder in the browser would take them. */
+export interface ImageDecodeError {
+    readonly kind: "decode";
+    readonly reason: string;
+}
+
+/** Everything one image can fail with, fetched by the page or the worker. */
+export type ImageError =
+    | RequestError
+    | ForbiddenHostError
+    | NoReceiverError
+    | ImageDecodeError;
+
+/** One line naming why an image never became a PNG. */
+export const describeImageError = (error: ImageError): string => {
+    switch (error.kind) {
+        case "network":
+        case "http":
+            return describeRequestError(error);
+        case "unsupported":
+            return error.reason;
+        case "no-receiver":
+            return "The extension is reloading, try again";
+        case "decode":
+            return `Could not decode the image: ${error.reason}`;
+    }
+};
 
 /** An image that downloaded and decoded, re-encoded as a PNG. */
 export interface DecodedArtwork {
@@ -74,7 +103,9 @@ export const soundcloudCandidates = (raw: string): string[] => {
  * Fetches from the page, then the worker, which is not bound by CORS.
  * @returns The image bytes, or an `http` error when the CDN answered.
  */
-export const fetchImage = async (url: string): Promise<AppResult<Blob>> => {
+export const fetchImage = async (
+    url: string,
+): Promise<Result<Blob, ImageError>> => {
     const direct = await Result.try(
         fetch(url, { credentials: "omit", mode: "cors" }),
     );
@@ -119,7 +150,7 @@ export const fetchImage = async (url: string): Promise<AppResult<Blob>> => {
 export const toPng = async (
     blob: Blob,
     sourceUrl: string,
-): Promise<AppResult<DecodedArtwork>> => {
+): Promise<Result<DecodedArtwork, ImageDecodeError>> => {
     const bitmap = await Result.try(createImageBitmap(blob));
 
     if (bitmap.isErr()) {
@@ -158,8 +189,8 @@ export const toPng = async (
  */
 export const resolveArtwork = async (
     candidates: readonly string[],
-): Promise<AppResult<DecodedArtwork>> => {
-    let lastError: AppError = {
+): Promise<Result<DecodedArtwork, ImageError>> => {
+    let lastError: ImageError = {
         kind: "unsupported",
         reason: "no artwork URL could be derived from this element",
     };

@@ -8,17 +8,18 @@ import {
 import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
 
-const button = slot<PageComponent<ButtonProps>>("Genius's Button");
+/** Exported whole so an install can record why a lookup failed. */
+export const buttonSlot = slot<PageComponent<ButtonProps>>("Genius's Button");
 
-export const setButton = button.set;
+export const setButton = buttonSlot.set;
 
 /** Whether this page bound it at all. */
-export const hasButton = (): boolean => button.peek() !== null;
+export const hasButton = (): boolean => buttonSlot.peek() !== null;
 
 /**
  * Their component, read at render rather than at import.
  * @throws If nothing bound it; a component cannot return a `Result`.
  */
 export const Button = asPageValue<PageComponent<ButtonProps>>(
-    (props: ButtonProps): PageElement => createElement(button.get(), props),
+    (props: ButtonProps): PageElement => createElement(buttonSlot.get(), props),
 );

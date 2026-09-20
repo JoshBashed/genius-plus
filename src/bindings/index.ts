@@ -2,14 +2,22 @@
 
 export * from "./components";
 export {
+    borrowChunks,
     type ChunkIndex,
     describeMarkers,
     detectPage,
     type GeniusPage,
     type PageMarkers,
+    readChunkUrls,
     resolveChunk,
     resolveChunkMatching,
 } from "./discovery";
+export {
+    type BindingError,
+    type ChunkError,
+    describeBindingError,
+    type UnsupportedPageError,
+} from "./errors";
 export {
     displayNameOf,
     findByDisplayName,
@@ -28,6 +36,7 @@ export {
 } from "./finders";
 export * from "./hooks";
 export {
+    type Binding,
     getPage,
     loadChunk,
     loadChunkMatching,

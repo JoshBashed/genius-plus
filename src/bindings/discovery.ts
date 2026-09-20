@@ -1,5 +1,5 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
+import type { BindingError, UnsupportedPageError } from "./errors";
 
 /** Chunk URLs are read from the live `<head>`; every hash changes daily. */
 
@@ -132,7 +132,7 @@ export const describeMarkers = (markers: PageMarkers): string =>
  * Three-way: a React page, the legacy page, or a genuine failure.
  * @returns A `react` or `legacy` page, or `unsupported` off genius.com.
  */
-export const detectPage = (): AppResult<GeniusPage> => {
+export const detectPage = (): Result<GeniusPage, UnsupportedPageError> => {
     if (!isGeniusHost()) {
         return Result.err({
             kind: "unsupported",
@@ -151,13 +151,113 @@ export const detectPage = (): AppResult<GeniusPage> => {
 };
 
 /**
+ * Chunks this page never loaded, taken from one that did.
+ *
+ * A module is only ever the page's own instance when the URL matches
+ * exactly, so a borrowed chunk is only safe while both pages come from
+ * the same deploy. `borrowChunks` is what checks that.
+ */
+const borrowed = new Map<string, string>();
+
+/** Reads chunk URLs out of another page's markup. */
+export const readChunkUrls = (html: string): ReadonlyMap<string, string> => {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const urls = new Map<string, string>();
+
+    const add = (href: string): void => {
+        // The parsed document has no base, so links stay relative.
+        const url = new URL(href, location.origin).href;
+        const base = baseNameOf(url);
+
+        if (base !== null && !urls.has(base)) {
+            urls.set(base, url);
+        }
+    };
+
+    for (const link of parsed.querySelectorAll<HTMLLinkElement>(
+        'head link[rel="modulepreload"][href]',
+    )) {
+        add(link.getAttribute("href") ?? "");
+    }
+
+    for (const script of parsed.querySelectorAll<HTMLScriptElement>(
+        'head script[type="module"][src]',
+    )) {
+        add(script.getAttribute("src") ?? "");
+    }
+
+    return urls;
+};
+
+/**
+ * Adds another page's chunks to the ones this page may bind.
+ *
+ * @param theirs That page's chunk URLs, by base name.
+ * @param ours This page's own, which decide whether the two agree.
+ * @returns How many chunks were taken, or a `binding` error when the two
+ * pages are different builds, in which case sharing a module would hand
+ * us a second React rather than the page's own.
+ */
+export const borrowChunks = (
+    theirs: ReadonlyMap<string, string>,
+    ours: ChunkIndex,
+): Result<number, BindingError> => {
+    const shared = [...ours.urls].filter(([base]) => theirs.has(base));
+    const disagreed = shared.filter(([base, url]) => theirs.get(base) !== url);
+
+    if (shared.length === 0) {
+        return Result.err({
+            kind: "binding",
+            target: "another page's chunks",
+            reason: "the two pages have no module in common, so nothing vouches for them being the same build",
+        });
+    }
+
+    if (disagreed.length > 0) {
+        return Result.err({
+            kind: "binding",
+            target: "another page's chunks",
+            reason: `${disagreed.length} of ${shared.length} shared modules have different URLs (${disagreed
+                .map(([base]) => base)
+                .join(", ")}), so that page is a different build`,
+        });
+    }
+
+    let taken = 0;
+
+    for (const [base, url] of theirs) {
+        if (!ours.urls.has(base) && !borrowed.has(base)) {
+            borrowed.set(base, url);
+            taken += 1;
+        }
+    }
+
+    return Result.ok(taken);
+};
+
+/** Forgets every borrowed chunk, so a re-prime starts clean. */
+export const clearBorrowed = (): void => {
+    borrowed.clear();
+};
+
+/**
  * Exact base name first, then a unique prefix match.
+ * The page's own chunks win; a borrowed one is only ever a fallback.
  * @returns The URL, or a `binding` error if absent or ambiguous.
  */
 export const resolveChunk = (
-    chunks: ChunkIndex,
+    index: ChunkIndex,
     baseName: string,
-): AppResult<string> => {
+): Result<string, BindingError> => {
+    const chunks: ChunkIndex =
+        borrowed.size === 0
+            ? index
+            : {
+                  duplicates: index.duplicates,
+                  entries: index.entries,
+                  urls: new Map([...borrowed, ...index.urls]),
+              };
+
     if (chunks.duplicates.has(baseName)) {
         return Result.err({
             kind: "binding",
@@ -199,10 +299,18 @@ export const resolveChunk = (
  * @returns The URL of the one matching chunk, or a `binding` error.
  */
 export const resolveChunkMatching = (
-    chunks: ChunkIndex,
+    index: ChunkIndex,
     pattern: RegExp,
     target: string,
-): AppResult<string> => {
+): Result<string, BindingError> => {
+    const chunks: ChunkIndex =
+        borrowed.size === 0
+            ? index
+            : {
+                  duplicates: index.duplicates,
+                  entries: index.entries,
+                  urls: new Map([...borrowed, ...index.urls]),
+              };
     const matches = [...chunks.urls].filter(
         ([base]) => pattern.test(base) && !chunks.duplicates.has(base),
     );

@@ -5,7 +5,9 @@ import {
     type Settings,
     watchSettings,
 } from "@/utilities/settings";
-import { postEnabled, readStatus } from "./relay";
+import { IMPORT_PATH } from "./importRoute";
+import { watchNav } from "./navSlot";
+import { postEnabled, readStatus, serveCreditRequests } from "./relay";
 
 let current: Settings | null = null;
 
@@ -41,3 +43,11 @@ addEventListener("message", (event) => {
 
 void readSettings().then(publish);
 watchSettings(publish);
+
+// Their sticky nav is on every page, so this is the one entry point that
+// does not depend on the album table having mounted.
+watchNav({ href: IMPORT_PATH, label: "Add An Album" });
+
+// The main half has the page's React but no `chrome.*`, so its reads
+// of Apple's catalogue are answered here.
+serveCreditRequests();

@@ -1,10 +1,12 @@
 /** A binding that is read when it is used, not when its module loads. */
 import { Result } from "@resulted/results";
 import {
-    type AppError,
-    type AppResult,
-    describeError,
-} from "@/utilities/result";
+    type Binding,
+    type BindingError,
+    type ChunkError,
+    describeBindingError,
+} from "@/bindings";
+import { log } from "@/utilities/log";
 
 export interface Slot<Value> {
     /** The bound value. */
@@ -12,6 +14,8 @@ export interface Slot<Value> {
     /** The bound value, or `null` when nothing has bound it. */
     readonly peek: () => Value | null;
     readonly set: (value: Value) => void;
+    /** Records why a lookup could not fill it, for `get` to report. */
+    readonly fail: (reason: string) => void;
 }
 
 /**
@@ -25,18 +29,25 @@ export interface Slot<Value> {
  */
 export const slot = <Value>(target: string): Slot<Value> => {
     let current: Value | null = null;
+    /** Set when a lookup ran and could not find it. */
+    let refused: string | null = null;
 
     return {
+        fail: (reason: string): void => {
+            refused = reason;
+        },
         get: (): Value => {
             if (current === null) {
-                const error: AppError = {
+                const error: BindingError = {
                     kind: "binding",
                     target,
-                    reason: "nothing bound it on this page",
+                    // Never installed, and installed but not found, are
+                    // different problems; only one is a missing call.
+                    reason: refused ?? "no install on this page asked for it",
                 };
 
                 // A component cannot return a `Result`, so this throws.
-                throw new Error(describeError(error));
+                throw new Error(describeBindingError(error));
             }
 
             return current;
@@ -44,26 +55,29 @@ export const slot = <Value>(target: string): Slot<Value> => {
         peek: () => current,
         set: (value: Value): void => {
             current = value;
+            refused = null;
         },
     };
 };
 
 /** One binding's whole job: look it up, and put it in its slot. */
-export type Install = () => Promise<AppResult<null>>;
+export type Install = () => Promise<Result<null, ChunkError>>;
 
 /** Pairs a lookup with the setter it feeds. */
 export const installs =
-    <Value>(
-        load: () => Promise<AppResult<Value>>,
-        set: (value: Value) => void,
-    ): Install =>
+    <Value>(load: Binding<Value>, into: Slot<Value>): Install =>
     () =>
-        load().then((found) =>
-            found.map((value) => {
-                set(value);
+        load().then((found) => {
+            if (found.isErr()) {
+                into.fail(describeBindingError(found.error));
+                return found;
+            }
+
+            return found.map((value) => {
+                into.set(value);
                 return null;
-            }),
-        );
+            });
+        });
 
 /**
  * Runs every install at once.
@@ -71,7 +85,7 @@ export const installs =
  */
 export const installAll = async (
     bindings: readonly Install[],
-): Promise<AppResult<null>> => {
+): Promise<Result<null, ChunkError>> => {
     const results = await Promise.all(bindings.map((run) => run()));
     const failed = results.find((result) => result.isErr());
 
@@ -82,5 +96,14 @@ export const installAll = async (
 export const installOptional = async (
     bindings: readonly Install[],
 ): Promise<void> => {
-    await Promise.all(bindings.map((run) => run()));
+    const results = await Promise.all(bindings.map((run) => run()));
+
+    for (const result of results) {
+        if (result.isErr()) {
+            log.debug(
+                "genius: optional binding",
+                describeBindingError(result.error),
+            );
+        }
+    }
 };

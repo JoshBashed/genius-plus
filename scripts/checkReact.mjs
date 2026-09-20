@@ -4,7 +4,11 @@ import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
 const SOURCE_DIRS = ["src/content/genius", "src/bindings"];
-const BUNDLES = ["dist/content/genius.js", "dist/content/genius-main.js"];
+const BUNDLES = [
+    "dist/content/genius.js",
+    "dist/content/genius-main.js",
+    "dist/content/genius-early.js",
+];
 
 /** The three ways `react` gets in, anchored to specifier position. */
 const FORBIDDEN_PATTERNS = [

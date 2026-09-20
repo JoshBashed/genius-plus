@@ -8,14 +8,15 @@ import {
 import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
 
-const selectInput = slot<PageComponent<SelectInputProps>>(
+/** Exported whole so an install can record why a lookup failed. */
+export const selectInputSlot = slot<PageComponent<SelectInputProps>>(
     "Genius's SelectInput",
 );
 
-export const setSelectInput = selectInput.set;
+export const setSelectInput = selectInputSlot.set;
 
 /** Whether this page bound it at all. */
-export const hasSelectInput = (): boolean => selectInput.peek() !== null;
+export const hasSelectInput = (): boolean => selectInputSlot.peek() !== null;
 
 /**
  * Their component, read at render rather than at import.
@@ -23,5 +24,5 @@ export const hasSelectInput = (): boolean => selectInput.peek() !== null;
  */
 export const SelectInput = asPageValue<PageComponent<SelectInputProps>>(
     (props: SelectInputProps): PageElement =>
-        createElement(selectInput.get(), props),
+        createElement(selectInputSlot.get(), props),
 );

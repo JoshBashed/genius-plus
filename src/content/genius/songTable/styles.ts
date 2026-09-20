@@ -353,5 +353,65 @@ export const Confirm = asPageValue<Wrapper>(
             gap: ${({ theme }) => theme.space.half};
             padding: ${({ theme }) => theme.space.quarter} 0;
         }
+
+        /** One labelled control of the import form. */
+        .gp-row {
+            display: flex;
+            flex-direction: column;
+            gap: ${({ theme }) => theme.space.quarter};
+        }
+
+        .gp-inline {
+            display: flex;
+            align-items: center;
+            gap: ${({ theme }) => theme.space.half};
+        }
+
+        .gp-label {
+            color: ${({ theme }) => theme.color.background.onVariant};
+            font-size: ${({ theme }) => theme.fontSize.smallReading};
+        }
+
+        /** Which fields the import stages, as one checkbox each. */
+        .gp-choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: ${({ theme }) => theme.space.half};
+        }
+
+        .gp-choices label {
+            display: flex;
+            align-items: center;
+            gap: ${({ theme }) => theme.space.quarter};
+            font-size: ${({ theme }) => theme.fontSize.smallReading};
+        }
+
+        /** A contributor row: the name Apple gave, and who it maps to. */
+        .gp-map li {
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .gp-name {
+            display: flex;
+            flex-direction: column;
+            flex: 0 0 38%;
+            gap: 2px;
+            color: ${({ theme }) => theme.color.background.on};
+        }
+
+        .gp-from {
+            color: ${({ theme }) => theme.color.background.onVariant};
+            font-size: ${({ theme }) => theme.fontSize.smallReading};
+        }
+
+        .gp-pick {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .gp-warn {
+            color: ${({ theme }) => theme.color.background.on};
+        }
     `,
 );

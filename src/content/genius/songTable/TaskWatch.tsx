@@ -1,7 +1,6 @@
 /** One queued bulk task's Pusher subscription. It renders nothing. */
 import type { PageElement } from "@/bindings";
 import { log } from "@/utilities/log";
-import { describeError } from "@/utilities/result";
 import { type BulkEvent, parseBulkEvent } from "../bulkStatus";
 import type { SongDraft } from "../draft";
 import { usePusher } from "../geniusHooks";
@@ -58,7 +57,7 @@ export const TaskWatch = ({
             const event = parseBulkEvent(payload);
 
             if (event.isErr()) {
-                log.warn("bulk status", describeError(event.error));
+                log.warn("bulk status", event.error.reason);
                 return;
             }
 

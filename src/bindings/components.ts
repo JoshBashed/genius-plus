@@ -1,12 +1,12 @@
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
+import type { BindingError } from "./errors";
 import {
     findByDisplayName,
     findByPropTypes,
     findByStyledNamespace,
     findDeviceComponent,
 } from "./finders";
-import { loadChunk, memoBinding } from "./loader";
+import { type Binding, loadChunk, memoBinding } from "./loader";
 import {
     asPageValue,
     type ModuleNamespace,
@@ -18,11 +18,11 @@ import {
 
 /** One accessor per borrowed component. Prop names read from chunks. */
 
-type Bind<Props> = () => Promise<AppResult<PageComponent<Props>>>;
+type Bind<Props> = Binding<PageComponent<Props>>;
 
 const bind = <Props>(
     chunk: string,
-    find: (ns: ModuleNamespace) => AppResult<unknown>,
+    find: (ns: ModuleNamespace) => Result<unknown, BindingError>,
 ): Bind<Props> =>
     memoBinding(async () => {
         const ns = await loadChunk(chunk);

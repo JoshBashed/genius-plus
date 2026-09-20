@@ -2,9 +2,9 @@
  * Genius's `Modal`.
  */
 import { Result } from "@resulted/results";
-import type { AppResult } from "@/utilities/result";
+import type { BindingError } from "./errors";
 import { readProperty, selectExport } from "./finders";
-import { loadChunk, memoBinding } from "./loader";
+import { type Binding, loadChunk, memoBinding } from "./loader";
 import {
     asPageValue,
     type ModuleNamespace,
@@ -39,7 +39,7 @@ export interface ModalProps {
 const DEVICE_PREFIX = "DeviceComponent(";
 
 /** The modal's device helper yields a `forwardRef`, not a styled tag. */
-const findDevicePair = (ns: ModuleNamespace): AppResult<unknown> =>
+const findDevicePair = (ns: ModuleNamespace): Result<unknown, BindingError> =>
     selectExport(ns, "Modal (responsive pair)", (value) => {
         const name = readProperty(value, "displayName");
 
@@ -66,5 +66,4 @@ const bindModal = memoBinding<PageComponent<ModalProps>>(async () => {
  * Genius's `Modal` (cached): the desktop and mobile pair.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getModal = (): Promise<AppResult<PageComponent<ModalProps>>> =>
-    bindModal();
+export const getModal: Binding<PageComponent<ModalProps>> = () => bindModal();

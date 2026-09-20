@@ -8,12 +8,14 @@ import {
 import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
 
-const textInput = slot<PageComponent<TextInputProps>>("Genius's TextInput");
+/** Exported whole so an install can record why a lookup failed. */
+export const textInputSlot =
+    slot<PageComponent<TextInputProps>>("Genius's TextInput");
 
-export const setTextInput = textInput.set;
+export const setTextInput = textInputSlot.set;
 
 /** Whether this page bound it at all. */
-export const hasTextInput = (): boolean => textInput.peek() !== null;
+export const hasTextInput = (): boolean => textInputSlot.peek() !== null;
 
 /**
  * Their component, read at render rather than at import.
@@ -21,5 +23,5 @@ export const hasTextInput = (): boolean => textInput.peek() !== null;
  */
 export const TextInput = asPageValue<PageComponent<TextInputProps>>(
     (props: TextInputProps): PageElement =>
-        createElement(textInput.get(), props),
+        createElement(textInputSlot.get(), props),
 );
