@@ -1,18 +1,23 @@
 import { Result } from "@resulted/results";
 import { IMAGE_CDN_MATCHES } from "@/manifest";
+import { ampSongUrl } from "@/utilities/appleCredits";
 import { onMessage } from "@/utilities/messaging";
+import { claimAppleOrigin } from "./appleOrigin";
+import { appleToken } from "./appleToken";
 
 /** The image CDNs only. The worker is not an open proxy. */
 const ALLOWED_HOSTS = /^(?:[a-z0-9-]+\.)?(mzstatic|sndcdn)\.com$/i;
 
-const isAllowed = (raw: string): boolean => {
+const permits = (raw: string, hosts: RegExp): boolean => {
     try {
         const url = new URL(raw);
-        return url.protocol === "https:" && ALLOWED_HOSTS.test(url.host);
+        return url.protocol === "https:" && hosts.test(url.host);
     } catch {
         return false;
     }
 };
+
+const isAllowed = (raw: string): boolean => permits(raw, ALLOWED_HOSTS);
 
 /** `FileReader` does not exist in a worker, so base64 is done by hand. */
 const encodeBase64 = (buffer: ArrayBuffer): string => {
@@ -28,7 +33,68 @@ const encodeBase64 = (buffer: ArrayBuffer): string => {
     return btoa(binary);
 };
 
+/**
+ * Registered once per worker, and idempotent: without it every amp-api
+ * call is a 401, because Apple binds their token to their own origin.
+ */
+const originClaimed = claimAppleOrigin();
+
 onMessage({
+    /**
+     * Apple's catalogue, which needs their token and no CORS.
+     * Both are reasons this runs here rather than in a page.
+     */
+    "apple:credits": async ({ storefront, trackId }) => {
+        const token = await appleToken(Date.now());
+
+        if (token.isErr()) {
+            return token;
+        }
+
+        const claimed = await originClaimed;
+
+        if (claimed.isErr()) {
+            return Result.err({
+                kind: "network",
+                reason: claimed.error.reason,
+                url: "apple:credits",
+            });
+        }
+
+        const url = ampSongUrl(storefront, trackId);
+        // No `origin` header here: `fetch` forbids that name and drops
+        // it. `claimAppleOrigin` rewrites it on the way out instead.
+        const response = await Result.try(
+            fetch(url, {
+                credentials: "omit",
+                headers: { authorization: `Bearer ${token.value}` },
+            }),
+        );
+
+        if (response.isErr()) {
+            return Result.err({
+                kind: "network",
+                reason: String(response.error),
+                url,
+            });
+        }
+
+        if (!response.value.ok) {
+            return Result.err({
+                kind: "http",
+                status: response.value.status,
+                url,
+            });
+        }
+
+        const body = await Result.try(
+            response.value.json() as Promise<unknown>,
+        );
+
+        return body.isErr()
+            ? Result.err({ kind: "decode", reason: `${url} was not JSON` })
+            : Result.ok(body.value);
+    },
     "image:fetch": async ({ url }) => {
         if (!isAllowed(url)) {
             return Result.err({

@@ -5,10 +5,22 @@ export const SITE_MATCHES = {
     appleMusic: ["https://music.apple.com/*"],
 } as const;
 
+/** The one path the import page claims, on both Genius hosts. */
+export const IMPORT_MATCHES = [
+    "https://genius.com/new/import",
+    "https://*.genius.com/new/import",
+] as const;
+
 /** Where the artwork actually lives, for the relay fetch fallback. */
 export const IMAGE_CDN_MATCHES = [
     "https://*.mzstatic.com/*",
     "https://*.sndcdn.com/*",
+] as const;
+
+/** Apple's catalogue, and the site that ships the token it wants. */
+export const CREDITS_MATCHES = [
+    "https://music.apple.com/*",
+    "https://amp-api.music.apple.com/*",
 ] as const;
 
 /**
@@ -24,9 +36,12 @@ export const createManifest = (
         manifest_version: 3,
         name: isDev ? "Genius+ (dev)" : "Genius+",
         version,
+        // Names what it writes, not only what it reads: an undisclosed
+        // write feature is a listing rejection.
         description:
-            "Editor tooling for Genius: clean SoundCloud links and " +
-            "full quality PNG artwork from Apple Music and SoundCloud.",
+            "Editor toolkit for Genius: album metadata editor with " +
+            "Apple Music import, clean SoundCloud links, and full " +
+            "quality PNG artwork.",
         icons: {
             16: "icons/icon-16.png",
             32: "icons/icon-32.png",
@@ -45,10 +60,13 @@ export const createManifest = (
         background: {
             service_worker: "background.js",
         },
-        permissions: ["storage"],
+        // `WithHostAccess` rather than the bare API: its rules only run
+        // where a host permission already reaches, which is the one
+        // header rewrite below `CREDITS_MATCHES`.
+        permissions: ["storage", "declarativeNetRequestWithHostAccess"],
         // Static `content_scripts` grant their own injection, so only the
         // CDNs the worker fetches from need a host permission.
-        host_permissions: [...IMAGE_CDN_MATCHES],
+        host_permissions: [...IMAGE_CDN_MATCHES, ...CREDITS_MATCHES],
         content_scripts: [
             {
                 matches: [...SITE_MATCHES.genius],
@@ -78,6 +96,13 @@ export const createManifest = (
                 matches: [...SITE_MATCHES.appleMusic],
                 js: ["content/apple-music.js"],
                 run_at: "document_idle",
+            },
+            {
+                // Only hides their 404, early enough to beat first paint.
+                // The page itself is mounted by the main world half.
+                matches: [...IMPORT_MATCHES],
+                js: ["content/genius-early.js"],
+                run_at: "document_start",
             },
         ],
     };
