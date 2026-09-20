@@ -15,7 +15,8 @@
         "typecheck": "tsc --noEmit && tsc --noEmit -p src/content/genius",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
-        "format": "biome format --write .",
+        "format": "biome format .",
+        "format:fix": "biome format --write .",
         "check": "pnpm lint && pnpm typecheck",
         "check:react": "node scripts/checkReact.mjs",
         "clean": "rimraf dist"

@@ -1,0 +1,38 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push to the same branch makes the first run irrelevant.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Before setup-node, so its pnpm cache has a store to point at.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          # Resolves `engines.node`, so the pin lives in one place.
+          node-version-file: package.json
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Checks only. `pnpm format:fix` is the one that rewrites.
+      - run: pnpm format
+
+      - run: pnpm typecheck
+
+      # Also runs check:react, which fails if anything under
+      # src/content/genius or src/bindings imports React.
+      - run: pnpm build
