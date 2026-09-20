@@ -64,8 +64,16 @@ Inside `src/content/genius/`:
 ## Binding to their bundle
 
 - Chunk URLs and export names are read from the live `<head>` every
-  load. Never hardcode a hash, a URL, or a Rollup export letter. The
+  load. Never hardcode a hash, a URL, or a minified export letter. The
   full discovery and finder story is `src/bindings/README.md`.
+- **Their build tool is unidentified, and nothing here should assume
+  one.** Measured: native ESM, one chunk per module named
+  `<base>-<hash>.js` with relative specifiers, `modulepreload` links in
+  the head, and cross-chunk exports renamed to single letters. Rails
+  serves it, since a Sprockets asset sits alongside on the same page.
+  It is not webpack, which emits no ESM of this shape, and carries none
+  of Vite's markers: no `__vitePreload`, no `import.meta`, no
+  `__vite__mapDeps`. Bind to the shape above, never to a toolchain.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone. Different comment from the eager one, different
   job.

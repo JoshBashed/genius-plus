@@ -129,6 +129,6 @@ the build or the page when violated.
   after install, which is why `mount.ts` uses an eager dynamic import.
 - `theme()` is a call, never a stored value.
 - Chunk URLs and export names are read from the live `<head>` every
-  load. Never hardcode a hash, a URL, or a Rollup export letter.
+  load. Never hardcode a hash, a URL, or a minified export letter.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone.
