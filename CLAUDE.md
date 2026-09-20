@@ -64,8 +64,6 @@ body shape, and record what it said.
   is still on an unmerged branch. Never stack a fix on top for a
   reviewer to meet three commits later. Rewriting merged `main` is a
   different matter: ask first.
-- Author is Claude, committer is Josh, one `Co-authored-by: Josh`
-  trailer, and nothing else. No session or model trailer.
 
 ## Style
 
