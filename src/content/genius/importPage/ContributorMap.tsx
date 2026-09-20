@@ -12,11 +12,11 @@ import {
 } from "../albumImport/contributors";
 // Deep imports, not the barrel: it evaluates every component, and this
 // page binds only the few it renders with.
+import { Icon } from "../geniusComponents/Icon";
 import { TagInput } from "../geniusComponents/TagInput";
 import { loadArtistOptions } from "../options";
 import { memo } from "../reactHost/react";
 import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
-import { StateIcon } from "./StateIcon";
 import { Rows, Scroller } from "./styles";
 
 interface RowProps {
@@ -29,10 +29,16 @@ const Row = ({ entry, onChange }: RowProps): PageElement => (
     <tr>
         <td className="gp-state">
             {entry.options.length === 0 ? (
-                <StateIcon state="missing" />
-            ) : (
-                <StateIcon state="kept" />
-            )}
+                <>
+                    <Icon
+                        className="gp-icon gp-icon-missing"
+                        height={14}
+                        names={["warning", "alert"]}
+                        width={14}
+                    />
+                    <span className="gp-said">Nothing chosen yet</span>
+                </>
+            ) : null}
         </td>
         <td className="gp-name" title={entry.name}>
             {entry.name}

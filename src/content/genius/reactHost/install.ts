@@ -4,10 +4,13 @@ import type { Result } from "@resulted/results";
 import {
     type ChunkError,
     type GeniusTheme,
+    getAlertIcon,
     getButton,
     getCheckbox,
+    getCheckIcon,
     getDateInput,
     getDropdown,
+    getPlusIcon,
     getReact,
     getReactDomClient,
     getSelectInput,
@@ -19,14 +22,18 @@ import {
     getUseGoogleReCaptcha,
     getUsePusher,
     getUseTranslation,
+    getWarningIcon,
     type PageReactDomClient,
     type PageStyledComponents,
 } from "@/bindings";
 import {
+    alertIconSlot,
     buttonSlot,
     checkboxSlot,
+    checkIconSlot,
     dateInputSlot,
     dropdownSlot,
+    plusIconSlot,
     selectInputSlot,
     setStyled,
     setTheme,
@@ -34,6 +41,7 @@ import {
     spinnerSlot,
     tagInputSlot,
     textInputSlot,
+    warningIconSlot,
 } from "../geniusComponents";
 import {
     useGoogleReCaptchaSlot,
@@ -148,6 +156,10 @@ export const installExtras = (): Promise<void> =>
         installs(getUsePusher, usePusherSlot),
         installs(getUseTranslation, useTranslationSlot),
         installs(getUseGoogleReCaptcha, useGoogleReCaptchaSlot),
+        installs(getPlusIcon, plusIconSlot),
+        installs(getWarningIcon, warningIconSlot),
+        installs(getAlertIcon, alertIconSlot),
+        installs(getCheckIcon, checkIconSlot),
     ]);
 
 /**

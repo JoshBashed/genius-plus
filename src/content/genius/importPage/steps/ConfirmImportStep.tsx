@@ -18,10 +18,12 @@ import {
     titleAccepted,
 } from "../../albumImport/matchTracks";
 import { Button } from "../../geniusComponents/Button";
+import { Icon } from "../../geniusComponents/Icon";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { optionLabel, searchSongs } from "../../options";
 import { drain } from "../../pool";
 import { memo, useEffect, useState } from "../../reactHost/react";
+import { borrowIconsFrom } from "../borrowIcons";
 import type { GeniusAlbum } from "../geniusAlbums";
 import { plural } from "../plural";
 import {
@@ -30,7 +32,6 @@ import {
     runImport,
 } from "../runImport";
 import { type SongChoice, SongSelect } from "../SongSelect";
-import { StateIcon } from "../StateIcon";
 import { Actions, Note, Panel, Problem, Rows, Scroller } from "../styles";
 import type { CreditMode } from "../wizard";
 
@@ -131,6 +132,15 @@ const renderConfirmImportStep = ({
 
             const credited = creditedNames(artists);
 
+            // Their tick is on a song page and nowhere this page has
+            // been, and a song of this album is the first one it can
+            // name. Nothing waits on it: an icon arrives or it does not.
+            const anySong = tracks.value.find((seed) => seed.url !== null);
+            const borrowing =
+                anySong?.url == null
+                    ? Promise.resolve()
+                    : borrowIconsFrom(anySong.url);
+
             const matched = matchTracks(album.tracks, tracks.value).matches;
             // Its name on Genius, which is the one it was created under
             // and not Apple's when the reader renamed it.
@@ -182,6 +192,10 @@ const renderConfirmImportStep = ({
                     }
                 },
             );
+
+            // Before the rows first render: filling a slot changes a
+            // stored value, and nothing re-renders off the back of it.
+            await borrowing;
 
             if (!live) {
                 return;
@@ -354,16 +368,38 @@ const renderConfirmImportStep = ({
                                               />
                                           </td>
                                           <td className="gp-state">
-                                              <StateIcon
-                                                  state={
-                                                      choice === null
-                                                          ? "missing"
-                                                          : choice.kind ===
-                                                              "song"
-                                                            ? "kept"
-                                                            : "new"
-                                                  }
-                                              />
+                                              {choice === null ? (
+                                                  <Icon
+                                                      className="gp-icon gp-icon-missing"
+                                                      height={14}
+                                                      names={[
+                                                          "warning",
+                                                          "alert",
+                                                      ]}
+                                                      width={14}
+                                                  />
+                                              ) : choice.kind === "new" ? (
+                                                  <Icon
+                                                      className="gp-icon gp-icon-new"
+                                                      height={14}
+                                                      names={["plus"]}
+                                                      width={14}
+                                                  />
+                                              ) : (
+                                                  <Icon
+                                                      className="gp-icon gp-icon-kept"
+                                                      height={14}
+                                                      names={["check"]}
+                                                      width={14}
+                                                  />
+                                              )}
+                                              <span className="gp-said">
+                                                  {choice === null
+                                                      ? "Nothing chosen yet"
+                                                      : choice.kind === "new"
+                                                        ? "Will be created"
+                                                        : "Already on the album"}
+                                              </span>
                                           </td>
                                       </tr>
                                   );

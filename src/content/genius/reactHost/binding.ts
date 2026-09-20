@@ -16,6 +16,8 @@ export interface Slot<Value> {
     readonly set: (value: Value) => void;
     /** Records why a lookup could not fill it, for `get` to report. */
     readonly fail: (reason: string) => void;
+    /** Why it is empty, when a lookup ran and could not fill it. */
+    readonly reason: () => string | null;
 }
 
 /**
@@ -53,6 +55,7 @@ export const slot = <Value>(target: string): Slot<Value> => {
             return current;
         },
         peek: () => current,
+        reason: () => refused,
         set: (value: Value): void => {
             current = value;
             refused = null;

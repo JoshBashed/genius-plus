@@ -13,6 +13,18 @@ export {
     setDateInput,
 } from "./DateInput";
 export { Dropdown, dropdownSlot, hasDropdown, setDropdown } from "./Dropdown";
+export {
+    alertIconSlot,
+    checkIconSlot,
+    Icon,
+    type IconName,
+    plusIconSlot,
+    setAlertIcon,
+    setCheckIcon,
+    setPlusIcon,
+    setWarningIcon,
+    warningIconSlot,
+} from "./Icon";
 export * from "./react";
 export {
     hasSelectInput,

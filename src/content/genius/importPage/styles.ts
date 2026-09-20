@@ -230,6 +230,16 @@ export const Rows = asPageValue<Wrapper>(
             text-align: right;
         }
 
+        /** Said, never shown: the icon carries it for everyone else. */
+        .gp-said {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
         .gp-icon {
             display: block;
             margin: 0 auto;
@@ -238,6 +248,10 @@ export const Rows = asPageValue<Wrapper>(
 
         .gp-icon-new {
             color: ${({ theme }) => theme.color.success.main};
+        }
+
+        .gp-icon-kept {
+            color: ${({ theme }) => theme.color.background.onVariant};
         }
 
         .gp-icon-missing {

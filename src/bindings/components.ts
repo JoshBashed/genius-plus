@@ -5,6 +5,7 @@ import {
     findByPropTypes,
     findByStyledNamespace,
     findDeviceComponent,
+    selectExport,
 } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
 import {
@@ -71,6 +72,45 @@ export interface ButtonProps extends PassThroughProps {
  * Binds Genius's `Button`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
+/** Everything their own icons take, which is anything an `svg` does. */
+export interface IconProps {
+    readonly className?: string;
+    readonly width?: number | string;
+    readonly height?: number | string;
+    readonly role?: string;
+    readonly "aria-label"?: string;
+    readonly "aria-hidden"?: boolean;
+}
+
+/** react's own marker for the `forwardRef` each of their icons is. */
+const FORWARD_REF = Symbol.for("react.forward_ref");
+
+const isIcon = (value: unknown): boolean =>
+    typeof value === "object" &&
+    value !== null &&
+    (value as { $$typeof?: unknown }).$$typeof === FORWARD_REF;
+
+/**
+ * One of their own icons, each its own chunk exporting one component.
+ *
+ * Drawn their way by construction rather than by imitation: a solid
+ * fill in `currentColor` with no stroke, on their own viewBox.
+ */
+const bindIcon = (chunk: string): Bind<IconProps> =>
+    bind(chunk, (ns) => selectExport(ns, `the ${chunk} icon`, isIcon));
+
+/** A plus. Not on every page: the import page borrows it from `/new`. */
+export const getPlusIcon = bindIcon("plus");
+
+/** A ring and an exclamation. Not on every page either. */
+export const getWarningIcon = bindIcon("warning");
+
+/** A tick. On song pages only, which the import borrows from late. */
+export const getCheckIcon = bindIcon("check");
+
+/** A warning triangle, which every page they render carries. */
+export const getAlertIcon = bindIcon("alert");
+
 export const getButton: Bind<ButtonProps> = bind("Button", (ns) =>
     findByDisplayName(ns, "Button"),
 );
