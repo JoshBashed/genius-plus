@@ -1,7 +1,7 @@
 /** The metadata editor, on a React album page. */
 import { Result } from "@resulted/results";
-import { createElement } from "react";
-import { describeMarkers, getPage, type PageElement } from "@/bindings";
+import { createElement, type ReactElement } from "react";
+import { describeMarkers, getPage } from "@/bindings";
 import { loadPrimaryTagOptions } from "../options";
 import { describePageError, isAlbumUrl, readAlbumSeed } from "../pageState";
 import { postStatus } from "../relay";
@@ -34,7 +34,7 @@ const claimContainer = (): HTMLElement => {
 };
 
 export const albumTableLoader: Loader = {
-    build: async (): Promise<PageElement> => {
+    build: async (): Promise<ReactElement> => {
         const seed = readAlbumSeed();
 
         // `prepare` already read it; this cannot be the failing one.

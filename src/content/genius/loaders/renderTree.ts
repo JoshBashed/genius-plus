@@ -1,7 +1,7 @@
 /** Rendering into the page's React: the part no page owns on its own. */
 
-import { createElement } from "react";
-import type { PageElement, PageRoot } from "@/bindings";
+import { createElement, type ReactElement } from "react";
+import type { PageRoot } from "@/bindings";
 import type { Runtime } from "../install";
 import { withPageContexts } from "../pageContext";
 
@@ -16,7 +16,7 @@ export interface MountedTree {
  * bound until the runtime is, and a styles module cannot evaluate before
  * `styled` exists. So it hands back a builder instead of a tree.
  */
-export type BuildTree = (runtime: Runtime) => Promise<PageElement>;
+export type BuildTree = (runtime: Runtime) => Promise<ReactElement>;
 
 /**
  * Renders a page's tree under the providers its own React is running.

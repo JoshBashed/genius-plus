@@ -1,15 +1,7 @@
 /** Borrows the page's context values off the live fiber tree. */
 import { Result } from "@resulted/results";
-import { createElement } from "react";
-import {
-    asPageValue,
-    type BindingError,
-    type GeniusTheme,
-    type PageComponent,
-    type PageContext,
-    type PageElement,
-    type PageNode,
-} from "@/bindings";
+import { type Context, createElement, type ReactElement } from "react";
+import { asPageValue, type BindingError, type GeniusTheme } from "@/bindings";
 
 const PROVIDER = Symbol.for("react.provider");
 const CONTEXT = Symbol.for("react.context");
@@ -23,7 +15,7 @@ interface Fiber {
 }
 
 export interface CapturedContext {
-    readonly context: PageContext<unknown>;
+    readonly context: Context<unknown>;
     readonly value: unknown;
 }
 
@@ -135,7 +127,7 @@ export const capturePageContexts = (): readonly CapturedContext[] => {
         ) {
             seen.add(context);
             captured.push({
-                context: asPageValue<PageContext<unknown>>(context),
+                context: asPageValue<Context<unknown>>(context),
                 value: props.value,
             });
         }
@@ -171,7 +163,7 @@ const isTheme = (value: unknown): value is GeniusTheme => {
 /** The live theme, so high-contrast and album colours come for free. */
 export const pageTheme = (
     captured: readonly CapturedContext[],
-    themeContext: PageContext<GeniusTheme | undefined>,
+    themeContext: Context<GeniusTheme | undefined>,
 ): Result<GeniusTheme, BindingError> => {
     const exact = captured.find((entry) => entry.context === themeContext);
 
@@ -193,29 +185,17 @@ export const pageTheme = (
     });
 };
 
-interface ProviderProps {
-    readonly value: unknown;
-    readonly children?: PageNode;
-}
-
-const providerOf = (
-    context: PageContext<unknown>,
-): PageComponent<ProviderProps> =>
-    asPageValue<PageComponent<ProviderProps>>(
-        asPageValue<{ readonly Provider: unknown }>(context).Provider,
-    );
-
 /** Wraps `children` in every captured provider, outermost first. */
 export const withPageContexts = (
     captured: readonly CapturedContext[],
-    children: PageElement,
-): PageElement => {
+    children: ReactElement,
+): ReactElement => {
     let wrapped = children;
 
     // Innermost first, so the shallowest provider ends up outermost.
     for (const entry of [...captured].reverse()) {
         wrapped = createElement(
-            providerOf(entry.context),
+            entry.context.Provider,
             { value: entry.value },
             wrapped,
         );

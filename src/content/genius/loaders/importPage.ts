@@ -1,11 +1,10 @@
 /** The album import assistant, on the route Genius answers with a 404. */
 import { Result } from "@resulted/results";
-import { createElement } from "react";
+import { createElement, type ReactElement } from "react";
 import {
     borrowChunks,
     describeBindingError,
     getPage,
-    type PageElement,
     readChunkUrls,
     resetBindings,
 } from "@/bindings";
@@ -103,7 +102,7 @@ const borrowEditorChunks = async (): Promise<void> => {
 };
 
 export const importPageLoader: Loader = {
-    build: async (): Promise<PageElement> => {
+    build: async (): Promise<ReactElement> => {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.
         const { ImportAssistant } = await import(

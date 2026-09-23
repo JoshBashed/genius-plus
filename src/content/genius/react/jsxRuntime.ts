@@ -1,13 +1,14 @@
 /**
  * Genius's react runtime.
  */
+
 import type { Result } from "@resulted/results";
+import type { ReactElement } from "react";
 import {
     type BindingError,
     type ChunkError,
     describeBindingError,
     getJsxRuntime,
-    type PageElement,
     type PageJsxRuntime,
 } from "@/bindings";
 
@@ -47,7 +48,7 @@ export const jsx = (
     type: unknown,
     props: unknown,
     key?: string,
-): PageElement =>
+): ReactElement =>
     runtime === null
         ? unresolved()
         : runtime.jsx(type as string, props as Record<string, unknown>, key);
@@ -56,7 +57,7 @@ export const jsxs = (
     type: unknown,
     props: unknown,
     key?: string,
-): PageElement =>
+): ReactElement =>
     runtime === null
         ? unresolved()
         : runtime.jsxs(type as string, props as Record<string, unknown>, key);
@@ -66,7 +67,7 @@ export const jsxDEV = (
     type: unknown,
     props: unknown,
     key?: string,
-): PageElement => jsx(type, props, key);
+): ReactElement => jsx(type, props, key);
 
 /** The registered symbol, shared across React copies. */
 export const Fragment = Symbol.for("react.fragment");

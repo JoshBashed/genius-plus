@@ -1,10 +1,8 @@
 /** Mounting, in general. Nothing here knows what a page of ours contains. */
+
 import type { Result } from "@resulted/results";
-import {
-    type ChunkError,
-    describeBindingError,
-    type PageElement,
-} from "@/bindings";
+import type { ReactElement } from "react";
+import { type ChunkError, describeBindingError } from "@/bindings";
 import { log } from "@/utilities/log";
 import type { Runtime } from "../install";
 import { renderTree } from "./renderTree";
@@ -43,7 +41,7 @@ export interface Loader {
      */
     readonly prepare: () => Promise<Result<Element | null, PrepareFailure>>;
     /** Its tree, built once the bindings behind it are installed. */
-    readonly build: (runtime: Runtime) => Promise<PageElement>;
+    readonly build: (runtime: Runtime) => Promise<ReactElement>;
     /** Undoes `prepare`; the rendered tree is unmounted for it. */
     readonly cleanUp?: () => void;
 }
