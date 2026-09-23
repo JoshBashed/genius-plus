@@ -57,6 +57,11 @@ export default defineConfig({
         },
     },
     module: {
+        parser: {
+            // `react` in Genius code is our own module, typed as all of
+            // React, so a name it lacks has to fail here, not at render.
+            javascript: { exportsPresence: "error" },
+        },
         rules: [
             {
                 // This directory renders into Genius's React, not ours.
