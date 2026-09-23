@@ -25,13 +25,6 @@ body shape, and record what it said.
 
 ## Hard rules
 
-- **Re-read before writing.** A draft baseline is a snapshot, and
-  clobbering another editor is a real lost update. Tracklist and cover
-  art writes replace whole sets, so anything not carried through is
-  deleted.
-- **A queued bulk write is not a save.** Say "queued" until the Pusher
-  verdict lists the song. Details in `docs/geniusApi.md`.
-
 ## Toolchain
 
 - **pnpm only.** Never npm or yarn, including registry lookups.
