@@ -5,7 +5,7 @@ import type {
     PageNode,
     PageReact,
 } from "@/bindings";
-import { slot } from "./binding";
+import { slot } from "../slot";
 
 export const reactSlot = slot<PageReact>("React");
 

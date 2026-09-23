@@ -5,8 +5,8 @@ import {
     type PageElement,
     type SmallButtonProps,
 } from "@/bindings";
-import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
+import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const smallButtonSlot = slot<PageComponent<SmallButtonProps>>(

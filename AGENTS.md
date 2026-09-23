@@ -391,7 +391,7 @@ the build or the page when violated.
 - **Borrowed components and hooks are slot-backed.** Import them like
   ordinary React from `geniusComponents/` and `geniusHooks/`; the slots
   are filled at mount. `styled` alone requires its importer to load
-  after install, which is why `mount.ts` uses an eager dynamic import.
+  after install, which is why each loader uses an eager dynamic import.
 - `theme()` is a call, never a stored value.
 - Chunk URLs and export names are read from the live `<head>` every
   load. Never hardcode a hash, a URL, or a minified export letter.

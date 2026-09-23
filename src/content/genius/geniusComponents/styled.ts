@@ -5,7 +5,7 @@ import type {
     PageStyledFactory,
     PageStyledTag,
 } from "@/bindings";
-import { slot } from "../reactHost/binding";
+import { slot } from "../slot";
 
 export const styledSlot = slot<PageStyledFactory>("styled-components");
 

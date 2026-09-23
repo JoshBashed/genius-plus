@@ -6,7 +6,7 @@ import {
     type PageElement,
 } from "@/bindings";
 import { log } from "@/utilities/log";
-import type { Runtime } from "./install";
+import type { Runtime } from "../install";
 import { renderTree } from "./renderTree";
 
 /**

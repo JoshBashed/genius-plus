@@ -7,7 +7,7 @@ import {
     readChunkUrls,
 } from "@/bindings";
 import { log } from "@/utilities/log";
-import { installExtras } from "../reactHost/install";
+import { installExtras } from "../install";
 
 /** Latched on success only, so a failed borrow can be tried again. */
 let taken = false;

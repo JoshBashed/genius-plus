@@ -1,8 +1,8 @@
 /** Rendering into the page's React: the part no page owns on its own. */
 import type { PageElement, PageRoot } from "@/bindings";
+import type { Runtime } from "../install";
 import { withPageContexts } from "../pageContext";
-import type { Runtime } from "./install";
-import { createElement } from "./react";
+import { createElement } from "../reactHost/react";
 
 export interface MountedTree {
     readonly unmount: () => void;

@@ -5,8 +5,8 @@ import {
     type PageElement,
     type SelectInputProps,
 } from "@/bindings";
-import { slot } from "../reactHost/binding";
 import { createElement } from "../reactHost/react";
+import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const selectInputSlot = slot<PageComponent<SelectInputProps>>(

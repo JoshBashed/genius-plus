@@ -1,8 +1,8 @@
 /** Genius's own icons, each read at render rather than at import. */
 import type { IconProps, PageComponent, PageElement } from "@/bindings";
 import { log } from "@/utilities/log";
-import { slot } from "../reactHost/binding";
 import { createElement, Fragment } from "../reactHost/react";
+import { slot } from "../slot";
 
 /**
  * The ones this extension asks for.

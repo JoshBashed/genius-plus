@@ -25,8 +25,10 @@ Inside `src/content/genius/`:
 | --- | --- |
 | `index.ts` / `mainWorld.ts` | Isolated-world and MAIN-world entries |
 | `relay.ts` | `postMessage` bridge between the two worlds |
-| `loaders/` | One loader per page kind: table, import, legacy |
-| `reactHost/` | Prime-then-read host for the page's React; jsx runtime |
+| `install.ts` | Finds everything borrowed and fills its slot, at startup |
+| `slot.ts` | `slot()`, a value that is bound after its module loads |
+| `loaders/` | One loader per page kind, and `mount.ts`, which runs them |
+| `reactHost/` | The page's React, and the jsx runtime ours compiles to |
 | `geniusComponents/`, `geniusHooks/` | Slot-backed borrowed bindings |
 | `songTable/` | The album metadata editor table |
 | `importPage/`, `albumImport/` | The Apple import assistant, its pipeline |
@@ -51,13 +53,13 @@ Inside `src/content/genius/`:
   it. So they import like ordinary React (`import { TagInput }`,
   `import { usePusher }`), the barrel is safe, import order does not
   matter, and a re-prime reaches modules that were already imported.
-- `mount.ts` fills the slots with `installAll([installs(getX, setX)])`,
+- `install.ts` fills the slots with `installAll([installs(getX, setX)])`,
   and `installOptional` for the ones a page can do without.
 - **`styled` is the exception.** `styled("div")` has to return a
   component at module evaluation, so a styles module still has to be
   imported after the binding is installed. That is the only reason
-  `mount.ts` reaches the table through
-  `import(/* webpackMode: "eager" */ "./songTable")`.
+  `loaders/albumTable.ts` reaches the table through
+  `import(/* webpackMode: "eager" */ "../songTable")`.
 - `theme()` is a call, never a stored value: `deviceType` changes on a
   resize and a re-prime replaces it without re-evaluating a module.
 
