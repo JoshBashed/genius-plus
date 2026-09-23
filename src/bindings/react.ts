@@ -6,7 +6,6 @@ import { type Binding, loadChunk, memoBinding } from "./loader";
 import {
     asPageValue,
     type ModuleNamespace,
-    type PageComponent,
     type PageElement,
     type PageNode,
 } from "./types";
@@ -40,21 +39,6 @@ export interface PageReactDom {
         container: Element | DocumentFragment,
     ) => PageElement;
     readonly flushSync: <Value>(action: () => Value) => Value;
-}
-
-/** The page's `react/jsx-runtime`, what our JSX compiles against. */
-export interface PageJsxRuntime {
-    readonly jsx: <Props>(
-        type: PageComponent<Props> | string,
-        props: Props,
-        key?: string,
-    ) => PageElement;
-    readonly jsxs: <Props>(
-        type: PageComponent<Props> | string,
-        props: Props,
-        key?: string,
-    ) => PageElement;
-    readonly Fragment: PageComponent<{ readonly children?: PageNode }>;
 }
 
 /** React, react-dom, and the jsx runtime share one manual chunk. */
@@ -169,29 +153,3 @@ export const getReactDomClient: Binding<PageReactDomClient> = memoBinding(
             : found;
     },
 );
-
-/**
- * The page's own `react/jsx-runtime` (cached).
- * @returns The module, or a `binding` error if the chunk moved.
- */
-export const getJsxRuntime: Binding<PageJsxRuntime> = memoBinding(async () => {
-    const vendor = await loadVendor();
-
-    if (vendor.isErr()) {
-        return vendor;
-    }
-
-    const found = findByKeys(
-        vendor.value,
-        "react/jsx-runtime",
-        ["jsx", "jsxs", "Fragment"],
-        ["createElement"],
-    );
-
-    return found.isOk()
-        ? complete<PageJsxRuntime>(found.value, "react/jsx-runtime", [
-              "jsx",
-              "jsxs",
-          ])
-        : found;
-});

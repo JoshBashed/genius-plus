@@ -45,11 +45,9 @@ export {
 } from "./loader";
 export { getModal, type ModalProps } from "./modal";
 export {
-    getJsxRuntime,
     getReact,
     getReactDom,
     getReactDomClient,
-    type PageJsxRuntime,
     type PageReact,
     type PageReactDom,
     type PageReactDomClient,

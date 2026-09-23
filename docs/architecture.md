@@ -48,8 +48,9 @@ Inside `src/content/genius/`:
   `src/bindings/`, is refused; `scripts/checkReact.mjs` also fails the
   build if React's own code reaches a Genius bundle.
 - JSX there compiles to `react/jsx-runtime` as usual, which the same
-  rule resolves to `react/jsxRuntime.ts`. The directory's own
-  `tsconfig.json` is why `pnpm typecheck` runs two projects.
+  rule resolves to `react/index.ts`, where `jsx` is built on their
+  `createElement`. The directory's own `tsconfig.json` is why
+  `pnpm typecheck` runs two projects.
 - **Borrowed things live in slots, read at the call.** Each module in
   `geniusComponents/` and `geniusHooks/` holds a `slot()` and exports a
   `setX` beside a wrapper that reads it when something renders or calls

@@ -72,10 +72,10 @@ export default defineConfig({
                     alias: {
                         react$: path.resolve("src/content/genius/react"),
                         "react/jsx-runtime$": path.resolve(
-                            "src/content/genius/react/jsxRuntime.ts",
+                            "src/content/genius/react",
                         ),
                         "react/jsx-dev-runtime$": path.resolve(
-                            "src/content/genius/react/jsxRuntime.ts",
+                            "src/content/genius/react",
                         ),
                     },
                 },

@@ -33,6 +33,20 @@ export const Fragment = asPageValue<PageReact["Fragment"]>(
     Symbol.for("react.fragment"),
 );
 
+/**
+ * What compiled JSX calls, built on their `createElement`.
+ * `createElement` reads `key` out of props and keeps `children` there.
+ */
+export const jsx = (
+    type: Parameters<PageReact["createElement"]>[0],
+    props: Readonly<Record<string, unknown>>,
+    key?: string,
+): ReturnType<PageReact["createElement"]> =>
+    createElement(type, key === undefined ? props : { ...props, key });
+
+export const jsxs = jsx;
+export const jsxDEV = jsx;
+
 /** The same, for code that would rather write `React.createElement`. */
 const React = {
     cloneElement,

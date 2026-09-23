@@ -54,7 +54,6 @@ import {
     pageTheme,
 } from "./pageContext";
 import { reactSlot } from "./react";
-import { primeJsxRuntime } from "./react/jsxRuntime";
 import { installAll, installOptional, installs } from "./slot";
 
 /** What a page still has to hold, because it renders with it directly. */
@@ -79,13 +78,6 @@ export const installRuntime = async (): Promise<
 
     if (react.isErr()) {
         return react;
-    }
-
-    // Every JSX expression in these bundles reads this synchronously.
-    const jsxRuntime = await primeJsxRuntime();
-
-    if (jsxRuntime.isErr()) {
-        return jsxRuntime;
     }
 
     const dom = await getReactDomClient();
