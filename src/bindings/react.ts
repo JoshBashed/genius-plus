@@ -1,4 +1,5 @@
 import { Result } from "@resulted/results";
+import type * as React from "react";
 import type { BindingError, ChunkError } from "./errors";
 import { findByKeys, missingKeys } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
@@ -6,47 +7,15 @@ import {
     asPageValue,
     type ModuleNamespace,
     type PageComponent,
-    type PageContext,
     type PageElement,
     type PageNode,
 } from "./types";
 
-/** The page's own React. Two Reacts share no hooks or context. */
-export interface PageReact {
-    readonly version: string;
-    readonly createElement: <Props>(
-        type: PageComponent<Props> | string,
-        props?: Props | null,
-        ...children: readonly PageNode[]
-    ) => PageElement;
-    readonly cloneElement: (
-        element: PageElement,
-        props?: Readonly<Record<string, unknown>> | null,
-    ) => PageElement;
-    readonly Fragment: PageComponent<{ readonly children?: PageNode }>;
-    readonly useState: <State>(
-        initial: State | (() => State),
-    ) => readonly [State, (next: State | ((previous: State) => State)) => void];
-    readonly useEffect: (
-        // Return a cleanup function, or nothing at all.
-        effect: () => unknown,
-        deps?: readonly unknown[],
-    ) => void;
-    readonly useMemo: <Value>(
-        factory: () => Value,
-        deps: readonly unknown[],
-    ) => Value;
-    readonly useCallback: <Fn>(callback: Fn, deps: readonly unknown[]) => Fn;
-    readonly useRef: <Value>(initial: Value) => { current: Value };
-    readonly useContext: <Value>(context: PageContext<Value>) => Value;
-    /**
-     * Shallow prop compare. The album table owns every row's staged edit, so
-     * without this one keystroke re-renders a hundred react-selects.
-     */
-    readonly memo: <Props>(
-        component: PageComponent<Props>,
-    ) => PageComponent<Props>;
-}
+/**
+ * The page's own React, in React's own types. Two Reacts share no hooks
+ * or context, so this is only ever theirs.
+ */
+export type PageReact = typeof React;
 
 /** A mounted root from the page's `react-dom/client`. */
 export interface PageRoot {
