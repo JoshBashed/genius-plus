@@ -1,7 +1,6 @@
 /** One queued bulk task's Pusher subscription. It renders nothing. */
 
-import { useCallback, useEffect } from "react";
-import type { PageElement } from "@/bindings";
+import { type FC, useCallback, useEffect } from "react";
 import { log } from "@/utilities/log";
 import { type BulkEvent, parseBulkEvent } from "../bulkStatus";
 import type { SongDraft } from "../draft";
@@ -48,11 +47,11 @@ export interface TaskWatchProps {
  * Unmounting is the unsubscribe, so the table drops a terminal task and this
  * goes with it; the timeout is what stops an unanswered one waiting forever.
  */
-export const TaskWatch = ({
+export const TaskWatch: FC<TaskWatchProps> = ({
     onEvent,
     onTimeout,
     pending,
-}: TaskWatchProps): PageElement => {
+}) => {
     const callback = useCallback(
         (payload: unknown): void => {
             const event = parseBulkEvent(payload);

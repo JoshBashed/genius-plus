@@ -1,14 +1,11 @@
 /** The album table: its entry point, its modals, and its staged edits. */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import {
-    asPageValue,
     describeBindingError,
     getModal,
     getReactDom,
     type ModalProps,
-    type PageComponent,
-    type PageElement,
     type PageReactDom,
     type SelectOption,
 } from "@/bindings";
@@ -211,7 +208,7 @@ const initialLoads = (album: AlbumSeed): Readonly<Record<number, RowLoad>> => {
     return Object.fromEntries(entries);
 };
 
-const renderSongTable = (props: SongTableProps): PageElement => {
+export const SongTable: FC<SongTableProps> = (props) => {
     const { album, primaryTagOptions } = props;
     const albumId = album.albumId;
 
@@ -229,7 +226,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
     const [open, setOpen] = useState(false);
     /** Latches on first open; the album is never fetched before. */
     const [opened, setOpened] = useState(false);
-    const [Modal, setModal] = useState<PageComponent<ModalProps> | null>(null);
+    const [Modal, setModal] = useState<FC<ModalProps> | null>(null);
     const [slot, setSlot] = useState<ToolbarSlot | null>(null);
     const [saves, setSaves] = useState<Readonly<Record<number, RowSave>>>({});
     /** Non-null only while the confirmation modal is open. */
@@ -1166,7 +1163,3 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         </>
     );
 };
-
-/** Cast once, so the page's `createElement` takes our own component. */
-export const SongTable =
-    asPageValue<PageComponent<SongTableProps>>(renderSongTable);

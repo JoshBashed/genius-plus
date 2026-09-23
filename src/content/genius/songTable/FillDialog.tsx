@@ -1,5 +1,6 @@
 /** The column menu's dialog: the column's own editor, and nothing else. */
-import type { PageElement, SelectOption } from "@/bindings";
+import type { FC } from "react";
+import type { SelectOption } from "@/bindings";
 import { FIELD_LABELS, type SongDraft } from "../draft";
 import { ColumnEditor } from "./ColumnEditor";
 import type { FillMode } from "./ColumnMenu";
@@ -16,7 +17,7 @@ export interface FillDialogProps {
     readonly onPatch: (next: Partial<SongDraft>) => void;
 }
 
-export const FillDialog = (props: FillDialogProps): PageElement => {
+export const FillDialog: FC<FillDialogProps> = (props) => {
     const { column, mode } = props;
     const label = FIELD_LABELS[column.field].toLowerCase();
 

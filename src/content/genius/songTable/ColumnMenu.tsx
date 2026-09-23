@@ -1,14 +1,13 @@
 /** The header menu that stages one value across a whole column. */
 
-import { useEffect, useRef } from "react";
-import type { PageElement, PageNode } from "@/bindings";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { FIELD_LABELS } from "../draft";
 import { Dropdown, hasDropdown } from "../geniusComponents";
 import type { ColumnSpec } from "./columns";
 import { MenuPanel } from "./styles";
 
 /** Genius ships no ellipsis, so the trigger draws its own three dots. */
-const Ellipsis = (): PageElement => (
+const Ellipsis: FC = () => (
     <svg
         aria-hidden="true"
         focusable="false"
@@ -32,10 +31,10 @@ const Ellipsis = (): PageElement => (
 const ABOVE_MODAL = "11";
 
 interface PanelProps {
-    readonly children: PageNode;
+    readonly children: ReactNode;
 }
 
-const Panel = ({ children }: PanelProps): PageElement => {
+const Panel: FC<PanelProps> = ({ children }) => {
     const panel = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -63,10 +62,7 @@ export interface ColumnMenuProps {
     readonly onPick: (mode: FillMode) => void;
 }
 
-export const ColumnMenu = ({
-    column,
-    onPick,
-}: ColumnMenuProps): PageElement => {
+export const ColumnMenu: FC<ColumnMenuProps> = ({ column, onPick }) => {
     if (!hasDropdown()) {
         return <span hidden />;
     }

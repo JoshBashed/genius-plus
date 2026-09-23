@@ -1,5 +1,6 @@
 /** One column's editor, shared by the table's cells and the fill dialog. */
-import type { PageElement, SelectOption } from "@/bindings";
+import type { FC } from "react";
+import type { SelectOption } from "@/bindings";
 import { FIELD_LABELS, type SongDraft } from "../draft";
 import { SelectInput, TagInput, TextInput } from "../geniusComponents";
 import { loadArtistOptions, loadTagOptions, optionFor } from "../options";
@@ -66,7 +67,7 @@ const textPatch = (
     }
 };
 
-export const ColumnEditor = (props: ColumnEditorProps): PageElement => {
+export const ColumnEditor: FC<ColumnEditorProps> = (props) => {
     const { column, disabled, draft, hasError, onPatch } = props;
 
     switch (column.kind) {

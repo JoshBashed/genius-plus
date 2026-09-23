@@ -1,12 +1,7 @@
 /** One song's row: an editor per column, and its own write status. */
 
-import { memo, useCallback, useMemo } from "react";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageElement,
-    type SelectOption,
-} from "@/bindings";
+import { type FC, memo, type ReactElement, useCallback, useMemo } from "react";
+import type { SelectOption } from "@/bindings";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
 import { FIELD_LABELS, type SongDraft } from "../draft";
 import { SmallButton, Spinner } from "../geniusComponents";
@@ -47,7 +42,7 @@ const stageClass = (stage: SaveStage): string => {
     }
 };
 
-const smallButton = (label: string, onClick: () => void): PageElement => (
+const smallButton = (label: string, onClick: () => void): ReactElement => (
     <SmallButton onClick={onClick} type="button">
         {label}
     </SmallButton>
@@ -67,7 +62,7 @@ export interface RowProps {
     readonly onRetry: (songId: number) => void;
 }
 
-const renderSongRow = (props: RowProps): PageElement => {
+const renderSongRow: FC<RowProps> = (props) => {
     const { load, onPatch, onRetry, onRevert, row, save, track } = props;
 
     /** Only changed fields matter: an untouched field is never sent. */
@@ -264,6 +259,4 @@ const renderSongRow = (props: RowProps): PageElement => {
  * Memoised: the table owns every row's edit, so one keystroke re-renders it.
  * Every prop but `row` is shared and stable, so only the edited row repaints.
  */
-export const SongRow = memo(
-    asPageValue<PageComponent<RowProps>>(renderSongRow),
-);
+export const SongRow = memo(renderSongRow);

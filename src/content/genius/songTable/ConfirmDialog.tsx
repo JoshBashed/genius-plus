@@ -1,5 +1,5 @@
 /** What a save would send, shown before anything reaches Genius. */
-import type { PageElement } from "@/bindings";
+import type { FC } from "react";
 import { type DraftField, FIELD_LABELS } from "../draft";
 import { describePlan, type SavePlan } from "../write";
 import { Confirm } from "./styles";
@@ -11,7 +11,7 @@ interface ConfirmDialogProps {
     readonly plan: SavePlan;
 }
 
-export const ConfirmDialog = ({ plan }: ConfirmDialogProps): PageElement => (
+export const ConfirmDialog: FC<ConfirmDialogProps> = ({ plan }) => (
     <Confirm>
         <h2>Save these edits to Genius?</h2>
         {plan.writes.length === 0 ? (
