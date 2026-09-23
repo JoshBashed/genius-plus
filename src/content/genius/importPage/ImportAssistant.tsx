@@ -1,12 +1,7 @@
 /** The album import, as a walk through five steps. */
 
-import { useCallback, useState } from "react";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageElement,
-    type SelectOption,
-} from "@/bindings";
+import { type FC, type ReactElement, useCallback, useState } from "react";
+import type { SelectOption } from "@/bindings";
 import { type ContributorPlan, withMapping } from "../albumImport/contributors";
 import type { AlbumCredits } from "../albumImport/credits";
 import type { ImportedAlbum } from "../albumImport/importedAlbum";
@@ -27,7 +22,7 @@ export interface ImportAssistantProps {
     readonly album: GeniusAlbum | null;
 }
 
-const renderAssistant = ({ album }: ImportAssistantProps): PageElement => {
+export const ImportAssistant: FC<ImportAssistantProps> = ({ album }) => {
     const [wizard, setWizard] = useState<Wizard>({ step: 1 });
     /**
      * What step two settled, kept beside the walk rather than in it, so
@@ -158,7 +153,7 @@ const renderAssistant = ({ album }: ImportAssistantProps): PageElement => {
         );
     }, []);
 
-    const body = (): PageElement => {
+    const body = (): ReactElement => {
         switch (wizard.step) {
             case 1:
                 return <AlbumStep onLoaded={onLoaded} />;
@@ -218,6 +213,3 @@ const renderAssistant = ({ album }: ImportAssistantProps): PageElement => {
         </Page>
     );
 };
-
-export const ImportAssistant =
-    asPageValue<PageComponent<ImportAssistantProps>>(renderAssistant);

@@ -1,7 +1,6 @@
 /** Step one: the Apple Music link, and everything read from it. */
 
-import { memo, useState } from "react";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
+import { type FC, memo, useState } from "react";
 import {
     describeAppleAlbumFailure,
     fetchAppleAlbum,
@@ -27,7 +26,7 @@ export interface AlbumStepProps {
     readonly onLoaded: (album: ImportedAlbum, artists: ContributorPlan) => void;
 }
 
-const renderAlbumStep = ({ onLoaded }: AlbumStepProps): PageElement => {
+const renderAlbumStep: FC<AlbumStepProps> = ({ onLoaded }) => {
     const [url, setUrl] = useState("");
     const [busy, setBusy] = useState(false);
     const [note, setNote] = useState<string | null>(null);
@@ -95,6 +94,4 @@ const renderAlbumStep = ({ onLoaded }: AlbumStepProps): PageElement => {
     );
 };
 
-export const AlbumStep = memo(
-    asPageValue<PageComponent<AlbumStepProps>>(renderAlbumStep),
-);
+export const AlbumStep = memo(renderAlbumStep);

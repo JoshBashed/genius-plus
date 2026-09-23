@@ -1,12 +1,7 @@
 /** Each name Apple gave, against the Genius artist it maps to. */
 
-import { memo } from "react";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageElement,
-    type SelectOption,
-} from "@/bindings";
+import { type FC, memo } from "react";
+import type { SelectOption } from "@/bindings";
 import {
     type Contributor,
     type ContributorPlan,
@@ -26,7 +21,7 @@ interface RowProps {
 }
 
 /** The same control the song page credits an artist with. */
-const Row = ({ entry, onChange }: RowProps): PageElement => (
+const Row: FC<RowProps> = ({ entry, onChange }) => (
     <tr>
         <td className="gp-state">
             {entry.options.length === 0 ? (
@@ -81,10 +76,7 @@ interface ContributorMapProps {
  * A name Genius knew exactly is filled in already; anything else is left
  * empty on purpose, so an import never invents an artist on its own.
  */
-const renderContributorMap = ({
-    onChange,
-    plan,
-}: ContributorMapProps): PageElement => (
+const renderContributorMap: FC<ContributorMapProps> = ({ onChange, plan }) => (
     <Scroller>
         <Rows>
             <tbody>
@@ -96,6 +88,4 @@ const renderContributorMap = ({
     </Scroller>
 );
 
-export const ContributorMap = memo(
-    asPageValue<PageComponent<ContributorMapProps>>(renderContributorMap),
-);
+export const ContributorMap = memo(renderContributorMap);

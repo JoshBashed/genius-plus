@@ -1,7 +1,6 @@
 /** What Genius said when it would not create the song. */
 
-import { memo } from "react";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
+import { type FC, memo } from "react";
 import type { CreateSongFailure } from "./createSong";
 import { Problem } from "./styles";
 
@@ -19,7 +18,7 @@ export interface CreateErrorProps {
  * into a sentence: which field was wrong is the only part the reader can
  * act on, and Genius names it.
  */
-const renderCreateError = ({ failure }: CreateErrorProps): PageElement => {
+const renderCreateError: FC<CreateErrorProps> = ({ failure }) => {
     if (failure.kind === "validationError") {
         const entries = Object.entries(failure.errors);
         const whole = entries.filter(([field]) => field === WHOLE_RECORD);
@@ -74,6 +73,4 @@ const renderCreateError = ({ failure }: CreateErrorProps): PageElement => {
     );
 };
 
-export const CreateError = memo(
-    asPageValue<PageComponent<CreateErrorProps>>(renderCreateError),
-);
+export const CreateError = memo(renderCreateError);

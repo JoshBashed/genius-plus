@@ -1,7 +1,6 @@
 /** The stepped progress bar, one segment per step. */
 
-import { memo } from "react";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
+import { type FC, memo } from "react";
 import { Steps } from "./styles";
 import { STEP_LABELS, type StepNumber } from "./wizard";
 
@@ -9,7 +8,7 @@ interface StepBarProps {
     readonly step: StepNumber;
 }
 
-const renderStepBar = ({ step }: StepBarProps): PageElement => (
+const renderStepBar: FC<StepBarProps> = ({ step }) => (
     <Steps>
         {STEP_LABELS.map((label, index) => (
             <li
@@ -28,6 +27,4 @@ const renderStepBar = ({ step }: StepBarProps): PageElement => (
     </Steps>
 );
 
-export const StepBar = memo(
-    asPageValue<PageComponent<StepBarProps>>(renderStepBar),
-);
+export const StepBar = memo(renderStepBar);

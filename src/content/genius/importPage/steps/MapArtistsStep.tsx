@@ -1,12 +1,7 @@
 /** Step three: every name Apple credits, against a Genius artist. */
 
-import { memo } from "react";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageElement,
-    type SelectOption,
-} from "@/bindings";
+import { type FC, memo } from "react";
+import type { SelectOption } from "@/bindings";
 import type { ContributorPlan } from "../../albumImport/contributors";
 import { Button } from "../../geniusComponents/Button";
 import { ContributorMap } from "../ContributorMap";
@@ -19,12 +14,12 @@ export interface MapArtistsStepProps {
     readonly onBack: () => void;
 }
 
-const renderMapArtistsStep = ({
+const renderMapArtistsStep: FC<MapArtistsStepProps> = ({
     artists,
     onBack,
     onChange,
     onNext,
-}: MapArtistsStepProps): PageElement => (
+}) => (
     <Panel>
         <p>
             Match each name credited by Apple to the Genius artist it
@@ -43,6 +38,4 @@ const renderMapArtistsStep = ({
     </Panel>
 );
 
-export const MapArtistsStep = memo(
-    asPageValue<PageComponent<MapArtistsStepProps>>(renderMapArtistsStep),
-);
+export const MapArtistsStep = memo(renderMapArtistsStep);

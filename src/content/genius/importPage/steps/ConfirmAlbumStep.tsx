@@ -1,8 +1,7 @@
 /** Step two: the album Apple returned, before anything is done with it. */
 
-import { memo, useEffect, useState } from "react";
+import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import {
     type ContributorPlan,
     unmappedCount,
@@ -46,13 +45,13 @@ export interface ConfirmAlbumStepProps {
     readonly onBack: () => void;
 }
 
-const renderConfirmAlbumStep = ({
+const renderConfirmAlbumStep: FC<ConfirmAlbumStepProps> = ({
     album,
     artists,
     onBack,
     onNext,
     settled,
-}: ConfirmAlbumStepProps): PageElement => {
+}) => {
     const unmapped = unmappedCount(artists);
     /** Their credits are a page per track, so this is asked for. */
     const [wanted, setWanted] = useState(
@@ -266,6 +265,4 @@ const renderConfirmAlbumStep = ({
     );
 };
 
-export const ConfirmAlbumStep = memo(
-    asPageValue<PageComponent<ConfirmAlbumStepProps>>(renderConfirmAlbumStep),
-);
+export const ConfirmAlbumStep = memo(renderConfirmAlbumStep);

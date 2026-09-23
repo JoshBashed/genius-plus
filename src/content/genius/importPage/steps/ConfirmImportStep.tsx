@@ -1,8 +1,7 @@
 /** Step five: what the import will do, and the two ways to run it. */
 
-import { memo, useEffect, useState } from "react";
+import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import { loadAlbumTracks } from "../../albumImport/albumTracks";
 import {
     type ContributorPlan,
@@ -85,7 +84,7 @@ export interface ConfirmImportStepProps {
     readonly onBack: () => void;
 }
 
-const renderConfirmImportStep = ({
+const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
     album,
     credits,
     language,
@@ -94,7 +93,7 @@ const renderConfirmImportStep = ({
     artists,
     onBack,
     target,
-}: ConfirmImportStepProps): PageElement => {
+}) => {
     /** Each Apple track against the song it is, keyed by Apple's id. */
     const [choices, setChoices] = useState<ReadonlyMap<number, SongChoice>>(
         () => new Map(),
@@ -482,6 +481,4 @@ const renderConfirmImportStep = ({
     );
 };
 
-export const ConfirmImportStep = memo(
-    asPageValue<PageComponent<ConfirmImportStepProps>>(renderConfirmImportStep),
-);
+export const ConfirmImportStep = memo(renderConfirmImportStep);

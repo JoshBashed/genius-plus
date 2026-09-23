@@ -1,5 +1,6 @@
 /** Genius's own "search or create a song" control, rebuilt. */
-import type { PageElement, SelectOption } from "@/bindings";
+import type { FC } from "react";
+import type { SelectOption } from "@/bindings";
 // Deep imports, not the barrel: it evaluates every component, and this
 // page binds only the few it renders with.
 import { TagInput } from "../geniusComponents/TagInput";
@@ -83,7 +84,7 @@ const choiceOf = (option: SelectOption | undefined): SongChoice | null => {
         : { kind: "song", songId: option.value, title };
 };
 
-export const SongSelect = ({
+export const SongSelect: FC<SongSelectProps> = ({
     asText,
     initialText,
     label,
@@ -91,7 +92,7 @@ export const SongSelect = ({
     placeholder,
     suggestions,
     value,
-}: SongSelectProps): PageElement => {
+}) => {
     const prefilled = initialText !== undefined && initialText !== "";
 
     return (

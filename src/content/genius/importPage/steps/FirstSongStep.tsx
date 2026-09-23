@@ -1,8 +1,7 @@
 /** Step four: the song that names the album, or the album itself. */
 
-import { memo, useEffect, useState } from "react";
+import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import type { ContributorPlan } from "../../albumImport/contributors";
 import type { ImportedAlbum } from "../../albumImport/importedAlbum";
 import { Button } from "../../geniusComponents/Button";
@@ -49,7 +48,7 @@ export interface FirstSongStepProps {
 const sameName = (left: string, right: string): boolean =>
     left.trim().toLowerCase() === right.trim().toLowerCase();
 
-const renderFirstSongStep = ({
+const renderFirstSongStep: FC<FirstSongStepProps> = ({
     album,
     albumName,
     artists,
@@ -58,7 +57,7 @@ const renderFirstSongStep = ({
     onNext,
     onTarget,
     target,
-}: FirstSongStepProps): PageElement => {
+}) => {
     const first = album.tracks[0];
     /** Nothing until a pick: the box opens on Apple's title, and the
      * `Create "…"` beside it is what settles on one. */
@@ -446,6 +445,4 @@ const renderFirstSongStep = ({
     );
 };
 
-export const FirstSongStep = memo(
-    asPageValue<PageComponent<FirstSongStepProps>>(renderFirstSongStep),
-);
+export const FirstSongStep = memo(renderFirstSongStep);
