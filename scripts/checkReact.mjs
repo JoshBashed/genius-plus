@@ -17,9 +17,12 @@ const BUNDLES = [
     "dist/content/genius-early.js",
 ];
 
-/** The three ways `react` gets in, anchored to specifier position. */
+/**
+ * The three ways `react` gets in, anchored to specifier position.
+ * `import type` is erased at build, so it brings in nothing.
+ */
 const FORBIDDEN_PATTERNS = [
-    /^\s*(?:import|export)\s[^;]*?\bfrom\s*["'](react|react-dom)(\/[^"']*)?["']/gm,
+    /^\s*(?:import|export)\s(?!type\s)[^;]*?\bfrom\s*["'](react|react-dom)(\/[^"']*)?["']/gm,
     /^\s*import\s*["'](react|react-dom)(\/[^"']*)?["']/gm,
     /\b(?:require|import)\(\s*["'](react|react-dom)(\/[^"']*)?["']\s*\)/g,
 ];

@@ -75,7 +75,7 @@ export const Fragment = Symbol.for("react.fragment");
 /** What TypeScript checks JSX in this directory against. */
 export declare namespace JSX {
     type Element = PageElement;
-    type ElementType = string | ((props: never) => PageElement);
+    type ElementType = string | ((props: never) => PageNode);
 
     interface ElementChildrenAttribute {
         children: object;

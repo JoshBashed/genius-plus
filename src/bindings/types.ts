@@ -1,34 +1,17 @@
-/** Branded shapes for values owned by the page's React, not ours. */
+/** Shapes for values owned by the page's React, in React's own types. */
+import type { Context, FC, ReactElement, ReactNode } from "react";
 
-declare const componentBrand: unique symbol;
-declare const elementBrand: unique symbol;
-declare const contextBrand: unique symbol;
-
-/** A component from the page's React. Render it, never call it. */
-export interface PageComponent<Props> {
-    (props: Props): PageElement;
-    readonly [componentBrand]: Props;
-}
+/** A component from the page's React. */
+export type PageComponent<Props> = FC<Props>;
 
 /** An element built by the page's `createElement` / `jsx`. */
-export interface PageElement {
-    readonly [elementBrand]: "page-element";
-}
+export type PageElement = ReactElement;
 
 /** A context object from the page's React. */
-export interface PageContext<Value> {
-    readonly [contextBrand]: Value;
-}
+export type PageContext<Value> = Context<Value>;
 
 /** Anything the page's React accepts as a child. */
-export type PageNode =
-    | PageElement
-    | string
-    | number
-    | boolean
-    | null
-    | undefined
-    | readonly PageNode[];
+export type PageNode = ReactNode;
 
 /** The subset of a synthetic event that behaves like a DOM event. */
 export interface PageSyntheticEvent {
