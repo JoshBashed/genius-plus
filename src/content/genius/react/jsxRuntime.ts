@@ -9,7 +9,6 @@ import {
     getJsxRuntime,
     type PageElement,
     type PageJsxRuntime,
-    type PageNode,
 } from "@/bindings";
 
 let runtime: PageJsxRuntime | null = null;
@@ -71,23 +70,3 @@ export const jsxDEV = (
 
 /** The registered symbol, shared across React copies. */
 export const Fragment = Symbol.for("react.fragment");
-
-/** What TypeScript checks JSX in this directory against. */
-export declare namespace JSX {
-    type Element = PageElement;
-    type ElementType = string | ((props: never) => PageNode);
-
-    interface ElementChildrenAttribute {
-        children: object;
-    }
-
-    interface IntrinsicAttributes {
-        readonly key?: string | number;
-    }
-
-    interface IntrinsicElements {
-        [tag: string]: Record<string, unknown> & {
-            readonly children?: PageNode;
-        };
-    }
-}

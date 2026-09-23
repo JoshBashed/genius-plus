@@ -388,8 +388,8 @@ the build or the page when violated.
   19. Under `src/content/genius/`, `react` resolves to theirs:
   `react/index.ts` at build time and `@types/react-18` in the editor.
   `react-dom` is refused; `scripts/checkReact.mjs` fails the build on
-  it, and on any React of ours in those bundles. JSX there
-  compiles to Genius's runtime through `@page-react/jsx-runtime`.
+  it, and on any React of ours in those bundles. JSX there compiles
+  to `react/jsx-runtime`, which resolves to `react/jsxRuntime.ts`.
 - **Borrowed components and hooks are slot-backed.** Import them like
   ordinary React from `geniusComponents/` and `geniusHooks/`; the slots
   are filled at mount. `styled` alone requires its importer to load

@@ -54,13 +54,6 @@ export default defineConfig({
         extensions: [".ts", ".tsx", ".js", ".jsx"],
         alias: {
             "@": path.resolve("src"),
-            // Genius JSX builds elements with the page's React.
-            "@page-react/jsx-runtime": path.resolve(
-                "src/content/genius/react/jsxRuntime.ts",
-            ),
-            "@page-react/jsx-dev-runtime": path.resolve(
-                "src/content/genius/react/jsxRuntime.ts",
-            ),
         },
     },
     module: {
@@ -73,6 +66,12 @@ export default defineConfig({
                 resolve: {
                     alias: {
                         react$: path.resolve("src/content/genius/react"),
+                        "react/jsx-runtime$": path.resolve(
+                            "src/content/genius/react/jsxRuntime.ts",
+                        ),
+                        "react/jsx-dev-runtime$": path.resolve(
+                            "src/content/genius/react/jsxRuntime.ts",
+                        ),
                     },
                 },
                 loader: "builtin:swc-loader",
@@ -82,7 +81,6 @@ export default defineConfig({
                         transform: {
                             react: {
                                 runtime: "automatic",
-                                importSource: "@page-react",
                                 development: isDev,
                             },
                         },
