@@ -136,6 +136,256 @@ body shape, and record what it said.
 - **No em dashes anywhere**, comments or strings. Standard English,
   Oxford comma.
 
+## Copy
+
+Everything a reader sees: labels, buttons, notes, errors, and the store
+listing. Follow MECA: What (M)atters, (E)mpathy, (C)ontext, and (A)ll.
+
+## Avoid text where possible
+
+Sometimes it's best to AVOID using text and rely on the interface to
+convey information. This can reduce the mental load on the user and
+point out what they need to go rather than reading an instruction. The
+best user interfaces are intuitive enough to be navigated without text.
+
+Example: a user didn't enter a date when a form requires it. 
+
+Don't say:
+* "Enter a day, month, and year in the release date fields."
+
+The interface already has three fields, so mark the fields that have
+issues and provide display a message (ideally a solution, such as
+"Enter a day") next to the field.
+
+### What (M)atters first
+
+* Decide the most important thing the user needs to know and lead with
+  it.
+
+Example: you want to convey to the user that a critical security update
+is available.
+
+Don't say:
+* "A new update is available that fixes a critical security issue. You
+  should update now."
+  * This doesn't convey urgency, give the user a clear next step, or
+    lead with what they need to know.
+* "A new security update has been released. Tapping here will let you
+  update."
+  * This uses passive voice and doesn't lead with what matters
+    (updating).
+
+Do say:
+* "Critical security update available. Tap to update now."
+  * This leads with what matters, conveys urgency, and gives the user a
+    clear next step all while being concise.
+
+### (E)mpathize with the user
+
+* Imagine what it would be like as a first-time user after seeing your
+  copy.
+* Avoid apologetic language, such as "sorry", "uh oh", "oops", and
+  "unfortunately". It can come across as insincere and frustrating to
+  the user.
+* Avoid filler words such as "please", "just", and "simply". They can
+  make the copy longer than it needs to be and may come across as
+  condescending. The action that they're trying to do might not feel
+  simple to them. 
+* Get to the point quickly. Avoid verbose explanations and unnecessary
+  details.
+* Avoid exclamation marks: they may come across as excitement. This can
+  frustrate the user if they are not excited about the situation.
+
+Example: you want to convey to the user that they cannot create more
+than 10 songs in one hour.
+
+Don't say:
+* "Uh oh! You've reached the limit of how many songs you can create in
+  one hour. Do wait a bit and try again later."
+  * This uses apologetic language and is verbose.
+* "Sorry, you can't create songs right now. You can't create more than
+  10 songs in one hour. Please wait and try again later!"
+  * This conveys what matters, but uses apologetic language and is
+    verbose. It also uses an exclamation mark, which may come across as
+    excitement in a situation that is frustrating to the user.
+
+Do say:
+* "You've created the limit of 10 songs in the last hour. Wait 20
+  minutes to create more."
+  * This conveys what matters, is concise, and gives the user a clear
+    next step.
+
+### (C)ontext is key
+
+* Optimizing for the first-time user creates a baseline of simplicity.
+* This may involve explaining concepts and features that are obvious to
+  a power user.
+* Avoid using jargon, acronyms, and abbreviations unless they are
+  widely known and understood.
+
+Example: you created a feature to check if an album is missing songs
+with a link from Apple Music. You add a button to the album page.
+
+Don't say:
+* "Check"
+  * This is too vague and doesn't convey what the button does. It lacks
+    context.
+* "AM Check"
+  * Some may understand that this means "Apple Music Check", but many
+    will not. It also doesn't convey what is being checked.
+* "Missing Songs"
+  * This would confuse the user. It could convey that the album page has
+    missing songs when you're trying to convey that the button checks if
+    the album is missing songs.
+
+Do say:
+* "Check for missing songs"
+  * This is clear, concise, and conveys what the button does. Although
+    it doesn't include "Apple Music", the user would likely figure that
+    out in the next step after tapping the button (such as a modal or a
+    new page).
+
+### Write for (A)ll
+
+* Use plain language. Avoid idioms, humour, and phrases that exclude
+  people as these can be misread, may not translate, and can be
+  offensive.
+* Avoid jokes, especially ones that re-enforce stereotypes.
+* Avoid adjectives and adverbs that assume something about the reader's
+  situation.
+
+Example: you want to convey to the user that Genius did not answer a
+request.
+
+Don't say:
+* "Like a white rapper, this one is rare. Please try again later."
+  * This uses a joke that may be offensive to some users and may not
+    translate well.
+* "Ugh, that didn't work. Please try again later!"
+  * This is meant to be humorous, but it may just frustrate the user
+    more because their action has been interrupted.
+
+Do say:
+* "Unable to connect to Genius. Try again in a few minutes."
+  * This states the problem plainly and gives the user a next step,
+    without a joke and without assuming how the reader feels about it.
+
+### Terminology
+
+* Use one word for one thing, everywhere: the interface, the errors, the
+  documentation, and the store listing.
+* Where Genius has a word for something, use theirs. The reader is
+  already reading their interface, and a second word for the same thing
+  reads as a second thing.
+* Never invent a word for something that already has one.
+* These words are ours and never reach the reader: stash, slot, chunk,
+  baseline, task, verdict, queued, patch, draft. Each names part of how
+  this works, which is not something anybody else has.
+  * Not "no verdict arrived", but "could not verify that the change was
+    saved".
+  * Not "10 songs queued", but "saving 10 songs".
+* Keep the two sides apart. Apple and Genius describe the same album
+  with different words, and collapsing them hides which one is being
+  talked about.
+
+| Thing | Say | Not |
+| --- | --- | --- |
+| An entry on an Apple Music album | track | song |
+| A song on Genius | song | track, entry, row |
+| A name Apple lists against a track | contributor | credit |
+| A Genius artist page | artist | contributor |
+| The ordered songs of an album | tracklist | track list, song list |
+| The one tag that categorises a song | primary tag | genre |
+| Every other tag | tag | secondary tag, non-primary tag |
+
+Example: the import reads an album from Apple Music and puts it on
+Genius.
+
+Don't say:
+* "Apple lists 10 songs."
+  * Apple lists tracks. A song is the thing that exists on Genius, so
+    one word for both hides which side is being described.
+* "3 artists could not be matched."
+  * An artist is a page on Genius. The thing without a match is a
+    contributor Apple named, which an artist is then chosen for.
+
+Do say:
+* "Apple lists 10 tracks. 3 will be created as songs."
+  * Each side keeps its own word, so it is clear what already exists
+    and what is about to.
+
+### Errors
+
+* Errors generally should indicate how to fix the issue where possible.
+* Imagine the position of a user trying to do an action and failing. It
+  is frustrating to be blocked without knowing why or what to do next.
+* Never blame the user for what the software could not do.
+* A status code is not a message. "Error 422: Unprocessable Entity" is
+  not acceptable as an error message.
+* Most errors should be displayed as "Kind: detail".
+  * "Network error: could not resolve genius.com."
+  * "Request error: failed to parse the response."
+  * "Rate limited: try again in 5 minutes."
+* Avoid "unknown error" where possible. Where nothing is known beyond
+  the failure, explain that their action failed. This should almost
+  NEVER be used.
+  * "Could not save this song."
+* Where there is both a next step and a supporting detail, the step
+  comes first and the detail goes in parentheses after it. Context is
+  never the most relevant thing.
+  * "Rate limited: try again in 14 minutes (120 of the 100 request
+    limit in the last hour)."
+* Avoid (where possible) using the message from the server. It can't be
+  localized and may not match our writing convention.
+* Don't provide false confirmations.
+  * Don't say "saved" until it is actually saved.
+* Offer a retry only where retrying could work.
+
+Example: Genius refuses a song because its release date is incomplete.
+
+Don't say:
+* "Something went wrong."
+  * The user learns nothing and can do nothing.
+* "Error 422: Unprocessable Entity"
+  * A status code does not explain the problem. The reader cannot act
+    on it.
+* "You entered the release date wrong."
+  * This blames the user for a rule they were never shown.
+* "Release date was rejected: a day, month, and year are all required."
+  * The field is on screen. Marking it is the interface's job, and
+    naming it in a sentence covers for a screen that does not.
+* "A day, month, and year are all required."
+  * This is a rule, not a next step.
+
+Do say, on EACH release date field itself:
+* "Enter a day", "Enter a month", and "Enter a year" respectively.
+  * The field carries which, so the sentence is only the rule that was
+    broken.
+
+Example: a bulk save is accepted but has not been applied yet.
+
+Don't say:
+* "10 songs saved."
+  * They are accepted, not saved. Some may still be rejected, and
+    saying otherwise means the user stops watching.
+
+Do say:
+* "Saving 10 songs..."
+  * This is accurate about what is known. Each row shows its own
+    progress, so nothing has to say where to look.
+
+### Voice
+
+* Use second person: "you" and "your" instead of "we", "us", or "our".
+* Don't refer to the software where possible.
+* Use sentence casing.
+* End with "..." while an action is running and the text will be
+  replaced when it finishes: "Saving 10 songs...", then "10 songs
+  saved". Text that is not going to change does not get one.
+* Use standard English. Do not use ", FANBOY" for dependent clauses.
+* Use professional, neutral language.
+  * 
+
 ## Architecture invariants
 
 The detail is in `docs/architecture.md`; these are the rules that break
