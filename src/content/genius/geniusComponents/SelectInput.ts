@@ -1,16 +1,11 @@
 /** Genius's `SelectInput`, a single choice dropdown. */
 
-import { createElement } from "react";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageElement,
-    type SelectInputProps,
-} from "@/bindings";
+import { createElement, type FC } from "react";
+import type { SelectInputProps } from "@/bindings";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */
-export const selectInputSlot = slot<PageComponent<SelectInputProps>>(
+export const selectInputSlot = slot<FC<SelectInputProps>>(
     "Genius's SelectInput",
 );
 
@@ -23,7 +18,5 @@ export const hasSelectInput = (): boolean => selectInputSlot.peek() !== null;
  * Their component, read at render rather than at import.
  * @throws If nothing bound it; a component cannot return a `Result`.
  */
-export const SelectInput = asPageValue<PageComponent<SelectInputProps>>(
-    (props: SelectInputProps): PageElement =>
-        createElement(selectInputSlot.get(), props),
-);
+export const SelectInput: FC<SelectInputProps> = (props) =>
+    createElement(selectInputSlot.get(), props);

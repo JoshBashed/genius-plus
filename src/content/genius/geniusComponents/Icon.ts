@@ -1,7 +1,7 @@
 /** Genius's own icons, each read at render rather than at import. */
 
-import { createElement, Fragment } from "react";
-import type { IconProps, PageComponent, PageElement } from "@/bindings";
+import { createElement, type FC } from "react";
+import type { IconProps } from "@/bindings";
 import { log } from "@/utilities/log";
 import { slot } from "../slot";
 
@@ -16,12 +16,12 @@ import { slot } from "../slot";
 export type IconName = "plus" | "check" | "warning" | "alert";
 
 const SLOTS: Readonly<
-    Record<IconName, ReturnType<typeof slot<PageComponent<IconProps>>>>
+    Record<IconName, ReturnType<typeof slot<FC<IconProps>>>>
 > = {
-    alert: slot<PageComponent<IconProps>>("Genius's alert icon"),
-    check: slot<PageComponent<IconProps>>("Genius's check icon"),
-    plus: slot<PageComponent<IconProps>>("Genius's plus icon"),
-    warning: slot<PageComponent<IconProps>>("Genius's warning icon"),
+    alert: slot<FC<IconProps>>("Genius's alert icon"),
+    check: slot<FC<IconProps>>("Genius's check icon"),
+    plus: slot<FC<IconProps>>("Genius's plus icon"),
+    warning: slot<FC<IconProps>>("Genius's warning icon"),
 };
 
 export const alertIconSlot = SLOTS.alert;
@@ -65,12 +65,12 @@ export interface IconSlotProps extends IconProps {
  * The first of `names` this page actually bound.
  * @returns Nothing at all when it bound none of them.
  */
-export const Icon = ({ names, ...props }: IconSlotProps): PageElement => {
+export const Icon: FC<IconSlotProps> = ({ names, ...props }) => {
     for (const name of names) {
         const found = SLOTS[name].peek();
 
         if (found !== null) {
-            return createElement<IconProps>(found, props);
+            return createElement(found, props);
         }
     }
 
@@ -80,5 +80,5 @@ export const Icon = ({ names, ...props }: IconSlotProps): PageElement => {
     // hardest kind of missing to account for.
     said(names);
 
-    return createElement(Fragment, null);
+    return null;
 };
