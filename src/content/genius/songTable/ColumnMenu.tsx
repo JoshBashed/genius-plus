@@ -1,8 +1,9 @@
 /** The header menu that stages one value across a whole column. */
+
+import { useEffect, useRef } from "react";
 import type { PageElement, PageNode } from "@/bindings";
 import { FIELD_LABELS } from "../draft";
 import { Dropdown, hasDropdown } from "../geniusComponents";
-import { useEffect, useRef } from "../react";
 import type { ColumnSpec } from "./columns";
 import { MenuPanel } from "./styles";
 

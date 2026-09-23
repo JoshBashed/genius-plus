@@ -1,4 +1,6 @@
 /** Step one: the Apple Music link, and everything read from it. */
+
+import { memo, useState } from "react";
 import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import {
     describeAppleAlbumFailure,
@@ -18,7 +20,6 @@ import {
 import { Button } from "../../geniusComponents/Button";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { TextInput } from "../../geniusComponents/TextInput";
-import { memo, useState } from "../../react";
 import { Actions, Note, Panel } from "../styles";
 
 export interface AlbumStepProps {

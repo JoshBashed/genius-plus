@@ -1,11 +1,12 @@
 /** Genius's `TagInput`, the chip field behind every credit. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type PageComponent,
     type PageElement,
     type TagInputProps,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

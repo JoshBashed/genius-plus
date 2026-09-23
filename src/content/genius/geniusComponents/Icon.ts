@@ -1,7 +1,8 @@
 /** Genius's own icons, each read at render rather than at import. */
+
+import { createElement, Fragment } from "react";
 import type { IconProps, PageComponent, PageElement } from "@/bindings";
 import { log } from "@/utilities/log";
-import { createElement, Fragment } from "../react";
 import { slot } from "../slot";
 
 /**

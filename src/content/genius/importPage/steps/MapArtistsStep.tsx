@@ -1,4 +1,6 @@
 /** Step three: every name Apple credits, against a Genius artist. */
+
+import { memo } from "react";
 import {
     asPageValue,
     type PageComponent,
@@ -7,7 +9,6 @@ import {
 } from "@/bindings";
 import type { ContributorPlan } from "../../albumImport/contributors";
 import { Button } from "../../geniusComponents/Button";
-import { memo } from "../../react";
 import { ContributorMap } from "../ContributorMap";
 import { Actions, Panel } from "../styles";
 

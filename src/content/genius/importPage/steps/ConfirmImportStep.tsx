@@ -1,5 +1,6 @@
 /** Step five: what the import will do, and the two ways to run it. */
 
+import { memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
 import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import { loadAlbumTracks } from "../../albumImport/albumTracks";
@@ -22,7 +23,6 @@ import { Icon } from "../../geniusComponents/Icon";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { optionLabel, searchSongs } from "../../options";
 import { drain } from "../../pool";
-import { memo, useEffect, useState } from "../../react";
 import { borrowIconsFrom } from "../borrowIcons";
 import type { GeniusAlbum } from "../geniusAlbums";
 import { plural } from "../plural";

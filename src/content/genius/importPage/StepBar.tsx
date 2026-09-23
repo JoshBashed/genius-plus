@@ -1,6 +1,7 @@
 /** The stepped progress bar, one segment per step. */
+
+import { memo } from "react";
 import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
-import { memo } from "../react";
 import { Steps } from "./styles";
 import { STEP_LABELS, type StepNumber } from "./wizard";
 

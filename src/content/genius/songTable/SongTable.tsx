@@ -1,4 +1,6 @@
 /** The album table: its entry point, its modals, and its staged edits. */
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     asPageValue,
     describeBindingError,
@@ -51,7 +53,6 @@ import {
 import { optionFor, optionLabel } from "../options";
 import type { AlbumSeed } from "../pageState";
 import { canEdit } from "../permissions";
-import { useCallback, useEffect, useRef, useState } from "../react";
 import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
 import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
 import {
@@ -465,7 +466,7 @@ const renderSongTable = (props: SongTableProps): PageElement => {
         setLoads((previous) => ({ ...previous, [songId]: result }));
     }, []);
 
-    // `album` never changes while this tree is mounted, so it is no dep.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: `album` never changes while this tree is mounted.
     useEffect(() => {
         if (!opened) {
             return;

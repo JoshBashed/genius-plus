@@ -1,11 +1,12 @@
 /** Genius's `TextInput`, a single line field. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type PageComponent,
     type PageElement,
     type TextInputProps,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

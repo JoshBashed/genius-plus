@@ -1,11 +1,12 @@
 /** Genius's `SmallButton`, the compact control beside a row. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type PageComponent,
     type PageElement,
     type SmallButtonProps,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

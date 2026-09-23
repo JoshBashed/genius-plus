@@ -1,9 +1,9 @@
 /** The metadata editor, on a React album page. */
 import { Result } from "@resulted/results";
+import { createElement } from "react";
 import { describeMarkers, getPage, type PageElement } from "@/bindings";
 import { loadPrimaryTagOptions } from "../options";
 import { describePageError, isAlbumUrl, readAlbumSeed } from "../pageState";
-import { createElement } from "../react";
 import { postStatus } from "../relay";
 import { legacyNotice } from "./legacyNotice";
 import type { Loader, PrepareFailure } from "./mount";

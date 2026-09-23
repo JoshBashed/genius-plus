@@ -25,7 +25,6 @@ export {
     setWarningIcon,
     warningIconSlot,
 } from "./Icon";
-export * from "./react";
 export {
     hasSelectInput,
     SelectInput,

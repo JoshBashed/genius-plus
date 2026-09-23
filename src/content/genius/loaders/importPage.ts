@@ -1,5 +1,6 @@
 /** The album import assistant, on the route Genius answers with a 404. */
 import { Result } from "@resulted/results";
+import { createElement } from "react";
 import {
     borrowChunks,
     describeBindingError,
@@ -11,7 +12,6 @@ import {
 import { log } from "@/utilities/log";
 import { loadGeniusAlbum } from "../importPage/geniusAlbums";
 import { HIDE_STYLE_ID, IMPORT_PATH, NOT_FOUND } from "../importRoute";
-import { createElement } from "../react";
 import type { Loader } from "./mount";
 
 /**

@@ -1,5 +1,6 @@
 /** Step two: the album Apple returned, before anything is done with it. */
 
+import { memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
 import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
 import {
@@ -21,7 +22,6 @@ import { Spinner } from "../../geniusComponents/Spinner";
 import { TextInput } from "../../geniusComponents/TextInput";
 import { useLanguageOptions } from "../../geniusHooks";
 import { loadPrimaryTagOptions } from "../../options";
-import { memo, useEffect, useState } from "../../react";
 import { AlbumMedia } from "../AlbumMedia";
 import { plural } from "../plural";
 import { Actions, Choice, Note, Panel } from "../styles";

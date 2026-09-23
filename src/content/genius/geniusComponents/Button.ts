@@ -1,11 +1,12 @@
 /** Genius's `Button`, the table's own primary control. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type ButtonProps,
     type PageComponent,
     type PageElement,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

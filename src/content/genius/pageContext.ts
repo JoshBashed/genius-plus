@@ -1,5 +1,6 @@
 /** Borrows the page's context values off the live fiber tree. */
 import { Result } from "@resulted/results";
+import { createElement } from "react";
 import {
     asPageValue,
     type BindingError,
@@ -9,7 +10,6 @@ import {
     type PageElement,
     type PageNode,
 } from "@/bindings";
-import { createElement } from "./react";
 
 const PROVIDER = Symbol.for("react.provider");
 const CONTEXT = Symbol.for("react.context");

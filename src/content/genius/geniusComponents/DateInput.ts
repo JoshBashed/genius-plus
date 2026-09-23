@@ -1,11 +1,12 @@
 /** Genius's `DateInput`, the three release date dropdowns. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type DateInputProps,
     type PageComponent,
     type PageElement,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

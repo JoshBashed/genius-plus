@@ -1,11 +1,12 @@
 /** Genius's `Checkbox`, their own box rather than the browser's. */
+
+import { createElement } from "react";
 import {
     asPageValue,
     type CheckboxProps,
     type PageComponent,
     type PageElement,
 } from "@/bindings";
-import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

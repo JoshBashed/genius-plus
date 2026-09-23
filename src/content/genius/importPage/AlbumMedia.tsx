@@ -1,4 +1,6 @@
 /** The artwork beside a title, which three steps lay out the same way. */
+
+import { memo } from "react";
 import {
     asPageValue,
     type PageComponent,
@@ -7,7 +9,6 @@ import {
 } from "@/bindings";
 import { appleArtwork } from "@/utilities/appleAlbum";
 import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import { memo } from "../react";
 import { Media } from "./styles";
 
 /** Artwork big enough for the panel, asked for by filename. */
