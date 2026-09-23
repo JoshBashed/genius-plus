@@ -9,7 +9,7 @@ import {
     type PageElement,
     type PageNode,
 } from "@/bindings";
-import { createElement } from "./reactHost/react";
+import { createElement } from "./react";
 
 const PROVIDER = Symbol.for("react.provider");
 const CONTEXT = Symbol.for("react.context");

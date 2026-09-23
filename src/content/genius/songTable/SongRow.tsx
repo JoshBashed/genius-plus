@@ -11,7 +11,7 @@ import { SmallButton, Spinner } from "../geniusComponents";
 import type { SongMetadata } from "../metadata";
 import type { TrackSeed } from "../pageState";
 import { canEdit, permissionsKnown } from "../permissions";
-import { memo, useCallback, useMemo } from "../reactHost/react";
+import { memo, useCallback, useMemo } from "../react";
 import { type FieldConflict, invalidFields, type SaveStage } from "../write";
 import { ColumnEditor, withCurrent } from "./ColumnEditor";
 import { COLUMNS } from "./columns";

@@ -22,7 +22,7 @@ import { Icon } from "../../geniusComponents/Icon";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { optionLabel, searchSongs } from "../../options";
 import { drain } from "../../pool";
-import { memo, useEffect, useState } from "../../reactHost/react";
+import { memo, useEffect, useState } from "../../react";
 import { borrowIconsFrom } from "../borrowIcons";
 import type { GeniusAlbum } from "../geniusAlbums";
 import { plural } from "../plural";

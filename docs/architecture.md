@@ -28,7 +28,7 @@ Inside `src/content/genius/`:
 | `install.ts` | Finds everything borrowed and fills its slot, at startup |
 | `slot.ts` | `slot()`, a value that is bound after its module loads |
 | `loaders/` | One loader per page kind, and `mount.ts`, which runs them |
-| `reactHost/` | The page's React, and the jsx runtime ours compiles to |
+| `react/` | The page's React, and the jsx runtime ours compiles to |
 | `geniusComponents/`, `geniusHooks/` | Slot-backed borrowed bindings |
 | `songTable/` | The album metadata editor table |
 | `importPage/`, `albumImport/` | The Apple import assistant, its pipeline |
@@ -45,7 +45,7 @@ Inside `src/content/genius/`:
   `scripts/checkReact.mjs` fails the build on it.
 - JSX under `src/content/genius/` compiles to Genius's runtime through
   `@page-react/jsx-runtime`, aliased in `rspack.config.ts` to
-  `reactHost/jsxRuntime.ts`. The directory's own `tsconfig.json` sets
+  `react/jsxRuntime.ts`. The directory's own `tsconfig.json` sets
   `jsxImportSource`, which is why `pnpm typecheck` runs two projects.
 - **Borrowed things live in slots, read at the call.** Each module in
   `geniusComponents/` and `geniusHooks/` holds a `slot()` and exports a

@@ -7,7 +7,7 @@ import {
 } from "@/bindings";
 import type { ContributorPlan } from "../../albumImport/contributors";
 import { Button } from "../../geniusComponents/Button";
-import { memo } from "../../reactHost/react";
+import { memo } from "../../react";
 import { ContributorMap } from "../ContributorMap";
 import { Actions, Panel } from "../styles";
 

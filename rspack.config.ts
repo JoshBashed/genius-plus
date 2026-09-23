@@ -56,10 +56,10 @@ export default defineConfig({
             "@": path.resolve("src"),
             // Genius JSX builds elements with the page's React.
             "@page-react/jsx-runtime": path.resolve(
-                "src/content/genius/reactHost/jsxRuntime.ts",
+                "src/content/genius/react/jsxRuntime.ts",
             ),
             "@page-react/jsx-dev-runtime": path.resolve(
-                "src/content/genius/reactHost/jsxRuntime.ts",
+                "src/content/genius/react/jsxRuntime.ts",
             ),
         },
     },

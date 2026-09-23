@@ -11,7 +11,7 @@ import {
 import { log } from "@/utilities/log";
 import { loadGeniusAlbum } from "../importPage/geniusAlbums";
 import { HIDE_STYLE_ID, IMPORT_PATH, NOT_FOUND } from "../importRoute";
-import { createElement } from "../reactHost/react";
+import { createElement } from "../react";
 import type { Loader } from "./mount";
 
 /**

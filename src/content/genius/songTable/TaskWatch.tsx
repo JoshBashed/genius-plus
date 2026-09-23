@@ -4,7 +4,7 @@ import { log } from "@/utilities/log";
 import { type BulkEvent, parseBulkEvent } from "../bulkStatus";
 import type { SongDraft } from "../draft";
 import { usePusher } from "../geniusHooks";
-import { useCallback, useEffect } from "../reactHost/react";
+import { useCallback, useEffect } from "../react";
 import type { BulkTask, FieldConflict } from "../write";
 
 /** Their event name for every bulk update task's status. */

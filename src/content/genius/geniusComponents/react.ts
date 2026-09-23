@@ -11,4 +11,4 @@ export {
     useMemo,
     useRef,
     useState,
-} from "../reactHost/react";
+} from "../react";

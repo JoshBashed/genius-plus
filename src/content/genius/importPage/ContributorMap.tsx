@@ -15,7 +15,7 @@ import {
 import { Icon } from "../geniusComponents/Icon";
 import { TagInput } from "../geniusComponents/TagInput";
 import { loadArtistOptions } from "../options";
-import { memo } from "../reactHost/react";
+import { memo } from "../react";
 import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
 import { Rows, Scroller } from "./styles";
 

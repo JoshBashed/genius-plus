@@ -2,7 +2,7 @@
 import type { PageElement, PageRoot } from "@/bindings";
 import type { Runtime } from "../install";
 import { withPageContexts } from "../pageContext";
-import { createElement } from "../reactHost/react";
+import { createElement } from "../react";
 
 export interface MountedTree {
     readonly unmount: () => void;

@@ -8,8 +8,8 @@
         "jsxImportSource": "@page-react",
         "paths": {
             "@/*": ["../../*"],
-            "@page-react/jsx-runtime": ["./reactHost/jsxRuntime.ts"],
-            "@page-react/jsx-dev-runtime": ["./reactHost/jsxRuntime.ts"]
+            "@page-react/jsx-runtime": ["./react/jsxRuntime.ts"],
+            "@page-react/jsx-dev-runtime": ["./react/jsxRuntime.ts"]
         }
     },
     "include": ["."],

@@ -5,7 +5,7 @@ import {
     type PageElement,
     type TagInputProps,
 } from "@/bindings";
-import { createElement } from "../reactHost/react";
+import { createElement } from "../react";
 import { slot } from "../slot";
 
 /** Exported whole so an install can record why a lookup failed. */

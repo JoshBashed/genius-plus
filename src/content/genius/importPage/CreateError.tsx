@@ -1,6 +1,6 @@
 /** What Genius said when it would not create the song. */
 import { asPageValue, type PageComponent, type PageElement } from "@/bindings";
-import { memo } from "../reactHost/react";
+import { memo } from "../react";
 import type { CreateSongFailure } from "./createSong";
 import { Problem } from "./styles";
 

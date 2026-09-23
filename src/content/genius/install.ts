@@ -53,8 +53,8 @@ import {
     capturePageContexts,
     pageTheme,
 } from "./pageContext";
-import { primeJsxRuntime } from "./reactHost/jsxRuntime";
-import { reactSlot } from "./reactHost/react";
+import { reactSlot } from "./react";
+import { primeJsxRuntime } from "./react/jsxRuntime";
 import { installAll, installOptional, installs } from "./slot";
 
 /** What a page still has to hold, because it renders with it directly. */

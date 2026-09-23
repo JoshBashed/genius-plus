@@ -7,7 +7,7 @@ import {
 } from "@/bindings";
 import { appleArtwork } from "@/utilities/appleAlbum";
 import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import { memo } from "../reactHost/react";
+import { memo } from "../react";
 import { Media } from "./styles";
 
 /** Artwork big enough for the panel, asked for by filename. */

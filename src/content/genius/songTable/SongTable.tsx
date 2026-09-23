@@ -51,7 +51,7 @@ import {
 import { optionFor, optionLabel } from "../options";
 import type { AlbumSeed } from "../pageState";
 import { canEdit } from "../permissions";
-import { useCallback, useEffect, useRef, useState } from "../reactHost/react";
+import { useCallback, useEffect, useRef, useState } from "../react";
 import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
 import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
 import {

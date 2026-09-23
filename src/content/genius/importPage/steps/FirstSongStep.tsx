@@ -8,7 +8,7 @@ import { Button } from "../../geniusComponents/Button";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { useGoogleReCaptcha } from "../../geniusHooks";
 import { loadPrimaryTagOptions, optionLabel, searchSongs } from "../../options";
-import { memo, useEffect, useState } from "../../reactHost/react";
+import { memo, useEffect, useState } from "../../react";
 import { AlbumMedia } from "../AlbumMedia";
 import { addSongUrl } from "../addSong";
 import {
