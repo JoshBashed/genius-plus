@@ -40,9 +40,13 @@ Inside `src/content/genius/`:
 ## Two Reacts, and the slot pattern
 
 - The page runs React 18; we bundle 19 for the popup only. Borrowed
-  Genius components work only in theirs. Nothing under
-  `src/content/genius/` may import `react` or `react-dom`;
-  `scripts/checkReact.mjs` fails the build on it.
+  Genius components work only in theirs.
+- **`react` means their React under `src/content/genius/`.** A rule in
+  `rspack.config.ts` resolves it to `react/index.ts` for that directory
+  alone, and its `tsconfig.json` types it with `@types/react-18`, the
+  version the page runs. `react-dom`, and any `react` in
+  `src/bindings/`, is refused; `scripts/checkReact.mjs` also fails the
+  build if React's own code reaches a Genius bundle.
 - JSX under `src/content/genius/` compiles to Genius's runtime through
   `@page-react/jsx-runtime`, aliased in `rspack.config.ts` to
   `react/jsxRuntime.ts`. The directory's own `tsconfig.json` sets

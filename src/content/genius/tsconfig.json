@@ -8,6 +8,8 @@
         "jsxImportSource": "@page-react",
         "paths": {
             "@/*": ["../../*"],
+            // The page runs React 18, so `react` here is typed as 18.
+            "react": ["../../../node_modules/@types/react-18"],
             "@page-react/jsx-runtime": ["./react/jsxRuntime.ts"],
             "@page-react/jsx-dev-runtime": ["./react/jsxRuntime.ts"]
         }

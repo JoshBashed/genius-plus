@@ -3,7 +3,14 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
-const SOURCE_DIRS = ["src/content/genius", "src/bindings"];
+/**
+ * Where an import of each module is refused. `react` itself is allowed
+ * under `src/content/genius`, because rspack resolves it to their React.
+ */
+const SOURCE_DIRS = [
+    { dir: "src/content/genius", allowed: ["react"] },
+    { dir: "src/bindings", allowed: [] },
+];
 const BUNDLES = [
     "dist/content/genius.js",
     "dist/content/genius-main.js",
@@ -43,13 +50,18 @@ const walk = (dir) => {
 
 const problems = [];
 
-for (const dir of SOURCE_DIRS) {
+for (const { dir, allowed } of SOURCE_DIRS) {
     for (const file of walk(join(ROOT, dir))) {
         const source = readFileSync(file, "utf8");
 
         for (const pattern of FORBIDDEN_PATTERNS) {
             for (const match of source.matchAll(pattern)) {
                 const module = `${match[1]}${match[2] ?? ""}`;
+
+                if (allowed.includes(module)) {
+                    continue;
+                }
+
                 problems.push(`${relative(ROOT, file)} imports "${module}"`);
             }
         }
@@ -84,5 +96,5 @@ if (problems.length > 0) {
 }
 
 console.info(
-    `check-react: ${BUNDLES.join(", ")} carry no React, and no file under ${SOURCE_DIRS.join(" or ")} imports it`,
+    `check-react: ${BUNDLES.join(", ")} carry no React, and no file under ${SOURCE_DIRS.map((entry) => entry.dir).join(" or ")} imports it`,
 );

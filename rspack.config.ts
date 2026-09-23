@@ -69,6 +69,12 @@ export default defineConfig({
                 // This directory renders into Genius's React, not ours.
                 test: /\.[jt]sx?$/,
                 include: /src[\\/]content[\\/]genius/,
+                // Their React, under its own name, for this directory only.
+                resolve: {
+                    alias: {
+                        react$: path.resolve("src/content/genius/react"),
+                    },
+                },
                 loader: "builtin:swc-loader",
                 options: {
                     jsc: {
