@@ -3,7 +3,7 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
-import { decodeOr } from "@/utilities/decode";
+import { decode, decodeOr } from "@/utilities/decode";
 import { apiGet, type ReadFailure } from "./api";
 import type { NamedRef } from "./metadata";
 
@@ -146,42 +146,53 @@ export const loadArtistOptions = debounced(async (input: string) => {
  */
 export const searchSongs = async (
     input: string,
-): Promise<readonly SelectOption[]> => {
+): Promise<Result<readonly SelectOption[], ReadFailure>> => {
     const response = await apiGet("/search/song", { q: input });
 
     if (response.isErr()) {
-        return [];
+        return response;
     }
 
-    const parsed = decodeOr(songsSchema, response.value);
+    const parsed = decode(songsSchema, response.value, "a song search");
 
-    return (parsed?.sections[0]?.hits ?? []).flatMap(
-        (row): readonly SelectOption[] => {
-            const hit = decodeOr(songHitSchema, row);
+    if (parsed.isErr()) {
+        return parsed;
+    }
 
-            if (hit === null) {
-                return [];
-            }
+    return Result.ok(
+        (parsed.value.sections[0]?.hits ?? []).flatMap(
+            (row): readonly SelectOption[] => {
+                const hit = decodeOr(songHitSchema, row);
 
-            const { artist_names, id, title, title_with_featured } = hit.result;
+                if (hit === null) {
+                    return [];
+                }
 
-            return [
-                {
-                    value: id,
-                    label: {
-                        primary: title_with_featured ?? title,
-                        ...(artist_names == null
-                            ? {}
-                            : { secondary: artist_names }),
+                const { artist_names, id, title, title_with_featured } =
+                    hit.result;
+
+                return [
+                    {
+                        value: id,
+                        label: {
+                            primary: title_with_featured ?? title,
+                            ...(artist_names == null
+                                ? {}
+                                : { secondary: artist_names }),
+                        },
                     },
-                },
-            ];
-        },
+                ];
+            },
+        ),
     );
 };
 
 /** The same search, paced for a field the user is typing into. */
-export const loadSongOptions = debounced(searchSongs);
+export const loadSongOptions = debounced(async (input: string) => {
+    const found = await searchSongs(input);
+
+    return found.isOk() ? found.value : [];
+});
 
 /** `GET /tags/autocomplete?q=`. Tag labels are plain strings. */
 export const loadTagOptions = debounced(async (input: string) => {
