@@ -2,7 +2,10 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { loadAlbumTracks } from "../../albumImport/albumTracks";
+import {
+    describeAlbumTracksFailure,
+    loadAlbumTracks,
+} from "../../albumImport/albumTracks";
 import {
     type ContributorPlan,
     unmappedCount,
@@ -125,7 +128,36 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
         let live = true;
 
         void loadAlbumTracks(target.id).then(async (tracks) => {
-            if (!live || tracks.isErr()) {
+            if (!live) {
+                return;
+            }
+
+            // Every row is left for the reader, which is no worse than a
+            // search that found nothing, and nothing is proposed as new.
+            if (tracks.isErr()) {
+                const first = album.tracks[0];
+
+                // The song that named the album is known by its id, and
+                // leaving it unchosen invites creating it a second time.
+                if (firstSongId !== null && first !== undefined) {
+                    setChoices(
+                        new Map([
+                            [
+                                first.key,
+                                {
+                                    kind: "song",
+                                    songId: firstSongId,
+                                    title: first.title,
+                                },
+                            ],
+                        ]),
+                    );
+                }
+
+                setNote(
+                    `Tracklist not read: choose a song for each track (${describeAlbumTracksFailure(tracks.error)}).`,
+                );
+                setReady(true);
                 return;
             }
 
