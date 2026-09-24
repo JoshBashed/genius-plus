@@ -1,8 +1,6 @@
 /** Genius's own "search or create a song" control, rebuilt. */
 import type { FC } from "react";
 import type { SelectOption } from "@/bindings";
-// Deep imports, not the barrel: it evaluates every component, and this
-// page binds only the few it renders with.
 import { TagInput } from "../geniusComponents/TagInput";
 import { loadSongOptions } from "../options";
 import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";

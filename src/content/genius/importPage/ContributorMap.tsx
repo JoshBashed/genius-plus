@@ -7,8 +7,6 @@ import {
     type ContributorPlan,
     contributorList,
 } from "../albumImport/contributors";
-// Deep imports, not the barrel: it evaluates every component, and this
-// page binds only the few it renders with.
 import { Icon } from "../geniusComponents/Icon";
 import { TagInput } from "../geniusComponents/TagInput";
 import { loadArtistOptions } from "../options";
