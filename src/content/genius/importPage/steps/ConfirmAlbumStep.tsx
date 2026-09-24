@@ -2,6 +2,7 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
+import { plural } from "@/utilities/plural";
 import {
     type ContributorPlan,
     unmappedCount,
@@ -22,7 +23,6 @@ import { TextInput } from "../../geniusComponents/TextInput";
 import { useLanguageOptions } from "../../geniusHooks";
 import { loadPrimaryTagOptions } from "../../options";
 import { AlbumMedia } from "../AlbumMedia";
-import { plural } from "../plural";
 import { Actions, Choice, Note, Panel } from "../styles";
 import type { ConfirmedAlbum } from "../wizard";
 

@@ -2,6 +2,7 @@
 import { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
 import { describeRequestError } from "@/utilities/http";
+import { plural } from "@/utilities/plural";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
 import { apiPut, csrfToken, type WriteFailure } from "./api";
 import {
@@ -376,10 +377,9 @@ export const planSave = (edits: readonly SongEdit[]): SavePlan => {
 
 /** One line naming the songs and fields a plan would send. */
 export const describePlan = (plan: SavePlan): string => {
-    const songs = plan.writes.length === 1 ? "song" : "songs";
     const names = plan.fields.map((field) => FIELD_LABELS[field]).join(", ");
 
-    return `${plan.writes.length} ${songs}, ${names}`;
+    return `${plural(plan.writes.length, "song")}, ${names}`;
 };
 
 /**
