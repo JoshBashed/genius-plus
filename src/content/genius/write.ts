@@ -89,13 +89,10 @@ interface BulkUpdateBody {
     readonly scalar_field_updates: Readonly<Record<string, ScalarFieldUpdate>>;
 }
 
-/** Their `w` helper folds `text_format` into every per-song write's body. */
+/** A per-song write's body; `apiPut` adds the `text_format` it needs. */
 interface SongUpdateBody {
-    readonly text_format: string;
     readonly song: Readonly<Record<string, unknown>>;
 }
-
-const TEXT_FORMAT = "html,markdown,preview";
 
 /** The five `array_field_updates` keys, in Genius's own descriptor order. */
 const ARRAY_FIELDS = [
@@ -327,7 +324,7 @@ const buildBodies = (
         song:
             Object.keys(songUpdates).length === 0
                 ? null
-                : { text_format: TEXT_FORMAT, song: songUpdates },
+                : { song: songUpdates },
     };
 };
 
