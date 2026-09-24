@@ -1,6 +1,8 @@
 /** The writes: `bulk_update_songs` for the bulk fields, `PUT /songs/:id` else. */
 import { Result } from "@resulted/results";
+import { z } from "zod";
 import type { SelectOption } from "@/bindings";
+import { decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 import { plural } from "@/utilities/plural";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
@@ -444,37 +446,37 @@ export interface SaveOutcome {
 /** Three at a time: quick enough to feel live, gentle on a shared API. */
 const CONCURRENCY = 3;
 
-const channelOf = (
-    task: Readonly<Record<string, unknown>>,
-    response: Record<string, unknown>,
-): string | null => {
-    for (const value of [task.pusher_channel, response.pusher_channel]) {
-        if (typeof value === "string" && value !== "") {
-            return value;
-        }
-    }
+/** A channel name, or nothing when it is absent or not one. */
+const channelSchema = z.string().min(1).optional().catch(undefined);
 
-    return null;
-};
+/** The accepted task; the channel may sit on it or beside it. */
+const taskSchema = z.object({
+    pusher_channel: channelSchema,
+    task_id: z.union([z.number(), z.string()]),
+});
+
+const bulkAnswerSchema = z.object({
+    bulk_song_update_task: taskSchema.nullish().catch(null),
+    pusher_channel: channelSchema,
+});
 
 /** The accepted task: its id, and the channel its verdict arrives on. */
 const queuedTask = (
-    response: Record<string, unknown>,
+    response: unknown,
 ): { readonly id: string; readonly channel: string | null } | null => {
-    const task = response.bulk_song_update_task;
+    const task = decodeOr(bulkAnswerSchema, response);
 
-    if (typeof task !== "object" || task === null) {
+    if (task?.bulk_song_update_task == null) {
         return null;
     }
 
-    const fields = task as Readonly<Record<string, unknown>>;
-    const id = fields.task_id;
-
-    if (typeof id !== "number" && typeof id !== "string") {
-        return null;
-    }
-
-    return { channel: channelOf(fields, response), id: String(id) };
+    return {
+        channel:
+            task.bulk_song_update_task.pusher_channel ??
+            task.pusher_channel ??
+            null,
+        id: String(task.bulk_song_update_task.task_id),
+    };
 };
 
 /**
@@ -509,6 +511,9 @@ const putBulk = async (
     );
 };
 
+/** A per-song write's answer, which carries the stored song. */
+const songAnswerSchema = z.object({ song: z.looseObject({}) });
+
 /** This one is synchronous: a 2xx carrying the song means it is stored. */
 const putSong = async (
     songId: number,
@@ -520,9 +525,7 @@ const putSong = async (
         return Result.err(asFailure(response.error));
     }
 
-    const { song } = response.value;
-
-    return Result.ok(typeof song === "object" && song !== null);
+    return Result.ok(decodeOr(songAnswerSchema, response.value) !== null);
 };
 
 /**
