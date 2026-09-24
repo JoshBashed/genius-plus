@@ -2,6 +2,7 @@
 import { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
 import { log } from "@/utilities/log";
+import { plural } from "@/utilities/plural";
 import {
     type AlbumTracksFailure,
     describeAlbumTracksFailure,
@@ -297,7 +298,7 @@ export const runImport = async (
         onProgress(
             count === 0
                 ? "Ordering the tracklist…"
-                : `Creating ${count} song${count === 1 ? "" : "s"}…`,
+                : `Creating ${plural(count, "song")}…`,
         );
 
         // Without the record there is no way to know what the album is

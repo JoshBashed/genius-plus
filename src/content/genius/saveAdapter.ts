@@ -1,5 +1,6 @@
 /** The clipboard exports, kept beside the real write as secondary actions. */
 import { Result } from "@resulted/results";
+import { plural } from "@/utilities/plural";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -110,8 +111,6 @@ const toTsv = (edits: readonly SongEdit[]): string => {
     return `${[header.join("\t"), ...lines].join("\n")}\n`;
 };
 
-const plural = (count: number): string => (count === 1 ? "row" : "rows");
-
 export const SAVE_ADAPTERS: readonly SaveAdapter[] = [
     {
         id: "clipboard-json",
@@ -126,7 +125,7 @@ export const SAVE_ADAPTERS: readonly SaveAdapter[] = [
             return written.isErr()
                 ? written
                 : Result.ok(
-                      `Copied ${edits.length} edited ${plural(edits.length)} as JSON`,
+                      `Copied ${plural(edits.length, "edited song")} as JSON`,
                   );
         },
     },
@@ -143,7 +142,7 @@ export const SAVE_ADAPTERS: readonly SaveAdapter[] = [
             return written.isErr()
                 ? written
                 : Result.ok(
-                      `Copied ${edits.length} edited ${plural(edits.length)} as TSV`,
+                      `Copied ${plural(edits.length, "edited song")} as TSV`,
                   );
         },
     },

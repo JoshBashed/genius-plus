@@ -2,6 +2,7 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
+import { plural } from "@/utilities/plural";
 import {
     describeAlbumTracksFailure,
     loadAlbumTracks,
@@ -27,7 +28,6 @@ import { optionLabel, searchSongs } from "../../options";
 import { drain } from "../../pool";
 import { borrowIconsFrom } from "../borrowIcons";
 import type { GeniusAlbum } from "../geniusAlbums";
-import { plural } from "../plural";
 import {
     describeEmptyImport,
     describeImportFailure,

@@ -10,6 +10,7 @@ import {
     type SelectOption,
 } from "@/bindings";
 import { log } from "@/utilities/log";
+import { plural } from "@/utilities/plural";
 import {
     type BulkEvent,
     describeVerdict,
@@ -98,18 +99,16 @@ const STASH_DELAY_MS = 500;
 /** One object, so a row that has not loaded keeps the same prop. */
 const LOADING: RowLoad = { status: "loading" };
 
-const plural = (count: number): string => (count === 1 ? "song" : "songs");
-
 /** The line under the toolbar once a run finishes. */
 const describeOutcome = (outcome: SaveOutcome): string => {
     const parts: string[] = [];
 
     if (outcome.saved > 0) {
-        parts.push(`saved ${outcome.saved} ${plural(outcome.saved)}`);
+        parts.push(`saved ${plural(outcome.saved, "song")}`);
     }
 
     if (outcome.queued > 0) {
-        parts.push(`queued ${outcome.queued} ${plural(outcome.queued)}`);
+        parts.push(`queued ${plural(outcome.queued, "song")}`);
     }
 
     if (outcome.failed > 0) {
@@ -118,9 +117,7 @@ const describeOutcome = (outcome: SaveOutcome): string => {
 
     if (outcome.conflicted > 0) {
         parts.push(
-            `held fields back on ${outcome.conflicted} ${plural(
-                outcome.conflicted,
-            )} that changed on Genius`,
+            `held fields back on ${plural(outcome.conflicted, "song")} that changed on Genius`,
         );
     }
 
@@ -790,9 +787,7 @@ export const SongTable: FC<SongTableProps> = (props) => {
         setRows(next);
         setFillTarget(null);
         setMessage(
-            `${FIELD_LABELS[column.field]}: staged on ${filled} ${plural(
-                filled,
-            )}${skipped === 0 ? "" : `, skipped ${skipped}`}`,
+            `${FIELD_LABELS[column.field]}: staged on ${plural(filled, "song")}${skipped === 0 ? "" : `, skipped ${skipped}`}`,
         );
     };
 
@@ -901,7 +896,7 @@ export const SongTable: FC<SongTableProps> = (props) => {
         setPlan(null);
         setSaving(true);
         setSaves({});
-        setMessage(`Sending ${count} ${plural(count)} to Genius…`);
+        setMessage(`Sending ${plural(count, "song")} to Genius…`);
 
         void runSave(album.albumId, confirmed, (progress) => {
             const edited = pinned.get(progress.songId) ?? 0;
@@ -1013,9 +1008,7 @@ export const SongTable: FC<SongTableProps> = (props) => {
             {notice ? (
                 <div className="gp-notice">
                     <span>
-                        {`Restored unsaved edits to ${restoredCount} ${plural(
-                            restoredCount,
-                        )} from this browser.`}
+                        {`Restored unsaved edits to ${plural(restoredCount, "song")} from this browser.`}
                     </span>
                     <Button onClick={discardRestored} secondary type="button">
                         Discard
