@@ -4,40 +4,30 @@
 // nothing until something renders it, so importing one name no longer
 // evaluates a binding that this page never installed.
 
-export { Button, buttonSlot, hasButton, setButton } from "./Button";
-export { Checkbox, checkboxSlot, hasCheckbox, setCheckbox } from "./Checkbox";
+export { Button, buttonSlot } from "./Button";
+export { Checkbox, checkboxSlot } from "./Checkbox";
 export {
     DateInput,
     dateInputSlot,
-    hasDateInput,
-    setDateInput,
 } from "./DateInput";
-export { Dropdown, dropdownSlot, hasDropdown, setDropdown } from "./Dropdown";
+export { Dropdown, dropdownSlot, hasDropdown } from "./Dropdown";
 export {
     alertIconSlot,
     checkIconSlot,
     Icon,
     type IconName,
     plusIconSlot,
-    setAlertIcon,
-    setCheckIcon,
-    setPlusIcon,
-    setWarningIcon,
     warningIconSlot,
 } from "./Icon";
 export {
-    hasSelectInput,
     SelectInput,
     selectInputSlot,
-    setSelectInput,
 } from "./SelectInput";
 export {
-    hasSmallButton,
     SmallButton,
-    setSmallButton,
     smallButtonSlot,
 } from "./SmallButton";
-export { hasSpinner, Spinner, setSpinner, spinnerSlot } from "./Spinner";
+export { Spinner, spinnerSlot } from "./Spinner";
 export {
     setStyled,
     setTheme,
@@ -46,10 +36,8 @@ export {
     theme,
     themeSlot,
 } from "./styled";
-export { hasTagInput, setTagInput, TagInput, tagInputSlot } from "./TagInput";
+export { TagInput, tagInputSlot } from "./TagInput";
 export {
-    hasTextInput,
-    setTextInput,
     TextInput,
     textInputSlot,
 } from "./TextInput";

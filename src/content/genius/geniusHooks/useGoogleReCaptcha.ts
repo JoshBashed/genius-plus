@@ -7,8 +7,6 @@ export const useGoogleReCaptchaSlot = slot<() => UseGoogleReCaptchaResult>(
     "Genius's useGoogleReCaptcha",
 );
 
-export const setUseGoogleReCaptcha = useGoogleReCaptchaSlot.set;
-
 /**
  * Their Google ReCaptcha hook, which needs no key and no auth of ours.
  */

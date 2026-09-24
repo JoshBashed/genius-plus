@@ -7,8 +7,6 @@ import { slot } from "../slot";
 /** Exported whole so an install can record why a lookup failed. */
 export const dropdownSlot = slot<FC<DropdownProps>>("Genius's Dropdown");
 
-export const setDropdown = dropdownSlot.set;
-
 /** Whether this page bound it at all. */
 export const hasDropdown = (): boolean => dropdownSlot.peek() !== null;
 

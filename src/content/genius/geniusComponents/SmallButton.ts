@@ -9,11 +9,6 @@ export const smallButtonSlot = slot<FC<SmallButtonProps>>(
     "Genius's SmallButton",
 );
 
-export const setSmallButton = smallButtonSlot.set;
-
-/** Whether this page bound it at all. */
-export const hasSmallButton = (): boolean => smallButtonSlot.peek() !== null;
-
 /**
  * Their component, read at render rather than at import.
  * @throws If nothing bound it; a component cannot return a `Result`.

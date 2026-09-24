@@ -29,11 +29,6 @@ export const checkIconSlot = SLOTS.check;
 export const plusIconSlot = SLOTS.plus;
 export const warningIconSlot = SLOTS.warning;
 
-export const setAlertIcon = SLOTS.alert.set;
-export const setCheckIcon = SLOTS.check.set;
-export const setPlusIcon = SLOTS.plus.set;
-export const setWarningIcon = SLOTS.warning.set;
-
 /** One line per name set, not one per row that renders. */
 const warned = new Set<string>();
 

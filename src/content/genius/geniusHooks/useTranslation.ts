@@ -7,8 +7,6 @@ export const useTranslationSlot = slot<() => UseTranslationResult>(
     "Genius's useTranslation",
 );
 
-export const setUseTranslation = useTranslationSlot.set;
-
 /** Their translation hook, which needs no key and no auth of ours. */
 export const useTranslation = (): UseTranslationResult =>
     useTranslationSlot.get()();
