@@ -1,14 +1,10 @@
 import { Result } from "@resulted/results";
 import type * as React from "react";
+import type { ReactElement, ReactNode } from "react";
 import type { BindingError, ChunkError } from "./errors";
 import { findByKeys, missingKeys } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
-import {
-    asPageValue,
-    type ModuleNamespace,
-    type PageElement,
-    type PageNode,
-} from "./types";
+import { asPageValue, type ModuleNamespace } from "./types";
 
 /**
  * The page's own React, in React's own types. Two Reacts share no hooks
@@ -18,7 +14,7 @@ export type PageReact = typeof React;
 
 /** A mounted root from the page's `react-dom/client`. */
 export interface PageRoot {
-    readonly render: (element: PageElement) => void;
+    readonly render: (element: ReactElement) => void;
     readonly unmount: () => void;
 }
 
@@ -27,7 +23,7 @@ export interface PageReactDomClient {
     readonly createRoot: (container: Element | DocumentFragment) => PageRoot;
     readonly hydrateRoot: (
         container: Element,
-        element: PageElement,
+        element: ReactElement,
     ) => PageRoot;
 }
 
@@ -35,9 +31,9 @@ export interface PageReactDomClient {
 export interface PageReactDom {
     readonly version: string;
     readonly createPortal: (
-        children: PageNode,
+        children: ReactNode,
         container: Element | DocumentFragment,
-    ) => PageElement;
+    ) => ReactElement;
     readonly flushSync: <Value>(action: () => Value) => Value;
 }
 

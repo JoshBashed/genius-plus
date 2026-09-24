@@ -1,16 +1,13 @@
 /**
  * Genius's `Modal`.
  */
+
 import { Result } from "@resulted/results";
+import type { FC, ReactNode } from "react";
 import type { BindingError } from "./errors";
 import { readProperty, selectExport } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
-import {
-    asPageValue,
-    type ModuleNamespace,
-    type PageComponent,
-    type PageNode,
-} from "./types";
+import { asPageValue, type ModuleNamespace } from "./types";
 
 /** Rollup named this chunk after an unrelated hook it also contains. */
 const MODAL_CHUNK = "useAnnotationTracking";
@@ -19,7 +16,7 @@ const MODAL_CHUNK = "useAnnotationTracking";
 export interface ModalProps {
     readonly show: boolean;
     readonly onClose: () => void;
-    readonly children: PageNode;
+    readonly children: ReactNode;
     /** Renders the save control inside the modal's own `Controls`. */
     readonly onSave?: () => void;
     readonly isSaveActive?: boolean;
@@ -46,7 +43,7 @@ const findDevicePair = (ns: ModuleNamespace): Result<unknown, BindingError> =>
         return typeof name === "string" && name.startsWith(DEVICE_PREFIX);
     });
 
-const bindModal = memoBinding<PageComponent<ModalProps>>(async () => {
+const bindModal = memoBinding<FC<ModalProps>>(async () => {
     const ns = await loadChunk(MODAL_CHUNK);
 
     if (ns.isErr()) {
@@ -59,11 +56,11 @@ const bindModal = memoBinding<PageComponent<ModalProps>>(async () => {
         return found;
     }
 
-    return Result.ok(asPageValue<PageComponent<ModalProps>>(found.value));
+    return Result.ok(asPageValue<FC<ModalProps>>(found.value));
 });
 
 /**
  * Genius's `Modal` (cached): the desktop and mobile pair.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getModal: Binding<PageComponent<ModalProps>> = () => bindModal();
+export const getModal: Binding<FC<ModalProps>> = () => bindModal();

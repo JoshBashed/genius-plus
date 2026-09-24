@@ -1,4 +1,5 @@
 import { Result } from "@resulted/results";
+import type { FC, ReactNode, SyntheticEvent } from "react";
 import type { BindingError } from "./errors";
 import {
     findByDisplayName,
@@ -6,17 +7,11 @@ import {
     selectExport,
 } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
-import {
-    asPageValue,
-    type ModuleNamespace,
-    type PageComponent,
-    type PageNode,
-    type PageSyntheticEvent,
-} from "./types";
+import { asPageValue, type ModuleNamespace } from "./types";
 
 /** One accessor per borrowed component. Prop names read from chunks. */
 
-type Bind<Props> = Binding<PageComponent<Props>>;
+type Bind<Props> = Binding<FC<Props>>;
 
 const bind = <Props>(
     chunk: string,
@@ -35,21 +30,21 @@ const bind = <Props>(
             return found;
         }
 
-        return Result.ok(asPageValue<PageComponent<Props>>(found.value));
+        return Result.ok(asPageValue<FC<Props>>(found.value));
     });
 
 /** Props every borrowed component forwards to its underlying element. */
 export interface PassThroughProps {
     readonly className?: string;
     readonly id?: string;
-    readonly onClick?: (event: PageSyntheticEvent) => void;
+    readonly onClick?: (event: SyntheticEvent) => void;
     readonly "aria-label"?: string;
     readonly "data-testid"?: string;
 }
 
 /** The primary action button, with `loading` and `success` states. */
 export interface ButtonProps extends PassThroughProps {
-    readonly children: PageNode;
+    readonly children: ReactNode;
     /** Solid green "saved" styling. */
     readonly success?: boolean;
     /** Foreground and background swapped. */
@@ -114,7 +109,7 @@ export const getButton: Bind<ButtonProps> = bind("Button", (ns) =>
 
 /** The compact button, for toolbars and inline actions. */
 export interface SmallButtonProps extends PassThroughProps {
-    readonly children: PageNode;
+    readonly children: ReactNode;
     readonly type?: "button" | "submit" | "reset";
     readonly inverted?: boolean;
     readonly secondary?: boolean;
@@ -142,7 +137,7 @@ export interface TextInputProps extends PassThroughProps {
     readonly value?: string;
     readonly defaultValue?: string;
     readonly placeholder?: string;
-    readonly onChange?: (event: PageSyntheticEvent) => void;
+    readonly onChange?: (event: SyntheticEvent) => void;
     readonly fullWidth?: boolean;
     /** `theme.space` keys; `paddingKey` overrides both axes. */
     readonly paddingKey?: string;
@@ -167,7 +162,7 @@ export interface CheckboxProps extends PassThroughProps {
     readonly type?: string;
     readonly value?: string;
     readonly checked?: boolean;
-    readonly onChange?: (event: PageSyntheticEvent) => void;
+    readonly onChange?: (event: SyntheticEvent) => void;
     readonly dataTestId?: string;
 }
 
@@ -322,8 +317,8 @@ export interface DropdownToggleState {
 
 /** A dropdown panel whose toggle the caller renders. */
 export interface DropdownProps {
-    readonly children: (api: { readonly onClose: () => void }) => PageNode;
-    readonly renderToggle: (state: DropdownToggleState) => PageNode;
+    readonly children: (api: { readonly onClose: () => void }) => ReactNode;
+    readonly renderToggle: (state: DropdownToggleState) => ReactNode;
     readonly hover?: boolean;
     readonly toggleElementProps?: Readonly<Record<string, unknown>>;
     readonly onOpen?: () => void;
