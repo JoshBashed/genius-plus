@@ -149,6 +149,8 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
             const settled = new Map<number, SongChoice>();
             const found = new Map<number, readonly SelectOption[]>();
             const firstKey = album.tracks[0]?.key;
+            /** Rows whose search failed, which are left for the reader. */
+            let unsearched = 0;
 
             for (const match of matched) {
                 // The song that named the album is known outright: once
@@ -181,9 +183,16 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
 
                     const hits = await searchSongs(match.imported.title);
 
-                    found.set(match.imported.key, hits);
+                    // No answer is not "no such song", so it is never
+                    // proposed as new on the strength of one.
+                    if (hits.isErr()) {
+                        unsearched += 1;
+                        return;
+                    }
 
-                    if (!byOurArtists(hits, credited)) {
+                    found.set(match.imported.key, hits.value);
+
+                    if (!byOurArtists(hits.value, credited)) {
                         settled.set(match.imported.key, {
                             kind: "new",
                             title: match.title,
@@ -202,6 +211,13 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
 
             setOffers(found);
             setChoices(settled);
+
+            if (unsearched > 0) {
+                setNote(
+                    `Search failed for ${plural(unsearched, "track")}: choose a song for each.`,
+                );
+            }
+
             setProposed(
                 new Set(
                     [...settled]

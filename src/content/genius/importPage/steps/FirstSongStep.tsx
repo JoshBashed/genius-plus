@@ -85,8 +85,8 @@ const renderFirstSongStep: FC<FirstSongStepProps> = ({
         let live = true;
 
         void searchSongs(first.title).then((found) => {
-            if (live) {
-                setSuggestions(found);
+            if (live && found.isOk()) {
+                setSuggestions(found.value);
             }
         });
 
