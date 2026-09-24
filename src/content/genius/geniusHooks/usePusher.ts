@@ -4,8 +4,6 @@ import { slot } from "../slot";
 
 export const usePusherSlot = slot<UsePusherHook>("Genius's usePusher");
 
-export const setUsePusher = usePusherSlot.set;
-
 /** Whether this page bound it; without it a queued write is never heard. */
 export const hasUsePusher = (): boolean => usePusherSlot.peek() !== null;
 

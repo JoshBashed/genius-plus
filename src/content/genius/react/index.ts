@@ -4,12 +4,6 @@ import { slot } from "../slot";
 
 export const reactSlot = slot<PageReact>("React");
 
-/** Binds the page's own React; everything below reads it at the call. */
-export const setReact = reactSlot.set;
-
-/** Whether the page's React has been bound at all. */
-export const hasReact = (): boolean => reactSlot.peek() !== null;
-
 /** Their function of that name, read from the slot when it is called. */
 const late = <Key extends keyof PageReact>(key: Key): PageReact[Key] =>
     asPageValue<PageReact[Key]>((...args: readonly unknown[]) =>

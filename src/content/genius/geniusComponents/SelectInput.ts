@@ -9,11 +9,6 @@ export const selectInputSlot = slot<FC<SelectInputProps>>(
     "Genius's SelectInput",
 );
 
-export const setSelectInput = selectInputSlot.set;
-
-/** Whether this page bound it at all. */
-export const hasSelectInput = (): boolean => selectInputSlot.peek() !== null;
-
 /**
  * Their component, read at render rather than at import.
  * @throws If nothing bound it; a component cannot return a `Result`.

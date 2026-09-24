@@ -125,18 +125,6 @@ const COMPONENTS = {
     textInput: installs(getTextInput, textInputSlot),
 } as const;
 
-export type ComponentName = keyof typeof COMPONENTS;
-
-/**
- * Installs the named components and nothing else.
- * A page asks for what it renders: the ones it leaves out may not be on
- * it at all, and reading one throws rather than painting wrong.
- */
-export const installComponents = (
-    names: readonly ComponentName[],
-): Promise<Result<null, ChunkError>> =>
-    installAll(names.map((name) => COMPONENTS[name]));
-
 /**
  * The ones a page still works without.
  * Missing, the header menus go, a queued write is never confirmed, and
