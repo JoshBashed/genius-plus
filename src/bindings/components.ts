@@ -2,9 +2,7 @@ import { Result } from "@resulted/results";
 import type { BindingError } from "./errors";
 import {
     findByDisplayName,
-    findByPropTypes,
     findByStyledNamespace,
-    findDeviceComponent,
     selectExport,
 } from "./finders";
 import { type Binding, loadChunk, memoBinding } from "./loader";
@@ -12,7 +10,6 @@ import {
     asPageValue,
     type ModuleNamespace,
     type PageComponent,
-    type PageElement,
     type PageNode,
     type PageSyntheticEvent,
 } from "./types";
@@ -132,25 +129,6 @@ export interface SmallButtonProps extends PassThroughProps {
 export const getSmallButton: Bind<SmallButtonProps> = bind(
     "SmallButton",
     (ns) => findByDisplayName(ns, "SmallButton"),
-);
-
-/** A button that reads as an underlined link. */
-export interface LinkButtonProps extends PassThroughProps {
-    readonly children: PageNode;
-    readonly type?: "button" | "submit" | "reset";
-    /** A `theme.fontSize` key, or `"inherit"`. Defaults to `"reading"`. */
-    readonly fontSize?: string;
-    /** A `theme.fontWeight` key. Defaults to `"normal"`. */
-    readonly fontWeight?: string;
-    readonly disabled?: boolean;
-}
-
-/**
- * Binds Genius's `LinkButton`.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getLinkButton: Bind<LinkButtonProps> = bind("LinkButton", (ns) =>
-    findByDisplayName(ns, "LinkButton"),
 );
 
 /** The text field; `as="textarea"` makes it multiline. */
@@ -335,47 +313,6 @@ export const getDateInput: Bind<DateInputProps> = bind(
     (ns) => findByDisplayName(ns, "DateInput"),
 );
 
-/** The label and validation wrapper; it clones its single child. */
-export interface FieldProps {
-    /** Exactly one element; `Field` clones it and injects form wiring. */
-    readonly children: PageElement;
-    readonly label: string;
-    readonly name: string;
-    readonly id?: string;
-    readonly className?: string;
-    readonly defaultValue?: unknown;
-    readonly disabled?: boolean;
-    readonly helpText?: string;
-    readonly hideLabel?: boolean;
-    readonly floatingLabel?: boolean;
-    readonly inlineLabel?: boolean;
-    readonly asFieldset?: boolean;
-    readonly wrapWithLabel?: boolean;
-    readonly isInputControlled?: boolean;
-    readonly infoTooltip?: {
-        readonly label: string;
-        readonly content: PageNode;
-    };
-    /** react-hook-form rules; `{ required: true }` also marks the label. */
-    readonly rules?: Readonly<Record<string, unknown>>;
-    readonly onChangeValue?: (value: unknown) => void;
-    readonly transformForForm?: (value: unknown) => unknown;
-    readonly transformForInput?: (value: unknown) => unknown;
-}
-
-/**
- * Binds `Field`, identified by prop names since it has none.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getField: Bind<FieldProps> = bind("Field", (ns) =>
-    findByPropTypes(ns, "Field", [
-        "wrapWithLabel",
-        "transformForForm",
-        "isInputControlled",
-        "asFieldset",
-    ]),
-);
-
 /** What `renderToggle` is handed on each render. */
 export interface DropdownToggleState {
     readonly isVisible: boolean;
@@ -400,215 +337,4 @@ export interface DropdownProps {
  */
 export const getDropdown: Bind<DropdownProps> = bind("Dropdown", (ns) =>
     findByStyledNamespace(ns, "Dropdown"),
-);
-
-/** A dropdown whose panel is a list of selectable rows. */
-export interface DropdownListProps {
-    /** One element per row; each is wrapped in an `<li role="option">`. */
-    readonly items: readonly PageNode[];
-    readonly small?: boolean;
-    readonly align?: "left" | "center" | "right";
-    readonly icon?: PageElement;
-    readonly label?: string;
-    /** Required when `label` is absent; their propTypes enforce it. */
-    readonly ariaLabel?: string;
-    readonly disabled?: boolean;
-    readonly secondary?: boolean;
-    readonly onOpen?: () => void;
-    readonly portal?: boolean;
-}
-
-/**
- * Binds Genius's `DropdownList`.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getDropdownList: Bind<DropdownListProps> = bind(
-    "DropdownList",
-    (ns) => findByStyledNamespace(ns, "DropdownList"),
-);
-
-/** One song or album card, as the discography grids render it. */
-export interface DiscographyItemProps {
-    readonly id: number;
-    readonly schema: "songs" | "albums";
-    readonly coverSize: "grow" | "large" | "small";
-    readonly section: string;
-    readonly showInfo?:
-        | "popularity"
-        | "release_date"
-        | "unreviewed_annotations"
-        | "lyrics_edit_proposals";
-    readonly horizontal?: boolean;
-    readonly leftAlign?: boolean;
-    readonly showArtist?: boolean;
-    readonly clickEventName?: string;
-    readonly clickEventProps?: Readonly<Record<string, unknown>>;
-    readonly className?: string;
-}
-
-/**
- * Binds one discography card.
- * @returns The component, which reads its entity from redux by id.
- */
-export const getDiscographyItem: Bind<DiscographyItemProps> = bind(
-    "DiscographyItemList",
-    (ns) => findByDisplayName(ns, "DiscographyItem"),
-);
-
-/** A grid or column of discography cards. */
-export interface DiscographyItemListProps {
-    readonly items: readonly number[];
-    readonly section: string;
-    readonly schema: "songs" | "albums";
-    readonly layout: "large" | "single-column" | "double-column";
-    readonly showInfo?: "popularity" | "release_date";
-    readonly showArtist?: boolean;
-    readonly itemClickEventName?: string;
-    readonly itemClickEventProps?: Readonly<Record<string, unknown>>;
-    readonly className?: string;
-}
-
-/**
- * Binds Genius's `DiscographyItemList`.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getDiscographyItemList: Bind<DiscographyItemListProps> = bind(
-    "DiscographyItemList",
-    (ns) => findByStyledNamespace(ns, "DiscographyItemList"),
-);
-
-/** A label and value row, which stacks on mobile. */
-export interface MetadataRowProps {
-    readonly children?: PageNode;
-    /** Desktop only; the mobile variant always stacks. */
-    readonly direction?: "row" | "column";
-    readonly className?: string;
-}
-
-/**
- * Binds `MetadataRow`, whose chunk holds two identically named pairs.
- * @returns The device pair; see `findDeviceComponent`.
- */
-export const getMetadataRow: Bind<MetadataRowProps> = bind(
-    "MetadataRow",
-    (ns) => findDeviceComponent(ns, "MetadataRow"),
-);
-
-/** `MetadataField` takes the same props as `Field`. */
-export type MetadataFieldProps = FieldProps;
-
-/**
- * Binds `MetadataField`, the editable half of a metadata row.
- * @returns The device pair; see `findDeviceComponent`.
- */
-export const getMetadataField: Bind<MetadataFieldProps> = bind(
-    "MetadataRow",
-    (ns) => findDeviceComponent(ns, "MetadataField"),
-);
-
-/** One tab: its name, its section, and an optional shortcut. */
-export interface ScrollableTabsTab {
-    readonly name: string;
-    readonly section: PageNode;
-    readonly shortcut?: {
-        readonly keys?: string;
-        readonly callback?: () => void;
-        readonly display?: string;
-    };
-}
-
-/** Tabbed navigation linked to the scroll position of its sections. */
-export interface ScrollableTabsProps {
-    readonly tabs: readonly ScrollableTabsTab[];
-    readonly initialActiveSectionIndex?: number;
-    readonly onTabClick?: (index: number) => void;
-    readonly onNavigated?: (index: number) => void;
-    readonly scrollingElementId?: string;
-    readonly postNavDisplay?: PageNode;
-    readonly navTrailing?: PageNode;
-    readonly contentHeader?: PageNode;
-    readonly contentPlaceholder?: PageNode;
-    readonly showShortcuts?: boolean;
-    readonly className?: string;
-}
-
-/**
- * Binds Genius's `ScrollableTabs`.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getScrollableTabs: Bind<ScrollableTabsProps> = bind(
-    "EditMetadataModal",
-    (ns) => findByDisplayName(ns, "ScrollableTabs"),
-);
-
-/** One rendered row; both renderers are handed it. */
-export interface RepeatableInputPairRow {
-    readonly category?: PageNode;
-    readonly value?: PageNode;
-}
-
-/** Paired inputs per row, with add and remove controls. */
-export interface RepeatableInputPairProps {
-    /** One entry per rendered row; the renderers receive each entry. */
-    readonly rows: readonly RepeatableInputPairRow[];
-    readonly renderCategory: (row: RepeatableInputPairRow) => PageNode;
-    readonly renderValue: (row: RepeatableInputPairRow) => PageNode;
-    readonly addButtonText?: string;
-    readonly allowAddRow?: boolean;
-    readonly centerButton?: boolean;
-    readonly disabled?: boolean;
-    readonly marginTop?: string;
-    readonly onAddClick?: () => void;
-    readonly onRemoveClick?: (index: number) => void;
-    readonly renderAfter?: PageNode;
-}
-
-/**
- * Binds Genius's `RepeatableInputPair`.
- * @returns The component, or a `binding` error if the chunk moved.
- */
-export const getRepeatableInputPair: Bind<RepeatableInputPairProps> = bind(
-    "EditMetadataModal",
-    (ns) => findByDisplayName(ns, "RepeatableInputPair"),
-);
-
-/** Everything their metadata editor needs to drive a save. */
-export interface EditMetadataModalProps {
-    readonly entityId: number;
-    /** `"songs"`, `"albums"`, and so on: the redux slice name. */
-    readonly schema: string;
-    readonly defaultValues: Readonly<Record<string, unknown>>;
-    readonly isEditingMetadata: boolean;
-    /** Redux action creator, called with the next open state. */
-    readonly setIsEditingMetadataAction: (open: boolean) => unknown;
-    /** Redux thunk or RTK Query mutation used to save. */
-    readonly submitAction: (payload: unknown) => unknown;
-    readonly createSections: (...args: readonly unknown[]) => unknown;
-    readonly serverErrorFieldMapping?: Readonly<Record<string, string>>;
-    readonly transformPayload?: (payload: unknown, values: unknown) => unknown;
-    readonly transformResponseOnReset?: (response: unknown) => unknown;
-    readonly trackFieldEventsOnSuccess?: (
-        ...args: readonly unknown[]
-    ) => unknown;
-    readonly updateStatus?: string;
-    readonly initialModalSectionId?: string;
-    readonly formResetEventName?: string;
-    readonly FormContentWrapper?: PageComponent<{
-        readonly children?: PageNode;
-    }>;
-}
-
-/**
- * The whole metadata editor, which drives its own submission.
- * @returns The component, which needs the page's redux Provider.
- */
-export const getEditMetadataModal: Bind<EditMetadataModalProps> = bind(
-    "EditMetadataModal",
-    (ns) =>
-        findByPropTypes(ns, "EditMetadataModal", [
-            "entityId",
-            "setIsEditingMetadataAction",
-            "createSections",
-            "FormContentWrapper",
-        ]),
 );

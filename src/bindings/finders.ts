@@ -208,29 +208,6 @@ export const findByStyledNamespace = (
         );
     });
 
-/**
- * Genius ships `prop-types` in production, so prop names survive.
- * @param required Prop names the wanted component declares.
- * @returns The export declaring all of them, or a `binding` error.
- */
-export const findByPropTypes = (
-    ns: ModuleNamespace,
-    target: string,
-    required: readonly string[],
-): Result<unknown, BindingError> =>
-    selectExport(ns, `${target} (propTypes ${required.join("+")})`, (value) => {
-        const owner = unwrapMemo(value);
-        const propTypes =
-            readProperty(owner, "propTypes") ??
-            readProperty(value, "propTypes");
-
-        if (!isObjectLike(propTypes)) {
-            return false;
-        }
-
-        return required.every((key) => key in (propTypes as object));
-    });
-
 const sourceOf = (value: unknown): string | null => {
     if (typeof value !== "function") {
         return null;
@@ -282,46 +259,6 @@ export const findContext = (
     target: string,
 ): Result<unknown, BindingError> =>
     selectExport(ns, `${target} (context)`, isContext);
-
-/**
- * Device pairs share a displayName; probing `attrs` separates them.
- * @param file The source file name its mobile half is prefixed with.
- * @returns The matching pair, or a `binding` error.
- */
-export const findDeviceComponent = (
-    ns: ModuleNamespace,
-    file: string,
-): Result<unknown, BindingError> =>
-    selectExport(ns, `${file} (responsive pair)`, (value) => {
-        if (!isStyled(value)) {
-            return false;
-        }
-
-        const attrs = readProperty(value, "attrs");
-
-        if (!Array.isArray(attrs)) {
-            return false;
-        }
-
-        return attrs.some((attr: unknown) => {
-            if (typeof attr !== "function") {
-                return false;
-            }
-
-            const produced = Result.trySync(() =>
-                (attr as (props: unknown) => unknown)({
-                    theme: { deviceType: "mobile" },
-                }),
-            );
-
-            if (produced.isErr()) {
-                return false;
-            }
-
-            const name = displayNameOf(readProperty(produced.value, "as"));
-            return (name ?? "").startsWith(`${file}__`);
-        });
-    });
 
 /**
  * Matches an object export by the keys it carries.
