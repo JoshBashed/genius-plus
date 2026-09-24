@@ -8,7 +8,7 @@ import {
     type PageNode,
 } from "./types";
 
-/** Genius's styled-components, mainly `ThemeProvider` and `useTheme`. */
+/** Genius's styled-components: `styled`, `ThemeProvider`, and `ThemeContext`. */
 
 /** One substitution in a styled template: a literal, or a theme read. */
 export type PageStyledValue =
@@ -91,18 +91,8 @@ export interface ThemeProviderProps {
 /** The slice of styled-components' exports this extension uses. */
 export interface PageStyledComponents {
     readonly styled: PageStyledFactory;
-    readonly css: (
-        strings: TemplateStringsArray,
-        ...values: readonly unknown[]
-    ) => readonly unknown[];
-    readonly keyframes: (
-        strings: TemplateStringsArray,
-        ...values: readonly unknown[]
-    ) => unknown;
     readonly ThemeProvider: PageComponent<ThemeProviderProps>;
     readonly ThemeContext: PageContext<GeniusTheme | undefined>;
-    /** Returns `undefined` outside a `ThemeProvider`. */
-    readonly useTheme: () => GeniusTheme | undefined;
 }
 
 const sourceOf = (value: unknown): string => {
@@ -142,42 +132,13 @@ export const getStyledComponents: Binding<PageStyledComponents> = memoBinding(
 
         const themeContext = findContext(ns, "ThemeContext");
 
-        // The remaining four are separable only by their minified bodies.
+        // Separable from the other exports only by its minified body.
         const themeProvider = selectExport(ns, "ThemeProvider", (value) => {
             const source = sourceOf(value);
             return (
                 source.includes("useContext") &&
                 source.includes("useMemo") &&
                 !source.includes("forwardRef")
-            );
-        });
-
-        const useTheme = selectExport(
-            ns,
-            "useTheme",
-            (value) =>
-                typeof value === "function" &&
-                value.length === 0 &&
-                sourceOf(value).includes("useContext"),
-        );
-
-        // Same preamble: `keyframes` joins the result,
-        // `createGlobalStyle` hashes it, and `css` does neither.
-        const keyframes = selectExport(ns, "keyframes", (value) => {
-            const source = sourceOf(value);
-            return (
-                source.includes("arguments.length") &&
-                source.includes('.join("")') &&
-                !source.includes("sc-global-")
-            );
-        });
-
-        const css = selectExport(ns, "css", (value) => {
-            const source = sourceOf(value);
-            return (
-                source.includes("arguments.length") &&
-                !source.includes('.join("")') &&
-                !source.includes("sc-global-")
             );
         });
 
@@ -190,30 +151,14 @@ export const getStyledComponents: Binding<PageStyledComponents> = memoBinding(
         if (themeProvider.isErr()) {
             return themeProvider;
         }
-        if (useTheme.isErr()) {
-            return useTheme;
-        }
-        if (keyframes.isErr()) {
-            return keyframes;
-        }
-        if (css.isErr()) {
-            return css;
-        }
 
         return Result.ok({
             styled: asPageValue<PageStyledFactory>(styled.value),
-            css: asPageValue<PageStyledComponents["css"]>(css.value),
-            keyframes: asPageValue<PageStyledComponents["keyframes"]>(
-                keyframes.value,
-            ),
             ThemeProvider: asPageValue<PageComponent<ThemeProviderProps>>(
                 themeProvider.value,
             ),
             ThemeContext: asPageValue<PageContext<GeniusTheme | undefined>>(
                 themeContext.value,
-            ),
-            useTheme: asPageValue<() => GeniusTheme | undefined>(
-                useTheme.value,
             ),
         });
     },
