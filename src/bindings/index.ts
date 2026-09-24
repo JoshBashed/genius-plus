@@ -63,9 +63,4 @@ export {
 export {
     asPageValue,
     type ModuleNamespace,
-    type PageComponent,
-    type PageContext,
-    type PageElement,
-    type PageNode,
-    type PageSyntheticEvent,
 } from "./types";

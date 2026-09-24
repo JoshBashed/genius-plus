@@ -1,13 +1,14 @@
 import { Result } from "@resulted/results";
-import type { ComponentProps, ElementType, FC, ReactNode } from "react";
+import type {
+    ComponentProps,
+    Context,
+    ElementType,
+    FC,
+    ReactNode,
+} from "react";
 import { findContext, readProperty, selectExport } from "./finders";
 import { type Binding, loadChunkMatching, memoBinding } from "./loader";
-import {
-    asPageValue,
-    type PageComponent,
-    type PageContext,
-    type PageNode,
-} from "./types";
+import { asPageValue } from "./types";
 
 /** Genius's styled-components: `styled`, `ThemeProvider`, and `ThemeContext`. */
 
@@ -84,14 +85,14 @@ export interface GeniusTheme {
 /** Their `ThemeProvider` props; `theme` may derive from the outer one. */
 export interface ThemeProviderProps {
     readonly theme: GeniusTheme | ((outer: GeniusTheme) => GeniusTheme);
-    readonly children?: PageNode;
+    readonly children?: ReactNode;
 }
 
 /** The slice of styled-components' exports this extension uses. */
 export interface PageStyledComponents {
     readonly styled: PageStyledFactory;
-    readonly ThemeProvider: PageComponent<ThemeProviderProps>;
-    readonly ThemeContext: PageContext<GeniusTheme | undefined>;
+    readonly ThemeProvider: FC<ThemeProviderProps>;
+    readonly ThemeContext: Context<GeniusTheme | undefined>;
 }
 
 const sourceOf = (value: unknown): string => {
@@ -153,10 +154,10 @@ export const getStyledComponents: Binding<PageStyledComponents> = memoBinding(
 
         return Result.ok({
             styled: asPageValue<PageStyledFactory>(styled.value),
-            ThemeProvider: asPageValue<PageComponent<ThemeProviderProps>>(
+            ThemeProvider: asPageValue<FC<ThemeProviderProps>>(
                 themeProvider.value,
             ),
-            ThemeContext: asPageValue<PageContext<GeniusTheme | undefined>>(
+            ThemeContext: asPageValue<Context<GeniusTheme | undefined>>(
                 themeContext.value,
             ),
         });
