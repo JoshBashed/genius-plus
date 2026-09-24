@@ -26,8 +26,7 @@
     },
     "include": ["src", "rspack.config.ts", "types"],
 
-    // `src/content/genius` compiles JSX against the page's React, not
-    // ours, so it needs a different `jsxImportSource` and gets its own
-    // config. `pnpm typecheck` runs both.
+    // `src/content/genius` types `react` as the page's React 18, not
+    // ours, so it gets its own config. `pnpm typecheck` runs both.
     "exclude": ["src/content/genius"]
 }

@@ -14,8 +14,6 @@ import {
     type ImportedAlbum,
     importedAlbum,
 } from "../../albumImport/importedAlbum";
-// Deep imports, not the barrel: it evaluates every component, and this
-// page binds only the few it renders with.
 import { Button } from "../../geniusComponents/Button";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { TextInput } from "../../geniusComponents/TextInput";

@@ -15,8 +15,6 @@ facts back into it. Domain detail lives there, not here.
   reCAPTCHA rule.
 - `docs/appleMusic.md`: the Apple Music lookup, credit handling, and the
   origin-bound credits token.
-- `src/bindings/README.md`: how Genius's own bundle is discovered and
-  bound at runtime.
 
 **Capture beats inference.** Endpoint shapes in `docs/geniusApi.md` come
 from captured live requests. Inference was wrong three times; captures
@@ -31,8 +29,9 @@ body shape, and record what it said.
 - `pnpm lint`, `pnpm typecheck`, `pnpm build` must all pass. Keep them
   green.
 - **Run `pnpm typecheck`, never bare `tsc --noEmit`.**
-  `src/content/genius/` has its own `tsconfig.json` for
-  `jsxImportSource`, and the bare compiler skips that project silently.
+  `src/content/genius/` has its own `tsconfig.json`, which types
+  `react` as the page's React 18, and the bare compiler skips that
+  project silently.
 - Emitted `dist/` filenames are referenced by `src/manifest.ts`. Renaming
   a source file must not move them.
 

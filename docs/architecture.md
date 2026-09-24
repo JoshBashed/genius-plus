@@ -57,7 +57,7 @@ Inside `src/content/genius/`:
   it. So they import like ordinary React (`import { TagInput }`,
   `import { usePusher }`), the barrel is safe, import order does not
   matter, and a re-prime reaches modules that were already imported.
-- `install.ts` fills the slots with `installAll([installs(getX, setX)])`,
+- `install.ts` fills the slots with `installAll([installs(getX, xSlot)])`,
   and `installOptional` for the ones a page can do without.
 - **`styled` is the exception.** `styled("div")` has to return a
   component at module evaluation, so a styles module still has to be
@@ -70,8 +70,7 @@ Inside `src/content/genius/`:
 ## Binding to their bundle
 
 - Chunk URLs and export names are read from the live `<head>` every
-  load. Never hardcode a hash, a URL, or a minified export letter. The
-  full discovery and finder story is `src/bindings/README.md`.
+  load. Never hardcode a hash, a URL, or a minified export letter.
 - **Their build tool is unidentified, and nothing here should assume
   one.** Measured: native ESM, one chunk per module named
   `<base>-<hash>.js` with relative specifiers, `modulepreload` links in

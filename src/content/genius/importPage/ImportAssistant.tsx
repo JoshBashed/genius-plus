@@ -5,8 +5,6 @@ import type { SelectOption } from "@/bindings";
 import { type ContributorPlan, withMapping } from "../albumImport/contributors";
 import type { AlbumCredits } from "../albumImport/credits";
 import type { ImportedAlbum } from "../albumImport/importedAlbum";
-// Deep imports, not the barrel: it evaluates every component, and this
-// page binds only the few it renders with.
 import type { GeniusAlbum } from "./geniusAlbums";
 import { StepBar } from "./StepBar";
 import { AlbumStep } from "./steps/AlbumStep";

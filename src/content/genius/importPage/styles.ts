@@ -7,8 +7,6 @@ import {
     type PageNode,
     type PageStyledValue,
 } from "@/bindings";
-// Deep imports, not the barrel: it evaluates every component, and
-// this page binds only the few it renders with.
 import { styled } from "../geniusComponents/styled";
 
 type Wrapper = PageComponent<{ readonly children?: PageNode }>;

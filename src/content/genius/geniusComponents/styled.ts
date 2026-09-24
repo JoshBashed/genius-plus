@@ -13,7 +13,7 @@ export const setStyled = styledSlot.set;
  * Unlike a component, this one is read at import: `styled("div")` has to
  * return a component there and then. A module that calls it must
  * therefore still be imported after the binding is installed, which is
- * what the eager import in `mount` is for.
+ * what each loader's eager import is for.
  */
 export const styled = <Props>(tag: FC<Props> | string): PageStyledTag =>
     styledSlot.get()(tag);
