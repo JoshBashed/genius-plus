@@ -1,4 +1,5 @@
 import { Result } from "@resulted/results";
+import type { ComponentProps, ElementType, FC, ReactNode } from "react";
 import { findContext, readProperty, selectExport } from "./finders";
 import { type Binding, loadChunkMatching, memoBinding } from "./loader";
 import {
@@ -16,18 +17,16 @@ export type PageStyledValue =
     | number
     | ((props: { readonly theme: GeniusTheme }) => string | number);
 
-/** A tagged template that builds one styled component. */
-export type PageStyledTag = (
+/** A tagged template that builds a component taking the target's props. */
+export type PageStyledTag<Props> = (
     strings: TemplateStringsArray,
     ...values: readonly PageStyledValue[]
-) => PageComponent<Readonly<Record<string, unknown>>>;
+) => FC<Props & { readonly className?: string; readonly children?: ReactNode }>;
 
-/** `styled(Component)` and `styled.div`, from the page's own copy. */
-export interface PageStyledFactory {
-    /** The call form matters under `noUncheckedIndexedAccess`. */
-    <Props>(component: PageComponent<Props> | string): PageStyledTag;
-    readonly [tag: string]: PageStyledTag;
-}
+/** `styled("div")` or `styled(Component)`, from the page's own copy. */
+export type PageStyledFactory = <Target extends ElementType>(
+    target: Target,
+) => PageStyledTag<ComponentProps<Target>>;
 
 /** Only theme keys seen in chunk source; add one when you read it. */
 export interface GeniusTheme {
