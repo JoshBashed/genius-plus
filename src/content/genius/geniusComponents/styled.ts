@@ -1,5 +1,5 @@
 /** Genius's `styled-components` factory, and the theme it renders with. */
-import type { FC } from "react";
+import type { ComponentProps, ElementType } from "react";
 import type { GeniusTheme, PageStyledFactory, PageStyledTag } from "@/bindings";
 import { slot } from "../slot";
 
@@ -15,8 +15,9 @@ export const setStyled = styledSlot.set;
  * therefore still be imported after the binding is installed, which is
  * what each loader's eager import is for.
  */
-export const styled = <Props>(tag: FC<Props> | string): PageStyledTag =>
-    styledSlot.get()(tag);
+export const styled = <Target extends ElementType>(
+    target: Target,
+): PageStyledTag<ComponentProps<Target>> => styledSlot.get()(target);
 
 export const themeSlot = slot<GeniusTheme>("the page's active theme");
 
