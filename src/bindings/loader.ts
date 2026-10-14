@@ -1,80 +1,19 @@
 import { Result } from "@resulted/results";
+import { JSLinker } from "@/content/genius/utilities/jsLinker";
 import {
     type ChunkIndex,
     describeMarkers,
     detectPage,
     type GeniusPage,
-    resolveChunk,
-    resolveChunkMatching,
 } from "./discovery";
-import type { BindingError, ChunkError, UnsupportedPageError } from "./errors";
+import type { ChunkError, UnsupportedPageError } from "./errors";
 import type { ModuleNamespace } from "./types";
 
 /** A memoised lookup of one borrowed value, and how it can fail. */
 export type Binding<Value> = () => Promise<Result<Value, ChunkError>>;
 
-const loaded = new Map<
-    string,
-    Promise<Result<ModuleNamespace, BindingError>>
->();
-
 /** Bumped by every reset, so a load in flight cannot write back late. */
 let generation = 0;
-
-const importModule = async (
-    url: string,
-): Promise<Result<ModuleNamespace, BindingError>> => {
-    // Must stay a native `import()` of a runtime string.
-    const imported = await Result.try(
-        import(/* webpackIgnore: true */ url) as Promise<unknown>,
-    );
-
-    if (imported.isErr()) {
-        return Result.err({
-            kind: "binding",
-            target: url,
-            reason: `import() rejected: ${String(imported.error)}`,
-        });
-    }
-
-    if (typeof imported.value !== "object" || imported.value === null) {
-        return Result.err({
-            kind: "binding",
-            target: url,
-            reason: "import() resolved to something that is not a module",
-        });
-    }
-
-    return Result.ok(imported.value as ModuleNamespace);
-};
-
-/**
- * The identical URL string is what yields the page's own instance.
- * @param url The absolute URL exactly as the page imported it.
- * @returns The namespace, cached per URL on success only, or a `binding` error.
- */
-export const loadChunkUrl = (
-    url: string,
-): Promise<Result<ModuleNamespace, BindingError>> => {
-    const existing = loaded.get(url);
-
-    if (existing !== undefined) {
-        return existing;
-    }
-
-    const era = generation;
-    const pending = importModule(url).then((outcome) => {
-        // A transient failure must not poison the URL for the document.
-        if (outcome.isErr() && era === generation) {
-            loaded.delete(url);
-        }
-
-        return outcome;
-    });
-
-    loaded.set(url, pending);
-    return pending;
-};
 
 let page: GeniusPage | null = null;
 
@@ -131,8 +70,7 @@ export const loadChunk = async (
         return chunks;
     }
 
-    const url = resolveChunk(chunks.value, baseName);
-    return url.isOk() ? loadChunkUrl(url.value) : url;
+    return JSLinker.shared().findAndLoadBundleByName(baseName);
 };
 
 /**
@@ -150,8 +88,7 @@ export const loadChunkMatching = async (
         return chunks;
     }
 
-    const url = resolveChunkMatching(chunks.value, pattern, target);
-    return url.isOk() ? loadChunkUrl(url.value) : url;
+    return JSLinker.shared().findAndLoadBundleMatching(pattern, target);
 };
 
 const resets: (() => void)[] = [];
@@ -199,7 +136,7 @@ export const memoBinding = <T, Err = ChunkError>(
 export const resetBindings = (): void => {
     generation += 1;
     page = null;
-    loaded.clear();
+    JSLinker.shared().reset();
     for (const reset of resets) {
         reset();
     }

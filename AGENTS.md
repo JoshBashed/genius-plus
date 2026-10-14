@@ -394,7 +394,8 @@ the build or the page when violated.
   are filled at mount. `styled` alone requires its importer to load
   after install, which is why each loader uses an eager dynamic import.
 - `theme()` is a call, never a stored value.
-- Chunk URLs and export names are read from the live `<head>` every
-  load. Never hardcode a hash, a URL, or a minified export letter.
+- Chunk URLs are read from About Genius (`/songs/474187`), a song page
+  that loads every bundle we use, through `utilities/jsLinker.ts`. Never
+  hardcode a hash, a chunk URL, or a minified export letter.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone.

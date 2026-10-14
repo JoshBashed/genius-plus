@@ -69,8 +69,33 @@ Inside `src/content/genius/`:
 
 ## Binding to their bundle
 
-- Chunk URLs and export names are read from the live `<head>` every
-  load. Never hardcode a hash, a URL, or a minified export letter.
+- **Every bundle is resolved from About Genius.** `JSLinker` in
+  `utilities/jsLinker.ts` reads the chunk list of `/songs/474187`, a
+  song page, and imports each bundle from exactly that URL. Captured
+  2026-09-23, signed out: its `<head>` lists 128 chunks, among them
+  every one we bind (`TagInput`, `SelectInput`, `TextInput`,
+  `Checkbox`, `SmallButton`, `Dropdown`, `useAvailableRoles`, the
+  `plus`, `warning`, `check`, and `alert` icons, and the rest). An
+  album, artist, home, or 404 page lists 40 to 53 and lacks the form's
+  11; `/new` redirects to `/signup` when signed out.
+- The list is cached in `chrome.storage.local` for a day, through the
+  isolated half. It is used only while it has this page's own
+  `react-vendor` and every chunk it shares with this page has the same
+  URL in both: a different one means Genius shipped a new build, and
+  importing from that list would put a second copy of a shared module,
+  React or a context, beside the page's own. The linker then reads the
+  page again, and when even that disagrees, the tab is older than
+  Genius: it says to reload, and stops trying until the page is. A page
+  with no React, such as an error or a bot check, is never cached, and
+  is read again on the next lookup rather than taken for an old tab.
+- Base names the donor loads under more than one URL are kept as
+  duplicates, as the page's own are, so a lookup refuses to guess.
+- **Only Genius's own chunks are ever imported.** Any script on a
+  Genius page can post the cache's messages, so both halves accept a
+  list only when every URL is a `.js` file on the origin the page's own
+  React comes from, and the linker drops other hosts' module scripts
+  from About Genius's list before using or caching it.
+- Never hardcode a hash, a chunk URL, or a minified export letter.
 - **Their build tool is unidentified, and nothing here should assume
   one.** Measured: native ESM, one chunk per module named
   `<base>-<hash>.js` with relative specifiers, `modulepreload` links in

@@ -8,6 +8,7 @@ export {
     detectPage,
     type GeniusPage,
     type PageMarkers,
+    readChunkIndex,
     readChunkUrls,
     resolveChunk,
     resolveChunkMatching,
@@ -38,7 +39,6 @@ export {
     getPage,
     loadChunk,
     loadChunkMatching,
-    loadChunkUrl,
     resetBindings,
 } from "./loader";
 export { getModal, type ModalProps } from "./modal";

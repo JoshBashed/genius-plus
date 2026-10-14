@@ -14,6 +14,7 @@ const ANSWER = "to-main-chunks";
 const READ_TIMEOUT_MS = 2_000;
 
 const cachedSchema = z.object({
+    duplicates: z.array(z.string()),
     savedAt: z.number(),
     urls: z.record(z.string(), z.string()),
 });
@@ -40,6 +41,8 @@ const answerSchema = z.object({
 /** A chunk list, and when it was read from the donor page. */
 export interface CachedChunks {
     readonly urls: ReadonlyMap<string, string>;
+    /** Base names the donor loads under more than one URL. */
+    readonly duplicates: ReadonlySet<string>;
     readonly savedAt: number;
 }
 
@@ -69,6 +72,7 @@ const chunkOrigin = (): string | null => {
  */
 const trusted = (cached: z.output<typeof cachedSchema>): boolean => {
     const origin = chunkOrigin();
+    const bases = new Set(Object.keys(cached.urls));
 
     return (
         origin !== null &&
@@ -77,6 +81,7 @@ const trusted = (cached: z.output<typeof cachedSchema>): boolean => {
 
             return parsed?.origin === origin && parsed.pathname.endsWith(".js");
         }) &&
+        cached.duplicates.every((base) => bases.has(base)) &&
         // Never ahead of now, or it would never expire.
         cached.savedAt <= Date.now()
     );
@@ -113,6 +118,7 @@ export const readChunkCache = (): Promise<CachedChunks | null> => {
                     answer.cached === null || !trusted(answer.cached)
                         ? null
                         : {
+                              duplicates: new Set(answer.cached.duplicates),
                               savedAt: answer.cached.savedAt,
                               urls: new Map(Object.entries(answer.cached.urls)),
                           },
@@ -143,6 +149,7 @@ export const writeChunkCache = (cached: CachedChunks): void => {
     postMessage(
         {
             cached: {
+                duplicates: [...cached.duplicates],
                 savedAt: cached.savedAt,
                 urls: Object.fromEntries(cached.urls),
             },

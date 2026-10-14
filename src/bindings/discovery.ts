@@ -190,6 +190,58 @@ export const readChunkUrls = (html: string): ReadonlyMap<string, string> => {
 };
 
 /**
+ * Reads another page's chunks out of its markup, the way `buildIndex`
+ * reads this page's: duplicates kept, and entry scripts named.
+ */
+export const readChunkIndex = (html: string): ChunkIndex => {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const urls = new Map<string, string>();
+    const duplicates = new Set<string>();
+    const entries: string[] = [];
+
+    const add = (href: string): string | null => {
+        // The parsed document has no base, so links stay relative.
+        if (!URL.canParse(href, location.origin)) {
+            return null;
+        }
+
+        const url = new URL(href, location.origin).href;
+        const base = baseNameOf(url);
+        const existing = base === null ? undefined : urls.get(base);
+
+        if (base === null) {
+            return null;
+        }
+
+        if (existing === undefined) {
+            urls.set(base, url);
+        } else if (existing !== url) {
+            duplicates.add(base);
+        }
+
+        return url;
+    };
+
+    for (const link of parsed.querySelectorAll<HTMLLinkElement>(
+        'head link[rel="modulepreload"][href]',
+    )) {
+        add(link.getAttribute("href") ?? "");
+    }
+
+    for (const script of parsed.querySelectorAll<HTMLScriptElement>(
+        'head script[type="module"][src]',
+    )) {
+        const url = add(script.getAttribute("src") ?? "");
+
+        if (url !== null) {
+            entries.push(url);
+        }
+    }
+
+    return { duplicates, entries, urls };
+};
+
+/**
  * Adds another page's chunks to the ones this page may bind.
  *
  * @param theirs That page's chunk URLs, by base name.
