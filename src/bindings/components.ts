@@ -91,16 +91,16 @@ const isIcon = (value: unknown): boolean =>
 const bindIcon = (chunk: string): Bind<IconProps> =>
     bind(chunk, (ns) => selectExport(ns, `the ${chunk} icon`, isIcon));
 
-/** A plus. Not on every page: the import page borrows it from `/new`. */
+/** A plus. */
 export const getPlusIcon = bindIcon("plus");
 
-/** A ring and an exclamation. Not on every page either. */
+/** A ring and an exclamation. */
 export const getWarningIcon = bindIcon("warning");
 
-/** A tick. On song pages only, which the import borrows from late. */
+/** A tick. */
 export const getCheckIcon = bindIcon("check");
 
-/** A warning triangle, which every page they render carries. */
+/** A warning triangle. */
 export const getAlertIcon = bindIcon("alert");
 
 export const getButton: Bind<ButtonProps> = bind("Button", (ns) =>

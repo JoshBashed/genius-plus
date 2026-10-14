@@ -2,14 +2,12 @@
 
 export * from "./components";
 export {
-    borrowChunks,
     type ChunkIndex,
     describeMarkers,
     detectPage,
     type GeniusPage,
     type PageMarkers,
     readChunkIndex,
-    readChunkUrls,
     resolveChunk,
     resolveChunkMatching,
 } from "./discovery";

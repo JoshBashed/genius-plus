@@ -26,7 +26,6 @@ import { Icon } from "../../geniusComponents/Icon";
 import { Spinner } from "../../geniusComponents/Spinner";
 import { optionLabel, searchSongs } from "../../options";
 import { drain } from "../../pool";
-import { borrowIconsFrom } from "../borrowIcons";
 import type { GeniusAlbum } from "../geniusAlbums";
 import {
     describeEmptyImport,
@@ -163,15 +162,6 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
 
             const credited = creditedNames(artists);
 
-            // Their tick is on a song page and nowhere this page has
-            // been, and a song of this album is the first one it can
-            // name. Nothing waits on it: an icon arrives or it does not.
-            const anySong = tracks.value.find((seed) => seed.url !== null);
-            const borrowing =
-                anySong?.url == null
-                    ? Promise.resolve()
-                    : borrowIconsFrom(anySong.url);
-
             const matched = matchTracks(album.tracks, tracks.value).matches;
             // Its name on Genius, which is the one it was created under
             // and not Apple's when the reader renamed it.
@@ -232,10 +222,6 @@ const renderConfirmImportStep: FC<ConfirmImportStepProps> = ({
                     }
                 },
             );
-
-            // Before the rows first render: filling a slot changes a
-            // stored value, and nothing re-renders off the back of it.
-            await borrowing;
 
             if (!live) {
                 return;

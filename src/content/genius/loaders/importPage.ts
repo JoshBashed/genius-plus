@@ -1,24 +1,11 @@
 /** The album import assistant, on the route Genius answers with a 404. */
 import { Result } from "@resulted/results";
 import { createElement, type ReactElement } from "react";
-import {
-    borrowChunks,
-    describeBindingError,
-    getPage,
-    readChunkUrls,
-    resetBindings,
-} from "@/bindings";
+import { resetBindings } from "@/bindings";
 import { log } from "@/utilities/log";
 import { loadGeniusAlbum } from "../importPage/geniusAlbums";
 import { HIDE_STYLE_ID, IMPORT_PATH, NOT_FOUND } from "../importRoute";
 import type { Loader } from "./mount";
-
-/**
- * A page that loads the editor's own components, for the ones this 404
- * never loaded. Their Add A Song form is the smallest page carrying the
- * inputs, and it is the same build, which is what makes sharing safe.
- */
-const DONOR_PATH = "/new";
 
 const APP_ID = "application";
 
@@ -73,34 +60,6 @@ const claimRoot = (): HTMLElement => {
     return mount;
 };
 
-/** Pulls in the inputs this page never loaded, from one that did. */
-const borrowEditorChunks = async (): Promise<void> => {
-    const page = getPage();
-
-    if (page.isErr() || page.value.kind !== "react") {
-        return;
-    }
-
-    const response = await fetch(DONOR_PATH, { credentials: "same-origin" });
-
-    if (!response.ok) {
-        log.warn(`genius: import page could not read ${DONOR_PATH}`);
-        return;
-    }
-
-    const taken = borrowChunks(
-        readChunkUrls(await response.text()),
-        page.value.chunks,
-    );
-
-    if (taken.isErr()) {
-        log.warn("genius: import page", describeBindingError(taken.error));
-        return;
-    }
-
-    log.debug(`genius: import page borrowed ${taken.value} chunks`);
-};
-
 export const importPageLoader: Loader = {
     build: async (): Promise<ReactElement> => {
         // Eager, so it stays in this bundle but evaluates only once the
@@ -137,7 +96,6 @@ export const importPageLoader: Loader = {
         // Whatever ran before that element existed read this as the
         // legacy page and cached it, and `getPage` only ever caches once.
         resetBindings();
-        await borrowEditorChunks();
         root.textContent = "";
 
         return Result.ok(root);

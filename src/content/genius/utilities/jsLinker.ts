@@ -21,6 +21,9 @@ import {
  */
 const DONOR_PATH = "/songs/474187";
 
+/** The donor, as an error names it. */
+const DONOR_NAME = "About Genius";
+
 /** How long a cached list is trusted before the donor is read again. */
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -152,7 +155,7 @@ export class JSLinker {
             return linked;
         }
 
-        const url = resolveChunk(linked.value.chunks, name);
+        const url = resolveChunk(linked.value.chunks, name, DONOR_NAME);
         return url.isOk() ? this.#load(url.value) : url;
     };
 
@@ -170,7 +173,12 @@ export class JSLinker {
             return linked;
         }
 
-        const url = resolveChunkMatching(linked.value.chunks, pattern, target);
+        const url = resolveChunkMatching(
+            linked.value.chunks,
+            pattern,
+            target,
+            DONOR_NAME,
+        );
         return url.isOk() ? this.#load(url.value) : url;
     };
 

@@ -151,45 +151,6 @@ export const detectPage = (): Result<GeniusPage, UnsupportedPageError> => {
 };
 
 /**
- * Chunks this page never loaded, taken from one that did.
- *
- * A module is only ever the page's own instance when the URL matches
- * exactly, so a borrowed chunk is only safe while both pages come from
- * the same deploy. `borrowChunks` is what checks that.
- */
-const borrowed = new Map<string, string>();
-
-/** Reads chunk URLs out of another page's markup. */
-export const readChunkUrls = (html: string): ReadonlyMap<string, string> => {
-    const parsed = new DOMParser().parseFromString(html, "text/html");
-    const urls = new Map<string, string>();
-
-    const add = (href: string): void => {
-        // The parsed document has no base, so links stay relative.
-        const url = new URL(href, location.origin).href;
-        const base = baseNameOf(url);
-
-        if (base !== null && !urls.has(base)) {
-            urls.set(base, url);
-        }
-    };
-
-    for (const link of parsed.querySelectorAll<HTMLLinkElement>(
-        'head link[rel="modulepreload"][href]',
-    )) {
-        add(link.getAttribute("href") ?? "");
-    }
-
-    for (const script of parsed.querySelectorAll<HTMLScriptElement>(
-        'head script[type="module"][src]',
-    )) {
-        add(script.getAttribute("src") ?? "");
-    }
-
-    return urls;
-};
-
-/**
  * Reads another page's chunks out of its markup, the way `buildIndex`
  * reads this page's: duplicates kept, and entry scripts named.
  */
@@ -242,79 +203,20 @@ export const readChunkIndex = (html: string): ChunkIndex => {
 };
 
 /**
- * Adds another page's chunks to the ones this page may bind.
- *
- * @param theirs That page's chunk URLs, by base name.
- * @param ours This page's own, which decide whether the two agree.
- * @returns How many chunks were taken, or a `binding` error when the two
- * pages are different builds, in which case sharing a module would hand
- * us a second React rather than the page's own.
- */
-export const borrowChunks = (
-    theirs: ReadonlyMap<string, string>,
-    ours: ChunkIndex,
-): Result<number, BindingError> => {
-    const shared = [...ours.urls].filter(([base]) => theirs.has(base));
-    const disagreed = shared.filter(([base, url]) => theirs.get(base) !== url);
-
-    if (shared.length === 0) {
-        return Result.err({
-            kind: "binding",
-            target: "another page's chunks",
-            reason: "the two pages have no module in common, so nothing vouches for them being the same build",
-        });
-    }
-
-    if (disagreed.length > 0) {
-        return Result.err({
-            kind: "binding",
-            target: "another page's chunks",
-            reason: `${disagreed.length} of ${shared.length} shared modules have different URLs (${disagreed
-                .map(([base]) => base)
-                .join(", ")}), so that page is a different build`,
-        });
-    }
-
-    let taken = 0;
-
-    for (const [base, url] of theirs) {
-        if (!ours.urls.has(base) && !borrowed.has(base)) {
-            borrowed.set(base, url);
-            taken += 1;
-        }
-    }
-
-    return Result.ok(taken);
-};
-
-/** Forgets every borrowed chunk, so a re-prime starts clean. */
-export const clearBorrowed = (): void => {
-    borrowed.clear();
-};
-
-/**
  * Exact base name first, then a unique prefix match.
- * The page's own chunks win; a borrowed one is only ever a fallback.
+ * @param source Where the list came from, named in the error.
  * @returns The URL, or a `binding` error if absent or ambiguous.
  */
 export const resolveChunk = (
-    index: ChunkIndex,
+    chunks: ChunkIndex,
     baseName: string,
+    source: string,
 ): Result<string, BindingError> => {
-    const chunks: ChunkIndex =
-        borrowed.size === 0
-            ? index
-            : {
-                  duplicates: index.duplicates,
-                  entries: index.entries,
-                  urls: new Map([...borrowed, ...index.urls]),
-              };
-
     if (chunks.duplicates.has(baseName)) {
         return Result.err({
             kind: "binding",
             target: `chunk "${baseName}"`,
-            reason: "this page loads several different chunks under that base name; identify it another way",
+            reason: `${source} loads several different chunks under that base name; identify it another way`,
         });
     }
 
@@ -338,31 +240,25 @@ export const resolveChunk = (
         target: `chunk "${baseName}"`,
         reason:
             prefixed.length > 1
-                ? `${prefixed.length} preloaded modules start with that name (${prefixed
+                ? `${prefixed.length} chunks ${source} loads start with that name (${prefixed
                       .map(([base]) => base)
                       .join(", ")})`
-                : `not among the ${chunks.urls.size} modules this page preloaded; Genius probably renamed or dropped it`,
+                : `not among the ${chunks.urls.size} chunks ${source} loads; Genius probably renamed or dropped it`,
     });
 };
 
 /**
  * Same, for chunks whose base name is itself likely to drift.
  * @param target Named in the error when nothing matches.
+ * @param source Where the list came from, named in the error.
  * @returns The URL of the one matching chunk, or a `binding` error.
  */
 export const resolveChunkMatching = (
-    index: ChunkIndex,
+    chunks: ChunkIndex,
     pattern: RegExp,
     target: string,
+    source: string,
 ): Result<string, BindingError> => {
-    const chunks: ChunkIndex =
-        borrowed.size === 0
-            ? index
-            : {
-                  duplicates: index.duplicates,
-                  entries: index.entries,
-                  urls: new Map([...borrowed, ...index.urls]),
-              };
     const matches = [...chunks.urls].filter(
         ([base]) => pattern.test(base) && !chunks.duplicates.has(base),
     );
@@ -377,8 +273,8 @@ export const resolveChunkMatching = (
         target,
         reason:
             matches.length === 0
-                ? `no preloaded module matches ${String(pattern)}`
-                : `${matches.length} preloaded modules match ${String(pattern)} (${matches
+                ? `no chunk ${source} loads matches ${String(pattern)}`
+                : `${matches.length} chunks ${source} loads match ${String(pattern)} (${matches
                       .map(([base]) => base)
                       .join(", ")})`,
     });
