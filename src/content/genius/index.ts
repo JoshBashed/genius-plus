@@ -8,6 +8,7 @@ import {
 import { IMPORT_PATH } from "./importRoute";
 import { watchNav } from "./navSlot";
 import { postEnabled, readStatus, serveCreditRequests } from "./relay";
+import { serveChunkCache } from "./utilities/chunkCache";
 
 let current: Settings | null = null;
 
@@ -49,5 +50,6 @@ watchSettings(publish);
 watchNav({ href: IMPORT_PATH, label: "Add An Album" });
 
 // The main half has the page's React but no `chrome.*`, so its reads
-// of Apple's catalogue are answered here.
+// of Apple's catalogue and extension storage are answered here.
 serveCreditRequests();
+serveChunkCache();
