@@ -36,6 +36,7 @@ export {
     type Binding,
     getPage,
     loadChunk,
+    loadChunkExporting,
     loadChunkMatching,
     resetBindings,
 } from "./loader";

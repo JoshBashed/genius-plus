@@ -6,7 +6,12 @@ import {
     findByStyledNamespace,
     selectExport,
 } from "./finders";
-import { type Binding, loadChunk, memoBinding } from "./loader";
+import {
+    type Binding,
+    loadChunk,
+    loadChunkExporting,
+    memoBinding,
+} from "./loader";
 import { asPageValue, type ModuleNamespace } from "./types";
 
 /** One accessor per borrowed component. Prop names read from chunks. */
@@ -31,6 +36,25 @@ const bind = <Props>(
         }
 
         return Result.ok(asPageValue<FC<Props>>(found.value));
+    });
+
+/**
+ * Binds a component by its display name, wherever Genius put it.
+ * @param own The chunk it lives in unless Genius moved it.
+ */
+const bindNamed = <Props>(name: string, own?: string): Bind<Props> =>
+    memoBinding(async () => {
+        const ns = await loadChunkExporting(name, own);
+
+        if (ns.isErr()) {
+            return ns;
+        }
+
+        const found = findByDisplayName(ns.value, name);
+
+        return found.isOk()
+            ? Result.ok(asPageValue<FC<Props>>(found.value))
+            : found;
     });
 
 /** Props every borrowed component forwards to its underlying element. */
@@ -103,9 +127,7 @@ export const getCheckIcon = bindIcon("check");
 /** A warning triangle. */
 export const getAlertIcon = bindIcon("alert");
 
-export const getButton: Bind<ButtonProps> = bind("Button", (ns) =>
-    findByDisplayName(ns, "Button"),
-);
+export const getButton: Bind<ButtonProps> = bindNamed("Button");
 
 /** The compact button, for toolbars and inline actions. */
 export interface SmallButtonProps extends PassThroughProps {
@@ -121,10 +143,7 @@ export interface SmallButtonProps extends PassThroughProps {
  * Binds Genius's `SmallButton`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getSmallButton: Bind<SmallButtonProps> = bind(
-    "SmallButton",
-    (ns) => findByDisplayName(ns, "SmallButton"),
-);
+export const getSmallButton: Bind<SmallButtonProps> = bindNamed("SmallButton");
 
 /** The text field; `as="textarea"` makes it multiline. */
 export interface TextInputProps extends PassThroughProps {
@@ -150,9 +169,7 @@ export interface TextInputProps extends PassThroughProps {
  * Binds Genius's `TextInput`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getTextInput: Bind<TextInputProps> = bind("TextInput", (ns) =>
-    findByDisplayName(ns, "TextInput"),
-);
+export const getTextInput: Bind<TextInputProps> = bindNamed("TextInput");
 
 /** Genius's checkbox, checkmark styling included. */
 export interface CheckboxProps extends PassThroughProps {
@@ -170,9 +187,7 @@ export interface CheckboxProps extends PassThroughProps {
  * Binds Genius's `Checkbox`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getCheckbox: Bind<CheckboxProps> = bind("Checkbox", (ns) =>
-    findByDisplayName(ns, "Checkbox"),
-);
+export const getCheckbox: Bind<CheckboxProps> = bindNamed("Checkbox");
 
 /** The inline spinner, sized in `em` off the surrounding text. */
 export interface SpinnerProps extends PassThroughProps {
@@ -184,9 +199,7 @@ export interface SpinnerProps extends PassThroughProps {
  * Binds Genius's `Spinner`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getSpinner: Bind<SpinnerProps> = bind("Spinner", (ns) =>
-    findByDisplayName(ns, "Spinner"),
-);
+export const getSpinner: Bind<SpinnerProps> = bindNamed("Spinner");
 
 /** A tag chip's two-line label: `primary` above `secondary`. */
 export interface SelectOptionLabel {
@@ -266,9 +279,7 @@ export interface TagInputProps {
  * Binds Genius's `TagInput`.
  * @returns The component, or a `binding` error if the chunk moved.
  */
-export const getTagInput: Bind<TagInputProps> = bind("TagInput", (ns) =>
-    findByDisplayName(ns, "TagInput"),
-);
+export const getTagInput: Bind<TagInputProps> = bindNamed("TagInput");
 
 /** Genius's release date shape, everywhere: `null` means "not set". */
 export interface DateComponents {
@@ -303,9 +314,9 @@ export interface DateInputProps {
  * The plain controlled input, not the form-bound `DateField`.
  * @returns The component, which needs the page's redux context.
  */
-export const getDateInput: Bind<DateInputProps> = bind(
+export const getDateInput: Bind<DateInputProps> = bindNamed(
+    "DateInput",
     "useAvailableRoles",
-    (ns) => findByDisplayName(ns, "DateInput"),
 );
 
 /** What `renderToggle` is handed on each render. */

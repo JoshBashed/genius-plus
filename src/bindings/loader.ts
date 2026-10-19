@@ -74,6 +74,24 @@ export const loadChunk = async (
 };
 
 /**
+ * Loads whichever chunk exports the component with this display name.
+ * @param own The chunk it lives in unless Genius moved it.
+ * @returns The namespace, or a `binding` error naming the component.
+ */
+export const loadChunkExporting = async (
+    name: string,
+    own?: string,
+): Promise<Result<ModuleNamespace, ChunkError>> => {
+    const chunks = requireChunks(`component "${name}"`);
+
+    if (chunks.isErr()) {
+        return chunks;
+    }
+
+    return JSLinker.shared().findAndLoadBundleExporting(name, own);
+};
+
+/**
  * For chunks whose base name is a bundler artefact and may drift.
  * @param target Named in the error when nothing matches.
  * @returns The namespace, or a `binding` error.
