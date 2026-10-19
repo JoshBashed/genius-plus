@@ -1,15 +1,13 @@
 /** Genius's `Spinner`, their inline busy indicator. */
 
-import { createElement, type FC } from "react";
+import type { FC } from "react";
 import type { SpinnerProps } from "@/bindings";
 import { slot } from "../slot";
+import { renderSlot } from "./renderSlot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const spinnerSlot = slot<FC<SpinnerProps>>("Genius's Spinner");
 
-/**
- * Their component, read at render rather than at import.
- * @throws If nothing bound it; a component cannot return a `Result`.
- */
+/** Their component, read at render, and nothing when this page lacks it. */
 export const Spinner: FC<SpinnerProps> = (props) =>
-    createElement(spinnerSlot.get(), props);
+    renderSlot(spinnerSlot, props);
