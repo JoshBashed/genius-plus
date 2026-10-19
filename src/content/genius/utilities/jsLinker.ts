@@ -8,12 +8,14 @@ import {
     resolveChunkMatching,
 } from "@/bindings/discovery";
 import type { BindingError } from "@/bindings/errors";
+import { findByDisplayName } from "@/bindings/finders";
 import type { ModuleNamespace } from "@/bindings/types";
 import {
     type CachedChunks,
     readChunkCache,
     writeChunkCache,
 } from "./chunkCache";
+import { type ExportIndex, indexExports } from "./exportIndex";
 
 /**
  * About Genius, by id so a renamed slug still redirects to it.
@@ -114,10 +116,32 @@ const readDonor = async (
     });
 };
 
-/** The donor's chunks, and when they were read. */
+/**
+ * The chunks worth indexing: not the page's entry scripts, which boot
+ * their whole app, and not names two chunks share.
+ */
+const indexable = (chunks: ChunkIndex): ReadonlyMap<string, string> => {
+    const entries = new Set(chunks.entries);
+
+    return new Map(
+        [...chunks.urls].filter(
+            ([base, url]) => !entries.has(url) && !chunks.duplicates.has(base),
+        ),
+    );
+};
+
+/** No index yet: every chunk is one a lookup may still have to read. */
+const unindexed = (chunks: ChunkIndex): ExportIndex => ({
+    exports: new Map(),
+    failed: [...indexable(chunks).keys()],
+});
+
+/** The donor's chunks, when they were read, and their index once built. */
 interface Linked {
     readonly chunks: ChunkIndex;
     readonly savedAt: number;
+    /** Built in the background; only lookups by display name wait for it. */
+    readonly index: Promise<ExportIndex>;
 }
 
 /** Links one document to Genius's bundles. */
@@ -139,6 +163,9 @@ export class JSLinker {
      */
     #outdated: BindingError | null = null;
 
+    /** The one retry of failed chunks this document gets, once started. */
+    #retrying: Promise<ExportIndex> | null = null;
+
     /** Imported namespaces, by URL, so a bundle is imported once. */
     #loaded = new Map<string, Promise<Result<ModuleNamespace, BindingError>>>();
 
@@ -157,6 +184,51 @@ export class JSLinker {
 
         const url = resolveChunk(linked.value.chunks, name, DONOR_NAME);
         return url.isOk() ? this.#load(url.value) : url;
+    };
+
+    /**
+     * Loads whichever bundle exports the component with this display name.
+     * @param own The bundle it lives in unless Genius moved it.
+     * @returns The namespace holding it, or why none could be linked.
+     */
+    findAndLoadBundleExporting = async (
+        name: string,
+        own: string = name,
+    ): Promise<Result<ModuleNamespace, BindingError>> => {
+        const linked = await this.#chunks();
+
+        if (linked.isErr()) {
+            return linked;
+        }
+
+        // Its own bundle first, which needs no index: only a component
+        // Genius has moved waits for the index to be built.
+        const direct = await this.findAndLoadBundleByName(own);
+
+        if (direct.isOk() && findByDisplayName(direct.value, name).isOk()) {
+            return direct;
+        }
+
+        const index = await linked.value.index;
+        const exports = index.exports.has(name)
+            ? index.exports
+            : (await this.#retryFailed(linked.value, index)).exports;
+
+        // The index can be a day old, so the chunk whose exports carry the
+        // name today is the answer.
+        for (const base of exports.get(name) ?? []) {
+            const url = linked.value.chunks.urls.get(base);
+            const ns = url === undefined ? null : await this.#load(url);
+
+            if (
+                ns?.isOk() === true &&
+                findByDisplayName(ns.value, name).isOk()
+            ) {
+                return ns;
+            }
+        }
+
+        return direct;
     };
 
     /**
@@ -187,15 +259,54 @@ export class JSLinker {
         this.#loaded.clear();
     };
 
-    /** Saves a list, for every tab on the same build. */
-    #save = (linked: Linked): void => {
+    /** Saves a list and its index, for every tab on the same build. */
+    #save = (linked: Linked, index: ExportIndex): void => {
         const cached: CachedChunks = {
             duplicates: linked.chunks.duplicates,
+            exports: index.exports,
+            failed: index.failed,
             savedAt: linked.savedAt,
             urls: linked.chunks.urls,
         };
 
         writeChunkCache(cached);
+    };
+
+    /**
+     * Indexes the chunks that failed last time, once per document.
+     * @returns The index with whatever they export added to it.
+     */
+    #retryFailed = (
+        linked: Linked,
+        index: ExportIndex,
+    ): Promise<ExportIndex> => {
+        this.#retrying ??= (async () => {
+            const failed = new Map(
+                index.failed.flatMap((base) => {
+                    const url = linked.chunks.urls.get(base);
+                    return url === undefined ? [] : [[base, url] as const];
+                }),
+            );
+
+            if (failed.size === 0) {
+                return index;
+            }
+
+            const retried = await indexExports(failed, index.exports);
+
+            if (retried.isErr()) {
+                return index;
+            }
+
+            this.#linked = Promise.resolve(
+                Result.ok({ ...linked, index: Promise.resolve(retried.value) }),
+            );
+            this.#save(linked, retried.value);
+
+            return retried.value;
+        })();
+
+        return this.#retrying;
     };
 
     #chunks = (): Promise<Result<Linked, BindingError>> => {
@@ -217,7 +328,7 @@ export class JSLinker {
 
     /**
      * The cached list while it is fresh and this page's build, otherwise
-     * the donor's, which replaces the cache.
+     * the donor's, which replaces the cache once its index is built.
      */
     #link = async (): Promise<Result<Linked, BindingError>> => {
         const page = pageChunks();
@@ -239,6 +350,10 @@ export class JSLinker {
                     entries: [],
                     urls: cached.urls,
                 },
+                index: Promise.resolve({
+                    exports: cached.exports,
+                    failed: cached.failed,
+                }),
                 savedAt: cached.savedAt,
             });
         }
@@ -265,9 +380,19 @@ export class JSLinker {
             return Result.err(this.#outdated);
         }
 
-        const linked: Linked = { chunks: donor.value, savedAt: Date.now() };
-
-        this.#save(linked);
+        const linked: Linked = {
+            chunks: donor.value,
+            // Without an index, the list is still cached, with every chunk
+            // left to read, so a lookup that misses tries again.
+            index: indexExports(indexable(donor.value)).then((built) => {
+                const index = built.isOk()
+                    ? built.value
+                    : unindexed(donor.value);
+                this.#save(linked, index);
+                return index;
+            }),
+            savedAt: Date.now(),
+        };
 
         return Result.ok(linked);
     };

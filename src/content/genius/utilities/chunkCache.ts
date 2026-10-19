@@ -15,6 +15,8 @@ const READ_TIMEOUT_MS = 2_000;
 
 const cachedSchema = z.object({
     duplicates: z.array(z.string()),
+    exports: z.record(z.string(), z.array(z.string())),
+    failed: z.array(z.string()),
     savedAt: z.number(),
     urls: z.record(z.string(), z.string()),
 });
@@ -38,11 +40,15 @@ const answerSchema = z.object({
     id: z.number(),
 });
 
-/** A chunk list, and when it was read from the donor page. */
+/** A chunk list, what each chunk exports, and when it was read. */
 export interface CachedChunks {
     readonly urls: ReadonlyMap<string, string>;
     /** Base names the donor loads under more than one URL. */
     readonly duplicates: ReadonlySet<string>;
+    /** Chunks exporting each component, by display name. */
+    readonly exports: ReadonlyMap<string, readonly string[]>;
+    /** Chunks the index could not read, retried when a name is missing. */
+    readonly failed: readonly string[];
     readonly savedAt: number;
 }
 
@@ -66,7 +72,7 @@ const chunkOrigin = (): string | null => {
 };
 
 /**
- * Whether a list names only Genius's own chunks.
+ * Whether a list names only Genius's own chunks, and its index only them.
  * Any script on the page can post these messages, so nothing it sends
  * may point an `import()` anywhere else.
  */
@@ -81,6 +87,10 @@ const trusted = (cached: z.output<typeof cachedSchema>): boolean => {
 
             return parsed?.origin === origin && parsed.pathname.endsWith(".js");
         }) &&
+        Object.values(cached.exports).every((names) =>
+            names.every((base) => bases.has(base)),
+        ) &&
+        cached.failed.every((base) => bases.has(base)) &&
         cached.duplicates.every((base) => bases.has(base)) &&
         // Never ahead of now, or it would never expire.
         cached.savedAt <= Date.now()
@@ -118,7 +128,11 @@ export const readChunkCache = (): Promise<CachedChunks | null> => {
                     answer.cached === null || !trusted(answer.cached)
                         ? null
                         : {
+                              exports: new Map(
+                                  Object.entries(answer.cached.exports),
+                              ),
                               duplicates: new Set(answer.cached.duplicates),
+                              failed: answer.cached.failed,
                               savedAt: answer.cached.savedAt,
                               urls: new Map(Object.entries(answer.cached.urls)),
                           },
@@ -150,6 +164,8 @@ export const writeChunkCache = (cached: CachedChunks): void => {
         {
             cached: {
                 duplicates: [...cached.duplicates],
+                exports: Object.fromEntries(cached.exports),
+                failed: cached.failed,
                 savedAt: cached.savedAt,
                 urls: Object.fromEntries(cached.urls),
             },
