@@ -95,6 +95,26 @@ Inside `src/content/genius/`:
   list only when every URL is a `.js` file on the origin the page's own
   React comes from, and the linker drops other hosts' module scripts
   from About Genius's list before using or caching it.
+- **Components are found by display name, not by chunk name.** A
+  chunk is named after its first module, so Genius can move a component
+  into an unrelated one: `Spinner` now lives in the `alert` chunk. Once
+  per build, `exportIndex.ts` imports About Genius's chunks inside a
+  hidden `srcdoc` frame, records each chunk's exported display names,
+  and deletes the frame. It skips the page's entry scripts, which boot
+  their whole app. The frame's CSP is `default-src 'none'` with only the
+  chunk host and a nonce allowed to run scripts, and its sandbox stops
+  it navigating this page, so their modules load without reaching the
+  network or this page. Its answer is decoded with zod, which copies it
+  out of the frame so the removed frame can be collected. The index is
+  built in the background, and nothing else waits for it. It is cached with the list,
+  and a list whose index failed is cached with every chunk left to
+  read. A binding that names a component (`bindNamed`) looks in the
+  chunk of that name first; only a component Genius has moved waits for
+  the index, which points at the chunk to import, in the page, from the
+  same URL.
+  Chunks the frame could not import are cached with the index, and
+  retried once per page when a binding asks for a name it lacks, so a
+  failed load does not leave a component missing for the day.
 - Never hardcode a hash, a chunk URL, or a minified export letter.
 - **Their build tool is unidentified, and nothing here should assume
   one.** Measured: native ESM, one chunk per module named
