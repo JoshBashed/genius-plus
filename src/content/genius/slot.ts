@@ -18,6 +18,8 @@ export interface Slot<Value> {
     readonly fail: (reason: string) => void;
     /** Why it is empty, when a lookup ran and could not fill it. */
     readonly reason: () => string | null;
+    /** What reading it while empty fails with. */
+    readonly missing: () => BindingError;
 }
 
 /**
@@ -34,26 +36,27 @@ export const slot = <Value>(target: string): Slot<Value> => {
     /** Set when a lookup ran and could not find it. */
     let refused: string | null = null;
 
+    const missing = (): BindingError => ({
+        kind: "binding",
+        target,
+        // Never installed, and installed but not found, are different
+        // problems; only one is a missing call.
+        reason: refused ?? "no install on this page asked for it",
+    });
+
     return {
         fail: (reason: string): void => {
             refused = reason;
         },
         get: (): Value => {
             if (current === null) {
-                const error: BindingError = {
-                    kind: "binding",
-                    target,
-                    // Never installed, and installed but not found, are
-                    // different problems; only one is a missing call.
-                    reason: refused ?? "no install on this page asked for it",
-                };
-
-                // A component cannot return a `Result`, so this throws.
-                throw new Error(describeBindingError(error));
+                // A hook cannot return a `Result`, so this throws.
+                throw new Error(describeBindingError(missing()));
             }
 
             return current;
         },
+        missing,
         peek: () => current,
         reason: () => refused,
         set: (value: Value): void => {
