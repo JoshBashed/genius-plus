@@ -12,6 +12,7 @@ import {
     FIELD_PAYLOAD_KEYS,
     type SongDraft,
 } from "@/content/genius/draft";
+import * as geniusApi from "@/content/genius/geniusApi";
 import {
     apiPut,
     csrfToken,
@@ -95,11 +96,6 @@ interface BulkUpdateBody {
     readonly scalar_field_updates: Readonly<Record<string, ScalarFieldUpdate>>;
 }
 
-/** A per-song write's body; `apiPut` adds the `text_format` it needs. */
-interface SongUpdateBody {
-    readonly song: Readonly<Record<string, unknown>>;
-}
-
 /** The five `array_field_updates` keys, in Genius's own descriptor order. */
 const ARRAY_FIELDS = [
     "primaryArtists",
@@ -151,21 +147,12 @@ const scalarUpdate = (
 
 /**
  * Never write a dirty SoundCloud URL back, whatever the user pasted.
- * Only ever reached for fields `planSong` approved, so the title is non-empty.
  * YouTube has no cleaner, so its URL is stored exactly as it was typed.
  */
-const songValue = (draft: SongDraft, field: SongField): unknown => {
-    switch (field) {
-        case "title":
-            return draft.title.trim();
-        case "soundcloudUrl":
-            return draft.soundcloudUrl === null
-                ? null
-                : cleanSoundcloudUrl(draft.soundcloudUrl);
-        case "youtubeUrl":
-            return draft.youtubeUrl;
-    }
-};
+const soundcloudValue = (draft: SongDraft): string | null =>
+    draft.soundcloudUrl === null
+        ? null
+        : cleanSoundcloudUrl(draft.soundcloudUrl);
 
 /** Why a changed field will not be sent. */
 export interface SkippedField {
@@ -297,11 +284,12 @@ const buildBodies = (
     fields: readonly DraftField[],
 ): {
     readonly bulk: BulkUpdateBody | null;
-    readonly song: SongUpdateBody | null;
+    readonly song: geniusApi.SongUpdate | null;
 } => {
+    const { draft } = write;
+    const sends = (field: DraftField): boolean => fields.includes(field);
     const arrayUpdates: Record<string, ArrayFieldUpdate> = {};
     const scalarUpdates: Record<string, ScalarFieldUpdate> = {};
-    const songUpdates: Record<string, unknown> = {};
 
     for (const field of fields) {
         const key = FIELD_PAYLOAD_KEYS[field];
@@ -310,8 +298,6 @@ const buildBodies = (
             arrayUpdates[key] = { values: write.draft[field].map(entityRef) };
         } else if (isScalarField(field)) {
             scalarUpdates[key] = scalarUpdate(write.draft, field);
-        } else if (isSongField(field)) {
-            songUpdates[key] = songValue(write.draft, field);
         }
     }
 
@@ -327,10 +313,19 @@ const buildBodies = (
                       array_field_updates: arrayUpdates,
                       scalar_field_updates: scalarUpdates,
                   },
-        song:
-            Object.keys(songUpdates).length === 0
-                ? null
-                : { song: songUpdates },
+        // Only reached for fields `planSong` approved, so the title is
+        // never empty.
+        song: fields.some(isSongField)
+            ? {
+                  soundcloud_url: sends("soundcloudUrl")
+                      ? soundcloudValue(draft)
+                      : undefined,
+                  title: sends("title") ? draft.title.trim() : undefined,
+                  youtube_url: sends("youtubeUrl")
+                      ? draft.youtubeUrl
+                      : undefined,
+              }
+            : null,
     };
 };
 
@@ -515,21 +510,14 @@ const putBulk = async (
     );
 };
 
-/** A per-song write's answer, which carries the stored song. */
-const songAnswerSchema = z.object({ song: z.looseObject({}) });
-
 /** This one is synchronous: a 2xx carrying the song means it is stored. */
 const putSong = async (
     songId: number,
-    body: SongUpdateBody,
+    song: geniusApi.SongUpdate,
 ): Promise<Result<boolean, SaveFailure>> => {
-    const response = await apiPut(`/songs/${songId}`, body);
+    const response = await geniusApi.updateSong(songId, song);
 
-    if (response.isErr()) {
-        return Result.err(asFailure(response.error));
-    }
-
-    return Result.ok(decodeOr(songAnswerSchema, response.value) !== null);
+    return response.map((stored) => stored !== null).mapErr(asFailure);
 };
 
 /**

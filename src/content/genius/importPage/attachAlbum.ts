@@ -1,9 +1,7 @@
 /** Putting a song on a new album, which is how an album gets created. */
 import { Result } from "@resulted/results";
-import { z } from "zod";
-import { apiGet, apiPut, type WriteFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
-import { decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 
 /**
@@ -33,7 +31,7 @@ export const describeAttachFailure = (error: AttachFailure): string => {
 };
 
 /** Flattens a write failure into what a reader actually needs. */
-const asFailure = (error: WriteFailure): AttachFailure => {
+const asFailure = (error: geniusApi.WriteFailure): AttachFailure => {
     switch (error.kind) {
         case "network":
             return { kind: "networkError" };
@@ -46,41 +44,18 @@ const asFailure = (error: WriteFailure): AttachFailure => {
     }
 };
 
-/** Their album shape as a song lists it, which carries no artist. */
-const albumSchema = z.object({
-    id: z.number(),
-    name: z.string(),
-    url: z.string().nullish(),
-});
-
-/** A song answer, of which only its albums are read. */
-const songSchema = z.object({
-    song: z.object({ albums: z.array(z.unknown()).default([]) }).nullish(),
-});
-
-const asAlbum = (parsed: z.output<typeof albumSchema>): GeniusAlbum => ({
+const asAlbum = (album: geniusApi.AlbumRef): GeniusAlbum => ({
     albumType: null,
     artistName: null,
     // A song's own listing carries none of this; the import re-reads
     // the album's own record before it writes anything to it.
     coverArtUrls: [],
-    id: parsed.id,
-    name: parsed.name,
+    id: album.id,
+    name: album.name,
     releaseDate: null,
-    url: parsed.url ?? null,
+    url: album.url ?? null,
     viewableByRoles: [],
 });
-
-/** The albums in one song answer; a row we cannot read is dropped. */
-const albumsOf = (body: unknown): readonly GeniusAlbum[] => {
-    const parsed = decodeOr(songSchema, body);
-
-    return (parsed?.song?.albums ?? []).flatMap((row) => {
-        const album = decodeOr(albumSchema, row);
-
-        return album === null ? [] : [asAlbum(album)];
-    });
-};
 
 const sameName = (left: string, right: string): boolean =>
     left.trim().toLowerCase() === right.trim().toLowerCase();
@@ -94,11 +69,9 @@ const sameName = (left: string, right: string): boolean =>
 export const songAlbums = async (
     songId: number,
 ): Promise<Result<readonly GeniusAlbum[], AttachFailure>> => {
-    const song = await apiGet(`/songs/${songId}`);
+    const song = await geniusApi.getSong(songId);
 
-    return song.isErr()
-        ? Result.err(asFailure(song.error))
-        : Result.ok(albumsOf(song.value));
+    return song.map((found) => found.albums.map(asAlbum)).mapErr(asFailure);
 };
 
 /**
@@ -114,13 +87,13 @@ export const attachToNewAlbum = async (
     songId: number,
     albumName: string,
 ): Promise<Result<GeniusAlbum, AttachFailure>> => {
-    const current = await apiGet(`/songs/${songId}`);
+    const current = await geniusApi.getSong(songId);
 
     if (current.isErr()) {
         return Result.err(asFailure(current.error));
     }
 
-    const existing = albumsOf(current.value);
+    const existing = current.value.albums.map(asAlbum);
     const already = existing.find((album) => sameName(album.name, albumName));
 
     // Already where it needs to be, so nothing is written.
@@ -131,22 +104,20 @@ export const attachToNewAlbum = async (
     // `_new` is their own marker for an album to bring into being.
     // Without it Genius is free to name-match instead, which puts the
     // song on somebody else's album of the same name.
-    const written = await apiPut(`/songs/${songId}`, {
-        song: {
-            albums: [
-                ...existing.map((album) => ({ id: album.id })),
-                { _new: true, name: albumName.trim() },
-            ],
-        },
+    const written = await geniusApi.updateSong(songId, {
+        albums: [
+            ...existing.map((album) => ({ id: album.id })),
+            { _new: true, name: albumName.trim() },
+        ],
     });
 
     if (written.isErr()) {
         return Result.err(asFailure(written.error));
     }
 
-    const created = albumsOf(written.value).find((album) =>
-        sameName(album.name, albumName),
-    );
+    const created = (written.value?.albums ?? [])
+        .map(asAlbum)
+        .find((album) => sameName(album.name, albumName));
 
     return created === undefined
         ? Result.err({

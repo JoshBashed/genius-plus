@@ -3,9 +3,10 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
+import * as geniusApi from "@/content/genius/geniusApi";
 import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
 import type { NamedRef } from "@/content/genius/metadata";
-import { decode, decodeOr } from "@/utilities/decode";
+import { decodeOr } from "@/utilities/decode";
 
 /** Genius debounces its own autocompletes by this much. Match it. */
 const DEBOUNCE_MS = 150;
@@ -21,22 +22,6 @@ const artistSchema = z.object({
 
 const artistsSchema = z.object({
     artists: z.array(z.unknown()).default([]),
-});
-
-/** One song hit: the title with features, the artists below it. */
-const songHitSchema = z.object({
-    result: z.object({
-        artist_names: z.string().nullish(),
-        id: z.number(),
-        title: z.string(),
-        title_with_featured: z.string().nullish(),
-    }),
-});
-
-const songsSchema = z.object({
-    sections: z
-        .array(z.object({ hits: z.array(z.unknown()).default([]) }))
-        .default([]),
 });
 
 /** Every tag list they answer with, whatever the endpoint. */
@@ -141,48 +126,30 @@ export const loadArtistOptions = debounced(async (input: string) => {
 });
 
 /**
- * `GET /search/song?q=`, the source their tracklist editor searches.
- * Their own hit shape: the title with features, the artists below it.
+ * A song search as options, the way their tracklist editor shows one:
+ * the title with features, the artists below it.
  */
 export const searchSongs = async (
     input: string,
 ): Promise<Result<readonly SelectOption[], ReadFailure>> => {
-    const response = await apiGet("/search/song", { q: input });
+    const found = await geniusApi.searchSongs(input);
 
-    if (response.isErr()) {
-        return response;
-    }
-
-    const parsed = decode(songsSchema, response.value, "a song search");
-
-    if (parsed.isErr()) {
-        return parsed;
-    }
-
-    return Result.ok(
-        (parsed.value.sections[0]?.hits ?? []).flatMap(
-            (row): readonly SelectOption[] => {
-                const hit = decodeOr(songHitSchema, row);
-
-                if (hit === null) {
-                    return [];
-                }
-
-                const { artist_names, id, title, title_with_featured } =
-                    hit.result;
-
-                return [
-                    {
-                        value: id,
-                        label: {
-                            primary: title_with_featured ?? title,
-                            ...(artist_names == null
-                                ? {}
-                                : { secondary: artist_names }),
-                        },
-                    },
-                ];
-            },
+    return found.map((hits) =>
+        hits.map(
+            ({
+                artist_names,
+                id,
+                title,
+                title_with_featured,
+            }): SelectOption => ({
+                value: id,
+                label: {
+                    primary: title_with_featured ?? title,
+                    ...(artist_names == null
+                        ? {}
+                        : { secondary: artist_names }),
+                },
+            }),
         ),
     );
 };

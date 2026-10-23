@@ -1,77 +1,15 @@
 /** The body their Add A Song form posts, built from what we imported. */
 
 import { Result } from "@resulted/results";
-import { z } from "zod";
-import type { DateComponents, SelectOption } from "@/bindings";
+import type { SelectOption } from "@/bindings";
 import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
 import { creditOptions } from "@/content/genius/albumImport/contributors";
 import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
-import type { ValidationErrors } from "@/content/genius/geniusApi";
-import { apiPost, type WriteFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
 import { optionToRef } from "@/content/genius/options";
-import { type DecodeFailure, decode } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 import { log } from "@/utilities/log";
-
-/** The three states their editor can create a song in. */
-export type LyricsState = "complete" | "incomplete" | "unreleased";
-
-/**
- * Their lyrics, as the wire carries them.
- *
- * Their client only transforms the string when it is not empty, so a
- * song created without lyrics really does post `""`; a non-empty one
- * goes through `eo = e => _t(bt(e, {}))` into their own DOM tree, whose
- * shape is unmeasured.
- */
-export type LyricsBody = unknown;
-
-/** An artist as their form sends one: the id, and the name beside it. */
-export type ArtistRef = {
-    readonly id?: number;
-    readonly name: string;
-};
-
-/** An album, with the marker their form sets on one it is creating. */
-export type AlbumRef = {
-    readonly id?: number;
-    readonly name: string;
-    readonly _new?: true;
-};
-
-/** A tag, as their form mirrors the primary one into the tag list. */
-export type TagRef = {
-    readonly id: number;
-    readonly name: string;
-    readonly isLocked?: true;
-};
-
-/**
- * The fields their Add A Song form actually posts.
- *
- * Read off a real request, not inferred: it sends eight keys and leaves
- * every empty one out entirely, so the optional ones here are omitted
- * rather than sent blank.
- */
-export interface CreateSongFields {
-    readonly title: string;
-    readonly primary_artists: readonly ArtistRef[];
-    readonly albums: readonly AlbumRef[];
-    readonly primary_tag_id: number | null;
-    /** Their form mirrors the primary tag into this list. */
-    readonly tags?: readonly TagRef[];
-    readonly release_date_components: DateComponents | null;
-    readonly lyrics: LyricsBody;
-    readonly lyrics_state: LyricsState;
-    readonly featured_artists?: readonly ArtistRef[];
-    readonly producer_artists?: readonly ArtistRef[];
-    readonly writer_artists?: readonly ArtistRef[];
-    readonly soundcloud_url?: string;
-    readonly viewable_by_roles?: readonly number[];
-    /** Only when their form was opened with `?apple_id=`. */
-    readonly match_to_apple_id?: string;
-}
 
 /**
  * What goes on the wire.
@@ -79,12 +17,14 @@ export interface CreateSongFields {
  * by their own page for the action `create_song`.
  */
 export interface CreateSongBody {
-    readonly song: CreateSongFields;
+    readonly song: geniusApi.CreateSongFields;
     readonly recaptcha_token: string;
 }
 
 /** Their own shape: the name travels with the id, never without it. */
-const refs = (options: readonly SelectOption[]): readonly ArtistRef[] =>
+const refs = (
+    options: readonly SelectOption[],
+): readonly geniusApi.ArtistRef[] =>
     options.map((option) => {
         const ref = optionToRef(option);
 
@@ -105,9 +45,9 @@ export const createSongFields = (
     album: ImportedAlbum,
     artists: ContributorPlan,
     title: string,
-    primaryTag: TagRef | null,
+    primaryTag: geniusApi.TagRef | null,
     albumName: string,
-): CreateSongFields => {
+): geniusApi.CreateSongFields => {
     const first = album.tracks[0];
 
     return {
@@ -142,7 +82,7 @@ export const createSongFields = (
 export const createSong = async (
     body: CreateSongBody,
 ): Promise<Result<CreatedSong, CreateSongFailure>> => {
-    const answer = await apiPost("/songs", body);
+    const answer = await geniusApi.createSong(body.song, body.recaptcha_token);
 
     if (answer.isErr()) {
         // The body is the only way to tell a rejected shape from a
@@ -152,12 +92,7 @@ export const createSong = async (
         return Result.err(asFailure(answer.error));
     }
 
-    // It answered; whether it answered with a song is another question.
-    const created = readCreatedSong(answer.value);
-
-    return created.isErr()
-        ? Result.err({ kind: "unreadable", reason: created.error.reason })
-        : Result.ok(created.value);
+    return Result.ok(asCreatedSong(answer.value));
 };
 
 /** The song their create call answers with, once it has made one. */
@@ -176,23 +111,6 @@ export interface CreatedSong {
     readonly albums: readonly GeniusAlbum[];
 }
 
-const createdSchema = z.object({
-    song: z.object({
-        albums: z
-            .array(
-                z.object({
-                    id: z.number(),
-                    name: z.string(),
-                    url: z.string().nullish(),
-                }),
-            )
-            .nullish(),
-        id: z.number(),
-        title: z.string(),
-        url: z.string().nullish(),
-    }),
-});
-
 /**
  * Every way creating a song can fail.
  *
@@ -210,37 +128,34 @@ export type CreateSongFailure =
           readonly message: string;
       }
     /** Genius refused it, and named the fields. */
-    | { readonly kind: "validationError"; readonly errors: ValidationErrors }
+    | {
+          readonly kind: "validationError";
+          readonly errors: geniusApi.ValidationErrors;
+      }
     /** Genius took it and answered with something that is not a song. */
     | { readonly kind: "unreadable"; readonly reason: string };
 
-/**
- * Reads the song out of a create call's answer.
- * @returns The created song, or why the answer was not one.
- */
-export const readCreatedSong = (
-    body: unknown,
-): Result<CreatedSong, DecodeFailure> =>
-    decode(createdSchema, body, "the created song").map((parsed) => ({
-        albums: (parsed.song.albums ?? []).map((entry) => ({
-            albumType: null,
-            artistName: null,
-            // The answer carries none of this, and the import re-reads
-            // the album's own record before it writes anything to it.
-            coverArtUrls: [],
-            id: entry.id,
-            name: entry.name,
-            releaseDate: null,
-            url: entry.url ?? null,
-            viewableByRoles: [],
-        })),
-        songId: parsed.song.id,
-        title: parsed.song.title,
-        url: parsed.song.url ?? null,
-    }));
+/** The song their create call answered with, in our own shape. */
+const asCreatedSong = (song: geniusApi.CreatedSong): CreatedSong => ({
+    albums: song.albums.map((entry) => ({
+        albumType: null,
+        artistName: null,
+        // The answer carries none of this, and the import re-reads the
+        // album's own record before it writes anything to it.
+        coverArtUrls: [],
+        id: entry.id,
+        name: entry.name,
+        releaseDate: null,
+        url: entry.url ?? null,
+        viewableByRoles: [],
+    })),
+    songId: song.id,
+    title: song.title,
+    url: song.url ?? null,
+});
 
 /** Flattens a write failure into what a reader actually needs. */
-const asFailure = (error: WriteFailure): CreateSongFailure => {
+const asFailure = (error: geniusApi.WriteFailure): CreateSongFailure => {
     if (error.kind === "network") {
         return { kind: "networkError", url: error.url };
     }

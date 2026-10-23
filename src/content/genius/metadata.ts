@@ -1,10 +1,8 @@
 /** The ten editable fields, fetched because the page carries none. */
 import { Result } from "@resulted/results";
-import { z } from "zod";
 import type { DateComponents } from "@/bindings";
-import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import { drain } from "@/content/genius/pool";
-import { decode, decodeOr } from "@/utilities/decode";
 
 /** A credit; `id` is `null` for a value Genius has never seen. */
 export interface NamedRef {
@@ -38,67 +36,19 @@ export const EMPTY_DATE: DateComponents = {
     day: null,
 };
 
-/** A credit; Genius omits `id` for a value it has never seen. */
-const refSchema = z.object({
-    id: z.number().nullish(),
-    name: z.string(),
-});
+/** Their credits, with an absent `id` made `null`. */
+const asRefs = (refs: readonly geniusApi.Ref[]): readonly NamedRef[] =>
+    refs.map((ref) => ({ id: ref.id ?? null, name: ref.name }));
 
-const dateSchema = z
-    .object({
-        day: z.number().nullish(),
-        month: z.number().nullish(),
-        year: z.number().nullish(),
-    })
-    .nullish();
-
-/** Blank is how their API says absent, so it reads as absent here. */
-const presentString = z
-    .string()
-    .nullish()
-    .transform((value) => (value === undefined || value === "" ? null : value));
-
-const refs = z
-    .array(z.unknown())
-    .default([])
-    .transform((rows) =>
-        rows.flatMap((row): readonly NamedRef[] => {
-            const ref = decodeOr(refSchema, row);
-
-            return ref === null ? [] : [{ id: ref.id ?? null, name: ref.name }];
-        }),
-    );
-
-const songSchema = z.object({
-    current_user_metadata: z
-        .object({ permissions: z.array(z.string()).nullish() })
-        .nullish(),
-    featured_artists: refs,
-    id: z.number(),
-    language: presentString,
-    primary_artists: refs,
-    primary_tag: refSchema.nullish(),
-    producer_artists: refs,
-    published: z.boolean().nullish(),
-    release_date_components: dateSchema,
-    soundcloud_url: presentString,
-    tags: refs,
-    title: z.string(),
-    writer_artists: refs,
-    youtube_url: presentString,
-});
-
-const answerSchema = z.object({ song: z.unknown() });
-
-const asMetadata = (song: z.output<typeof songSchema>): SongMetadata => {
+const asMetadata = (song: geniusApi.Song): SongMetadata => {
     const permissions = song.current_user_metadata?.permissions ?? [];
 
     return {
-        featuredArtists: song.featured_artists,
+        featuredArtists: asRefs(song.featured_artists),
         // The album wide call ships the key with nothing in it, and an
         // empty list means unknown rather than denied.
         permissions: permissions.length === 0 ? null : permissions,
-        primaryArtists: song.primary_artists,
+        primaryArtists: asRefs(song.primary_artists),
         primaryTag:
             song.primary_tag == null
                 ? null
@@ -106,7 +56,7 @@ const asMetadata = (song: z.output<typeof songSchema>): SongMetadata => {
                       id: song.primary_tag.id ?? null,
                       name: song.primary_tag.name,
                   },
-        producerArtists: song.producer_artists,
+        producerArtists: asRefs(song.producer_artists),
         // Only an explicit `true` locks: absent means unknown, not locked.
         published: song.published === true,
         releaseDate: {
@@ -116,9 +66,9 @@ const asMetadata = (song: z.output<typeof songSchema>): SongMetadata => {
         },
         songId: song.id,
         soundcloudUrl: song.soundcloud_url,
-        tags: song.tags,
+        tags: asRefs(song.tags),
         title: song.title,
-        writerArtists: song.writer_artists,
+        writerArtists: asRefs(song.writer_artists),
         youtubeUrl: song.youtube_url,
         language: song.language,
     };
@@ -151,7 +101,7 @@ export const describeMetadataFailure = (error: MetadataFailure): string => {
 };
 
 /** Flattens a read failure into what a row actually needs. */
-const asFailure = (error: ReadFailure): MetadataFailure =>
+const asFailure = (error: geniusApi.ReadFailure): MetadataFailure =>
     error.kind === "network"
         ? { kind: "networkError" }
         : error.kind === "http"
@@ -161,21 +111,9 @@ const asFailure = (error: ReadFailure): MetadataFailure =>
 export const loadSongMetadata = async (
     songId: number,
 ): Promise<Result<SongMetadata, MetadataFailure>> => {
-    const response = await apiGet(`/songs/${songId}`);
+    const song = await geniusApi.getSong(songId);
 
-    if (response.isErr()) {
-        return Result.err(asFailure(response.error));
-    }
-
-    const body = decode(answerSchema, response.value, `song ${songId}`);
-
-    if (body.isErr()) {
-        return Result.err({ kind: "unreadable" });
-    }
-
-    return decode(songSchema, body.value.song, `song ${songId}`)
-        .map(asMetadata)
-        .mapErr((): MetadataFailure => ({ kind: "unreadable" }));
+    return song.map(asMetadata).mapErr(asFailure);
 };
 
 /** Four at a time: enough to hide the latency, polite enough to ship. */
