@@ -7,20 +7,20 @@ const CHANNEL = "genius-plus:soundcloud-clean";
 let enabled = false;
 
 addEventListener("message", (event) => {
-    if (event.source !== window || typeof event.data !== "object") {
-        return;
+    // Same window only; nothing else may switch this on. Narrowed by
+    // hand, so this page script does not carry a schema library.
+    const data: unknown = event.source === window ? event.data : null;
+
+    if (
+        typeof data === "object" &&
+        data !== null &&
+        "channel" in data &&
+        data.channel === CHANNEL &&
+        "enabled" in data &&
+        typeof data.enabled === "boolean"
+    ) {
+        enabled = data.enabled;
     }
-
-    const data = event.data as {
-        channel?: unknown;
-        enabled?: unknown;
-    } | null;
-
-    if (data === null || data.channel !== CHANNEL) {
-        return;
-    }
-
-    enabled = data.enabled === true;
 });
 
 const { clipboard } = navigator;

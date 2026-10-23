@@ -1,4 +1,5 @@
 /** What a request can fail with, wherever this extension makes one. */
+import { z } from "zod";
 
 /** A request that never reached the server at all. */
 export interface NetworkError {
@@ -32,6 +33,22 @@ export interface HttpError {
 
 /** Either way a request fails: it did not land, or it was refused. */
 export type RequestError = NetworkError | HttpError;
+
+/** `NetworkError`, for one that crossed a message boundary. */
+export const networkErrorSchema = z.object({
+    kind: z.literal("network"),
+    reason: z.string().optional(),
+    url: z.string(),
+});
+
+/** `HttpError`, for one that crossed a message boundary. */
+export const httpErrorSchema = z.object({
+    kind: z.literal("http"),
+    messages: z.array(z.string()).optional(),
+    status: z.number(),
+    url: z.string(),
+    validationErrors: z.record(z.string(), z.array(z.string())).optional(),
+});
 
 /**
  * One line naming what went wrong with a request.

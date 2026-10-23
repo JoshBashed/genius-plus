@@ -4,7 +4,7 @@ import type {
     ForbiddenHostError,
     NoReceiverError,
 } from "@/utilities/messaging";
-import { sendMessage } from "@/utilities/messaging";
+import { requestImage } from "@/utilities/messaging";
 
 /** The bytes arrived, and no decoder in the browser would take them. */
 export interface ImageDecodeError {
@@ -130,7 +130,7 @@ export const fetchImage = async (
         }
     }
 
-    const relayed = await sendMessage({ type: "image:fetch", url });
+    const relayed = await requestImage(url);
 
     if (relayed.isErr()) {
         return Result.err(relayed.error);

@@ -1,12 +1,18 @@
 /** Schemas, as a `Result` rather than an exception. */
 import { Result } from "@resulted/results";
-import type { z } from "zod";
+import { z } from "zod";
 
 /** The only way decoding fails, so it is the only thing it returns. */
 export interface DecodeFailure {
     readonly kind: "decode";
     readonly reason: string;
 }
+
+/** `DecodeFailure`, for one that crossed a message boundary. */
+export const decodeFailureSchema = z.object({
+    kind: z.literal("decode"),
+    reason: z.string(),
+});
 
 /** How many issues a message lists before it stops. */
 const MAX_ISSUES = 3;

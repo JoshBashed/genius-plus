@@ -1,6 +1,16 @@
 import { Result, type ResultBase } from "@resulted/results";
-import type { DecodeFailure } from "@/utilities/decode";
-import type { HttpError, NetworkError } from "@/utilities/http";
+import { z } from "zod";
+import {
+    type DecodeFailure,
+    decodeFailureSchema,
+    decodeOr,
+} from "@/utilities/decode";
+import {
+    type HttpError,
+    httpErrorSchema,
+    type NetworkError,
+    networkErrorSchema,
+} from "@/utilities/http";
 
 /** Rebuilds a `Result` that lost its prototype crossing a boundary. */
 export const reviveResult = <Ok, Err>(
@@ -19,16 +29,26 @@ export interface ForbiddenHostError {
     readonly reason: string;
 }
 
+const noReceiverSchema = z.object({ kind: z.literal("no-receiver") });
+
+const forbiddenHostSchema = z.object({
+    kind: z.literal("unsupported"),
+    reason: z.string(),
+});
+
 /** Everything a content script can ask the service worker to do. */
-export type Message =
+const messageSchema = z.discriminatedUnion("type", [
     /** Fetch an image in the worker, which is not bound by page CORS. */
-    | { readonly type: "image:fetch"; readonly url: string }
+    z.object({ type: z.literal("image:fetch"), url: z.string() }),
     /** Read one song's credits from Apple's catalogue, token and all. */
-    | {
-          readonly type: "apple:credits";
-          readonly storefront: string;
-          readonly trackId: number;
-      };
+    z.object({
+        storefront: z.string(),
+        trackId: z.number(),
+        type: z.literal("apple:credits"),
+    }),
+]);
+
+export type Message = z.output<typeof messageSchema>;
 
 /** The success value each message type resolves to. */
 export interface ResponseMap {
@@ -65,42 +85,93 @@ export type MessageHandlers = {
     ) => Promise<Result<ResponseMap[T], ErrorMap[T]>>;
 };
 
-const isMessage = (value: unknown): value is Message =>
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === "string";
+/** A `Result` as it arrives, prototype gone, read with its two halves. */
+export const answerSchema = <Ok extends z.ZodType, Err extends z.ZodType>(
+    ok: Ok,
+    err: Err,
+) =>
+    z.discriminatedUnion("type", [
+        z.object({ type: z.literal("ok"), value: ok }),
+        z.object({ error: err, type: z.literal("err") }),
+    ]);
 
-const isResultBase = (value: unknown): value is ResultBase<unknown, unknown> =>
-    typeof value === "object" &&
-    value !== null &&
-    ((value as { type?: unknown }).type === "ok" ||
-        (value as { type?: unknown }).type === "err");
+/** What the channel adds to every answer, as it arrives. */
+const deliveryErrorSchema = z.union([noReceiverSchema, decodeFailureSchema]);
 
-/**
- * Sends a message to the service worker and revives its `Result`.
- * @returns The handler's result, or `no-receiver` if none replied.
- */
-export const sendMessage = async <M extends Message>(
-    message: M,
-): Promise<
-    Result<ResponseMap[M["type"]], ErrorMap[M["type"]] | DeliveryError>
-> => {
+/** Sends a message to the service worker, and reads its answer. */
+const ask = async <Answer extends z.ZodType>(
+    message: Message,
+    schema: Answer,
+): Promise<z.output<Answer> | null> => {
     const response = await Result.try(chrome.runtime.sendMessage(message));
 
-    if (response.isErr()) {
-        return Result.err({ kind: "no-receiver" });
-    }
+    return response.isErr() ? null : decodeOr(schema, response.value);
+};
 
-    if (!isResultBase(response.value)) {
-        return Result.err({ kind: "no-receiver" });
-    }
+const imageAnswerSchema = answerSchema(
+    z.string(),
+    z.union([
+        networkErrorSchema,
+        httpErrorSchema,
+        forbiddenHostSchema,
+        deliveryErrorSchema,
+    ]),
+);
 
-    return reviveResult(
-        response.value as ResultBase<
-            ResponseMap[M["type"]],
-            ErrorMap[M["type"]] | DeliveryError
-        >,
+/**
+ * Asks the worker for an image, which is not bound by page CORS.
+ * @returns A `data:` URL of the untouched bytes.
+ */
+export const requestImage = async (
+    url: string,
+): Promise<Result<string, ErrorMap["image:fetch"] | DeliveryError>> => {
+    const answer = await ask({ type: "image:fetch", url }, imageAnswerSchema);
+
+    return answer === null
+        ? Result.err({ kind: "no-receiver" })
+        : reviveResult(answer);
+};
+
+const creditsAnswerSchema = answerSchema(
+    z.unknown(),
+    z.union([
+        networkErrorSchema,
+        httpErrorSchema,
+        decodeFailureSchema,
+        deliveryErrorSchema,
+    ]),
+);
+
+/**
+ * Asks the worker for one song's credits from Apple's catalogue.
+ * @returns Apple's answer, for the caller to parse.
+ */
+export const requestCredits = async (
+    storefront: string,
+    trackId: number,
+): Promise<Result<unknown, ErrorMap["apple:credits"] | DeliveryError>> => {
+    const answer = await ask(
+        { storefront, trackId, type: "apple:credits" },
+        creditsAnswerSchema,
     );
+
+    return answer === null
+        ? Result.err({ kind: "no-receiver" })
+        : reviveResult(answer);
+};
+
+/** Runs the handler for a message, or `null` when there is none. */
+const handle = (
+    handlers: MessageHandlers,
+    message: Message,
+    sender: chrome.runtime.MessageSender,
+): Promise<Result<unknown, unknown>> | null => {
+    switch (message.type) {
+        case "image:fetch":
+            return handlers["image:fetch"]?.(message, sender) ?? null;
+        case "apple:credits":
+            return handlers["apple:credits"]?.(message, sender) ?? null;
+    }
 };
 
 /**
@@ -108,23 +179,16 @@ export const sendMessage = async <M extends Message>(
  * @param handlers Keyed by message type; unknown types are ignored.
  */
 export const onMessage = (handlers: MessageHandlers): void => {
-    chrome.runtime.onMessage.addListener((message, sender, respond) => {
-        if (!isMessage(message)) {
+    chrome.runtime.onMessage.addListener((raw, sender, respond) => {
+        const message = decodeOr(messageSchema, raw);
+        const handled =
+            message === null ? null : handle(handlers, message, sender);
+
+        if (handled === null) {
             return false;
         }
 
-        const handler = handlers[message.type] as
-            | ((
-                  message: Message,
-                  sender: chrome.runtime.MessageSender,
-              ) => Promise<Result<unknown, unknown>>)
-            | undefined;
-
-        if (handler === undefined) {
-            return false;
-        }
-
-        handler(message, sender)
+        handled
             .then((result) => respond(result))
             .catch((error: unknown) => {
                 respond(

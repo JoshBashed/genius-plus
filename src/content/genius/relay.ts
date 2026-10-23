@@ -1,47 +1,61 @@
 /** The `postMessage` channel between the two Genius content scripts. */
-import { Result, type ResultBase } from "@resulted/results";
-import type { NetworkError } from "@/utilities/http";
-import type { DeliveryError, ErrorMap } from "@/utilities/messaging";
-import { reviveResult, sendMessage } from "@/utilities/messaging";
+import { Result } from "@resulted/results";
+import { z } from "zod";
+import { decodeFailureSchema, decodeOr } from "@/utilities/decode";
+import {
+    httpErrorSchema,
+    type NetworkError,
+    networkErrorSchema,
+} from "@/utilities/http";
+import {
+    answerSchema,
+    type DeliveryError,
+    type ErrorMap,
+    requestCredits,
+    reviveResult,
+} from "@/utilities/messaging";
 
 export const GENIUS_CHANNEL = "genius-plus:genius";
 
 /** What the main half reports back, purely so it can be logged once. */
-export type GeniusStatus =
+const statusSchema = z.enum([
     /** The main half is listening; resend the settings. */
-    | "ready"
+    "ready",
     /** Table mounted. */
-    | "rendered"
+    "rendered",
     /** Table removed, because the switch went off or we navigated away. */
-    | "removed"
+    "removed",
     /** A Genius album page, but the legacy A/B variant of it. */
-    | "legacy"
+    "legacy",
     /** Not an album page, so there is nothing for us to do. */
-    | "skipped"
+    "skipped",
     /** Something we expected to be there was not. */
-    | "failed";
+    "failed",
+]);
 
-interface Envelope {
-    readonly channel: string;
-    readonly direction: string;
-}
+export type GeniusStatus = z.output<typeof statusSchema>;
 
-const envelopeOf = (event: MessageEvent): Envelope | null => {
-    // Same-window, same-origin only; Genius embeds chatty iframes.
-    if (event.source !== window || typeof event.data !== "object") {
-        return null;
-    }
+/** Same window only; Genius embeds chatty iframes. */
+const dataOf = (event: MessageEvent): unknown =>
+    event.source === window ? event.data : null;
 
-    const data = event.data as Partial<Envelope> | null;
+/** One message on this channel, going the given way. */
+const onChannel = <Direction extends string, Shape extends z.ZodRawShape>(
+    direction: Direction,
+    shape: Shape,
+) =>
+    z.object({
+        ...shape,
+        channel: z.literal(GENIUS_CHANNEL),
+        direction: z.literal(direction),
+    });
 
-    if (data === null || data.channel !== GENIUS_CHANNEL) {
-        return null;
-    }
+const enabledSchema = onChannel("to-main", { enabled: z.boolean() });
 
-    return typeof data.direction === "string"
-        ? { channel: data.channel, direction: data.direction }
-        : null;
-};
+const statusReportSchema = onChannel("to-isolated", {
+    detail: z.string().nullish(),
+    status: statusSchema,
+});
 
 /** Isolated → main: whether the feature is switched on. */
 export const postEnabled = (enabled: boolean): void => {
@@ -51,16 +65,8 @@ export const postEnabled = (enabled: boolean): void => {
     );
 };
 
-export const readEnabled = (event: MessageEvent): boolean | null => {
-    const envelope = envelopeOf(event);
-
-    if (envelope === null || envelope.direction !== "to-main") {
-        return null;
-    }
-
-    const { enabled } = event.data as { enabled?: unknown };
-    return typeof enabled === "boolean" ? enabled : null;
-};
+export const readEnabled = (event: MessageEvent): boolean | null =>
+    decodeOr(enabledSchema, dataOf(event))?.enabled ?? null;
 
 export interface StatusReport {
     readonly status: GeniusStatus;
@@ -79,25 +85,11 @@ export const postStatus = (
 };
 
 export const readStatus = (event: MessageEvent): StatusReport | null => {
-    const envelope = envelopeOf(event);
+    const report = decodeOr(statusReportSchema, dataOf(event));
 
-    if (envelope === null || envelope.direction !== "to-isolated") {
-        return null;
-    }
-
-    const { status, detail } = event.data as {
-        status?: unknown;
-        detail?: unknown;
-    };
-
-    if (typeof status !== "string") {
-        return null;
-    }
-
-    return {
-        status: status as GeniusStatus,
-        detail: typeof detail === "string" ? detail : null,
-    };
+    return report === null
+        ? null
+        : { detail: report.detail ?? null, status: report.status };
 };
 
 /**
@@ -115,6 +107,25 @@ export type CreditsError =
     | ErrorMap["apple:credits"]
     | DeliveryError
     | NetworkError;
+
+const requestSchema = onChannel(REQUEST, {
+    id: z.number(),
+    storefront: z.string(),
+    trackId: z.number(),
+});
+
+const answerMessageSchema = onChannel(ANSWER, {
+    id: z.number(),
+    result: answerSchema(
+        z.unknown(),
+        z.union([
+            networkErrorSchema,
+            httpErrorSchema,
+            decodeFailureSchema,
+            z.object({ kind: z.literal("no-receiver") }),
+        ]),
+    ),
+});
 
 /** Counted, not random: only uniqueness within one document matters. */
 let nextId = 0;
@@ -136,21 +147,13 @@ const listenForAnswers = (): void => {
 
     listening = true;
     addEventListener("message", (event) => {
-        const envelope = envelopeOf(event);
+        const answer = decodeOr(answerMessageSchema, dataOf(event));
 
-        if (envelope === null || envelope.direction !== ANSWER) {
+        if (answer === null) {
             return;
         }
 
-        const { id, result } = event.data as {
-            id?: unknown;
-            result?: unknown;
-        };
-
-        if (typeof id !== "number") {
-            return;
-        }
-
+        const { id, result } = answer;
         const settle = waiting.get(id);
 
         if (settle === undefined) {
@@ -158,7 +161,7 @@ const listenForAnswers = (): void => {
         }
 
         waiting.delete(id);
-        settle(reviveResult(result as ResultBase<unknown, CreditsError>));
+        settle(reviveResult(result));
     });
 };
 
@@ -208,31 +211,15 @@ export const fetchSongCredits = (
  */
 export const serveCreditRequests = (): (() => void) => {
     const onRequest = (event: MessageEvent): void => {
-        const envelope = envelopeOf(event);
+        const request = decodeOr(requestSchema, dataOf(event));
 
-        if (envelope === null || envelope.direction !== REQUEST) {
+        if (request === null) {
             return;
         }
 
-        const { id, storefront, trackId } = event.data as {
-            id?: unknown;
-            storefront?: unknown;
-            trackId?: unknown;
-        };
+        const { id, storefront, trackId } = request;
 
-        if (
-            typeof id !== "number" ||
-            typeof storefront !== "string" ||
-            typeof trackId !== "number"
-        ) {
-            return;
-        }
-
-        void sendMessage({
-            storefront,
-            trackId,
-            type: "apple:credits",
-        }).then((result) => {
+        void requestCredits(storefront, trackId).then((result) => {
             postMessage(
                 {
                     channel: GENIUS_CHANNEL,
