@@ -1,8 +1,8 @@
-/** Genius's own API calls: `GET` unauthenticated, `PUT` with its CSRF header. */
+/** The one way to call Genius's API: its headers, its envelope, a schema. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import { configString } from "@/content/genius/pageConfig";
-import { type DecodeFailure, decodeOr } from "@/utilities/decode";
+import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
 import type { HttpError, RequestError } from "@/utilities/http";
 
 /** Genius would reject the write: no usable CSRF token. */
@@ -22,9 +22,33 @@ export const EXTENSION_HEADERS = {
     "X-Genius-Extension-Id": "Genius+",
 } as const;
 
+/** A `GET`, which cookies authenticate. */
+export interface GeniusRead {
+    readonly path: string;
+    readonly query?: Readonly<Record<string, string>>;
+    /** Names the answer in a decode error. */
+    readonly what: string;
+}
+
+/** A write, which also carries Genius's CSRF token. */
+export interface GeniusWrite<Body> {
+    readonly method: "POST" | "PUT";
+    readonly path: string;
+    /** Sent as JSON, with `text_format` beside it. */
+    readonly body: Body;
+    /** Names the answer in a decode error. */
+    readonly what: string;
+}
+
 /** Their own root, which is not always this origin's `/api`. */
-export const apiRootUrl = (): string =>
+const apiRootUrl = (): string =>
     configString("apiRootUrl", "api_root_url") ?? `${location.origin}/api`;
+
+/** What their own helpers ask every answer to be rendered as. */
+const TEXT_FORMAT = "html,markdown,preview";
+
+/** Genius's own write credential, which its `prepareHeaders` reads too. */
+const CSRF_COOKIE = "_csrf_token";
 
 /**
  * What a rejection carries.
@@ -62,7 +86,7 @@ const SERVER_FIELDS: Readonly<Record<string, string>> = {
  * A rejection's field errors, under the keys a request body uses.
  * @returns An empty object when it named no field in particular.
  */
-export const readValidationErrors = (body: unknown): ValidationErrors => {
+const readValidationErrors = (body: unknown): ValidationErrors => {
     const problem = decodeOr(problemSchema, body);
     const found = problem?.response?.validation_errors;
 
@@ -109,11 +133,20 @@ const readMessages = (body: unknown): readonly string[] => {
     return message == null ? [] : [message];
 };
 
+/** A refusal, with whatever the body said about it. */
+const refusal = (url: string, status: number, body: unknown): HttpError => ({
+    kind: "http",
+    messages: readMessages(body),
+    status,
+    url,
+    validationErrors: readValidationErrors(body),
+});
+
 /** HTTP is 200 either way; the real status lives in `meta.status`. */
 const unwrap = (
     url: string,
     body: unknown,
-): Result<Record<string, unknown>, HttpError | DecodeFailure> => {
+): Result<unknown, HttpError | DecodeFailure> => {
     if (typeof body !== "object" || body === null) {
         return Result.err({
             kind: "decode",
@@ -126,13 +159,7 @@ const unwrap = (
     const response = envelope?.response;
 
     if (typeof status === "number" && (status < 200 || status >= 300)) {
-        return Result.err({
-            kind: "http",
-            messages: readMessages(body),
-            status,
-            url,
-            validationErrors: readValidationErrors(body),
-        });
+        return Result.err(refusal(url, status, body));
     }
 
     if (typeof response !== "object" || response === null) {
@@ -142,63 +169,8 @@ const unwrap = (
         });
     }
 
-    return Result.ok(response as Record<string, unknown>);
+    return Result.ok(response);
 };
-
-/** Cookies authenticate; the only header is the one naming us. */
-export const apiGet = async (
-    path: string,
-    params: Readonly<Record<string, string>> = {},
-): Promise<Result<Record<string, unknown>, ReadFailure>> => {
-    const query = new URLSearchParams(params);
-
-    if (!query.has("text_format")) {
-        query.set("text_format", "html,markdown,preview");
-    }
-
-    const url = `${apiRootUrl()}${path}?${query.toString()}`;
-    const response = await Result.try(
-        fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: EXTENSION_HEADERS,
-        }),
-    );
-
-    if (response.isErr()) {
-        return Result.err({ kind: "network", url });
-    }
-
-    const text = await Result.try(response.value.text());
-
-    if (text.isErr()) {
-        return Result.err({ kind: "network", url });
-    }
-
-    const parsed = Result.trySync(() => JSON.parse(text.value) as unknown);
-
-    // Parsed before the status is judged: a rejected call still carries
-    // the only line worth showing, and bailing early would drop it.
-    if (!response.value.ok || parsed.isErr()) {
-        return Result.err({
-            kind: "http",
-            messages: parsed.isOk() ? readMessages(parsed.value) : [],
-            status: response.value.status,
-            url,
-            validationErrors: parsed.isOk()
-                ? readValidationErrors(parsed.value)
-                : {},
-        });
-    }
-
-    return unwrap(url, parsed.value);
-};
-
-/** What their own POST and PUT helpers ask every answer to be rendered as. */
-const TEXT_FORMAT = "html,markdown,preview";
-
-/** Genius's own write credential, which its `prepareHeaders` reads too. */
-const CSRF_COOKIE = "_csrf_token";
 
 /**
  * Reads the `_csrf_token` cookie Genius signs its writes with.
@@ -226,33 +198,16 @@ export const csrfToken = (): Result<string, AuthError> => {
     });
 };
 
-/** Both writes send the same headers and read the same answer shape. */
-const sendWrite = async (
-    method: "POST" | "PUT",
-    path: string,
-    body: object,
-): Promise<Result<Record<string, unknown>, WriteFailure>> => {
-    const token = csrfToken();
-
-    if (token.isErr()) {
-        return token;
-    }
-
-    const url = `${apiRootUrl()}${path}`;
-    const response = await Result.try(
-        fetch(url, {
-            method,
-            credentials: "same-origin",
-            headers: {
-                ...EXTENSION_HEADERS,
-                "Content-Type": "application/json",
-                "X-CSRF-Token": token.value,
-            },
-            // Their own helper merges this into every write, and the
-            // serializer that renders the answer needs it.
-            body: JSON.stringify({ text_format: TEXT_FORMAT, ...body }),
-        }),
-    );
+/**
+ * Sends a request and unwraps Genius's envelope from the answer.
+ * @param emptyIsOk Whether a 2xx with no JSON wrote something.
+ */
+const send = async (
+    url: string,
+    init: RequestInit,
+    emptyIsOk: boolean,
+): Promise<Result<unknown, RequestError | DecodeFailure>> => {
+    const response = await Result.try(fetch(url, init));
 
     if (response.isErr()) {
         return Result.err({ kind: "network", url });
@@ -264,42 +219,121 @@ const sendWrite = async (
         return Result.err({ kind: "network", url });
     }
 
-    const parsed = Result.trySync(() => JSON.parse(text.value) as unknown);
+    const parsed = Result.trySync((): unknown => JSON.parse(text.value));
+    const { ok, status } = response.value;
 
-    if (!response.value.ok) {
-        return Result.err({
-            kind: "http",
-            messages: parsed.isOk() ? readMessages(parsed.value) : [],
-            status: response.value.status,
-            url,
-            validationErrors: parsed.isOk()
-                ? readValidationErrors(parsed.value)
-                : {},
-        });
+    // Parsed before the status is judged: a rejected call still carries
+    // the only line worth showing, and bailing early would drop it.
+    if (!ok) {
+        return Result.err(
+            refusal(url, status, parsed.isOk() ? parsed.value : null),
+        );
     }
 
-    // A 2xx that carried no JSON wrote something, and said nothing.
-    return parsed.isErr() ? Result.ok({}) : unwrap(url, parsed.value);
+    if (parsed.isErr()) {
+        // A write that answered 2xx with no JSON wrote something, and
+        // said nothing; a read with no JSON read nothing.
+        return emptyIsOk
+            ? Result.ok({})
+            : Result.err(refusal(url, status, null));
+    }
+
+    return unwrap(url, parsed.value);
 };
 
 /**
- * `POST` with the same headers, for the endpoints that create.
- * @param body Serialised as JSON; the caller owns its exact shape.
- * @returns A `Result` with the unwrapped response, empty if 2xx carried none.
+ * Reads from Genius's API, and reads its answer with `schema`.
+ * Only the endpoint modules in this folder call it.
+ * @returns The decoded `response`, or why there is none.
  */
-export const apiPost = async (
-    path: string,
-    body: object,
-): Promise<Result<Record<string, unknown>, WriteFailure>> =>
-    sendWrite("POST", path, body);
+export const geniusRead = async <Schema extends z.ZodType>(
+    request: GeniusRead,
+    schema: Schema,
+): Promise<Result<z.output<Schema>, ReadFailure>> => {
+    const query = new URLSearchParams(request.query);
+
+    if (!query.has("text_format")) {
+        query.set("text_format", TEXT_FORMAT);
+    }
+
+    const sent = await send(
+        `${apiRootUrl()}${request.path}?${query.toString()}`,
+        {
+            credentials: "same-origin",
+            headers: EXTENSION_HEADERS,
+            method: "GET",
+        },
+        false,
+    );
+
+    if (sent.isErr()) {
+        return Result.err(sent.error);
+    }
+
+    return decode(schema, sent.value, request.what);
+};
 
 /**
- * `PUT` with the headers Genius's own mutations send, never retried.
- * @param body Serialised as JSON; the caller owns its exact shape.
- * @returns A `Result` with the unwrapped response, empty if 2xx carried none.
+ * Writes to Genius's API, and reads its answer with `schema`.
+ * Only the endpoint modules in this folder call it.
+ * @returns The decoded `response`, or why there is none.
  */
-export const apiPut = async (
+export const geniusWrite = async <Body, Schema extends z.ZodType>(
+    request: GeniusWrite<Body>,
+    schema: Schema,
+): Promise<Result<z.output<Schema>, WriteFailure>> => {
+    const token = csrfToken();
+
+    if (token.isErr()) {
+        return token;
+    }
+
+    const sent = await send(
+        `${apiRootUrl()}${request.path}`,
+        {
+            // Their own helper merges `text_format` into every write, and
+            // the serializer that renders the answer needs it.
+            body: JSON.stringify(
+                Object.assign({ text_format: TEXT_FORMAT }, request.body),
+            ),
+            credentials: "same-origin",
+            headers: {
+                ...EXTENSION_HEADERS,
+                "Content-Type": "application/json",
+                "X-CSRF-Token": token.value,
+            },
+            method: request.method,
+        },
+        true,
+    );
+
+    if (sent.isErr()) {
+        return Result.err(sent.error);
+    }
+
+    return decode(schema, sent.value, request.what);
+};
+
+/** Any answer at all, for the callers not yet given an endpoint. */
+const anyResponse = z.record(z.string(), z.unknown());
+
+/** `GET`, for the callers not yet given an endpoint. */
+export const apiGet = (
     path: string,
-    body: object,
+    query: Readonly<Record<string, string>> = {},
+): Promise<Result<Record<string, unknown>, ReadFailure>> =>
+    geniusRead({ path, query, what: path }, anyResponse);
+
+/** `POST`, for the callers not yet given an endpoint. */
+export const apiPost = <Body>(
+    path: string,
+    body: Body,
 ): Promise<Result<Record<string, unknown>, WriteFailure>> =>
-    sendWrite("PUT", path, body);
+    geniusWrite({ body, method: "POST", path, what: path }, anyResponse);
+
+/** `PUT`, for the callers not yet given an endpoint. */
+export const apiPut = <Body>(
+    path: string,
+    body: Body,
+): Promise<Result<Record<string, unknown>, WriteFailure>> =>
+    geniusWrite({ body, method: "PUT", path, what: path }, anyResponse);
