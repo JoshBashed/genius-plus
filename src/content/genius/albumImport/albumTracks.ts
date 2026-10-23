@@ -1,7 +1,7 @@
 /** The album's tracklist, re-read from Genius after it has been written. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
-import { apiGet, type ReadFailure } from "@/content/genius/api";
+import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
 import type { TrackSeed } from "@/content/genius/pageState";
 import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";

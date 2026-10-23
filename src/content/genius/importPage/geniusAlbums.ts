@@ -2,7 +2,7 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { DateComponents } from "@/bindings";
-import { apiGet, type ReadFailure } from "@/content/genius/api";
+import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
 import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 

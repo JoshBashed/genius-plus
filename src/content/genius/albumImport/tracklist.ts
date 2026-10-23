@@ -2,7 +2,7 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
-import { apiPut, type WriteFailure } from "@/content/genius/api";
+import { apiPut, type WriteFailure } from "@/content/genius/geniusApi";
 import type { TrackSeed } from "@/content/genius/pageState";
 import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";

@@ -1,7 +1,7 @@
 /** The album's own record: its art, its date, its language, its kind. */
 import { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
-import { apiPut, type WriteFailure } from "@/content/genius/api";
+import { apiPut, type WriteFailure } from "@/content/genius/geniusApi";
 import { describeRequestError } from "@/utilities/http";
 
 /** Their four kinds, as their own editor offers them. */

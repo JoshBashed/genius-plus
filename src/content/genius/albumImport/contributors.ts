@@ -5,7 +5,7 @@ import {
     albumCredits,
     type ImportedAlbum,
 } from "@/content/genius/albumImport/importedAlbum";
-import type { ReadFailure } from "@/content/genius/api";
+import type { ReadFailure } from "@/content/genius/geniusApi";
 import {
     optionLabel,
     searchArtists,

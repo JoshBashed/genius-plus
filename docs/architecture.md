@@ -32,7 +32,7 @@ Inside `src/content/genius/`:
 | `geniusComponents/`, `geniusHooks/` | Slot-backed borrowed bindings |
 | `songTable/` | The album metadata editor table |
 | `importPage/`, `albumImport/` | The Apple import assistant, its pipeline |
-| `api.ts`, `write.ts` | Genius HTTP plumbing and the save path |
+| `geniusApi/`, `write.ts` | Genius's API, and the save path |
 | `draft.ts`, `draftStash.ts` | Row drafts, and their localStorage stash |
 | `bulkStatus.ts` | Parses Pusher `bulk-song-update-status` events |
 | `pageState.ts`, `pageConfig.ts`, `pageContext.ts` | Page-state reads |
@@ -156,7 +156,8 @@ never in a shared bag. The current map:
 - `utilities/artwork.ts`: `ImageError`
 - `bindings/errors.ts`: `BindingError`, `UnsupportedPageError`,
   `ChunkError`
-- `content/genius/api.ts`: `AuthError`, `ReadFailure`, `WriteFailure`
+- `content/genius/geniusApi/`: `AuthError`, `ReadFailure`,
+  `WriteFailure`
 - `content/genius/pageState.ts`: `PageError`
 - and so on, per module. `CreateSongFailure` in
   `importPage/createSong.ts` is the shape to copy: a private `asFailure`

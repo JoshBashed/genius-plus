@@ -84,8 +84,8 @@ body shape, and record what it said.
 - **An error type lives beside whatever produces it**, not in a shared
   bag. The current map is in `docs/architecture.md`; `CreateSongFailure`
   in `importPage/createSong.ts` is the shape to copy.
-- A module may name one union for **its own** domain, as `api.ts` does.
-  That is per module and stays there; it is not a new global.
+- A module may name one union for **its own** domain, as `geniusApi/`
+  does. That is per module and stays there; it is not a new global.
 - **There is no `AppError`, `AppResult`, or `describeError`.** They were
   deleted. Never reintroduce a catch-all error, result, or describer.
 - **An error never bubbles with information its caller does not need.**

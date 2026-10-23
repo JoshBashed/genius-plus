@@ -10,7 +10,7 @@ import {
 import type { BindingError } from "@/bindings/errors";
 import { findByDisplayName } from "@/bindings/finders";
 import type { ModuleNamespace } from "@/bindings/types";
-import { EXTENSION_HEADERS } from "@/content/genius/api";
+import { EXTENSION_HEADERS } from "@/content/genius/geniusApi";
 import {
     type CachedChunks,
     readChunkCache,

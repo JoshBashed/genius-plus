@@ -2,7 +2,6 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
-import { apiPut, csrfToken, type WriteFailure } from "@/content/genius/api";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -13,6 +12,11 @@ import {
     FIELD_PAYLOAD_KEYS,
     type SongDraft,
 } from "@/content/genius/draft";
+import {
+    apiPut,
+    csrfToken,
+    type WriteFailure,
+} from "@/content/genius/geniusApi";
 import {
     describeMetadataFailure,
     loadSongMetadata,

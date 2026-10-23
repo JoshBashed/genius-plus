@@ -9,12 +9,12 @@ and record what it said, in this file.
 
 - **Every request to Genius sends `X-Genius-Extension-Id: Genius+`**,
   which their tech team asked extensions to send. It comes from
-  `EXTENSION_HEADERS` in `src/content/genius/api.ts`. Requests to Apple,
-  Filestack, and artwork hosts never send it.
+  `EXTENSION_HEADERS` in `src/content/genius/geniusApi/`. Requests to
+  Apple, Filestack, and artwork hosts never send it.
 - Writes need `X-CSRF-Token` from the `_csrf_token` cookie.
 - **Every write sends `text_format` at the top level**, a sibling of `song`
   or `album`, because their own POST and PUT helpers merge it in. `apiPut`
-  and `apiPost` (`src/content/genius/api.ts`) do this for you.
+  and `apiPost` (`src/content/genius/geniusApi/`) do this for you.
 - **A rejection puts the only useful line in the body**, not the status:
   `response.errors` for the record, `response.validation_errors` keyed by
   field with `base` for the rest, and `meta.message` as the summary. The
