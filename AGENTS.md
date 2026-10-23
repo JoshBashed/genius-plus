@@ -67,6 +67,11 @@ body shape, and record what it said.
 - Strict TS: `verbatimModuleSyntax`, `noUncheckedIndexedAccess` (which is
   why `styled("div")` is required over `styled.div`), no `any`, no
   non-null assertions.
+- **Nothing that gets around the type checker.** No `object` as a type,
+  no `as` assertion (`as const` aside), and no `Record<string, unknown>`
+  for something whose shape is known. A request body gets its own type
+  beside the endpoint that sends it; a value of unknown shape is read
+  with a schema.
 - **Spacing is flex and `gap`, never margins.** No `margin` for spacing,
   and no Tailwind `m-*`/`mt-*`/`ml-auto`. `margin: 0` to neutralise a
   user-agent default is the only exception.
