@@ -32,7 +32,8 @@ Inside `src/content/genius/`:
 | `geniusComponents/`, `geniusHooks/` | Slot-backed borrowed bindings |
 | `songTable/` | The album metadata editor table |
 | `importPage/`, `albumImport/` | The Apple import assistant, its pipeline |
-| `geniusApi/`, `write.ts` | Genius's API, and the save path |
+| `geniusApi/` | One function per Genius endpoint, each with its schema |
+| `write.ts` | The save path |
 | `draft.ts`, `draftStash.ts` | Row drafts, and their localStorage stash |
 | `bulkStatus.ts` | Parses Pusher `bulk-song-update-status` events |
 | `pageState.ts`, `pageConfig.ts`, `pageContext.ts` | Page-state reads |

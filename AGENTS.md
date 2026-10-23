@@ -402,3 +402,8 @@ the build or the page when violated.
   hardcode a hash, a chunk URL, or a minified export letter.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone.
+- **Genius's API is called only through an endpoint in `geniusApi/`.**
+  A new call is a new function there, with a type for what it sends and
+  a schema for what it reads. `request.ts` adds the
+  `X-Genius-Extension-Id` header Genius asked for, and the lint refuses
+  it anywhere else.

@@ -7,19 +7,30 @@ and record what it said, in this file.
 
 ## Auth and envelopes
 
+- **Every endpoint is a function in `src/content/genius/geniusApi/`**,
+  grouped by resource: `songs.ts`, `albums.ts`, `artists.ts`, `tags.ts`.
+  Each one sends through `geniusRead` or `geniusWrite` in `request.ts`,
+  typed with its own request body, and reads its answer with its own
+  schema, so the shapes below live beside the call that sends them.
+  Nothing outside the folder may import `request.ts`; a lint rule
+  refuses it.
+- **The envelope is unwrapped once, in `request.ts`.** Every answer is
+  `{ meta: { status }, response }`, and a refusal can be HTTP 200 with a
+  failing `meta.status`. It becomes an `http` error there, so an
+  endpoint's schema describes `response` alone.
 - **Every request to Genius sends `X-Genius-Extension-Id: Genius+`**,
   which their tech team asked extensions to send. It comes from
   `EXTENSION_HEADERS` in `src/content/genius/geniusApi/`. Requests to
   Apple, Filestack, and artwork hosts never send it.
 - Writes need `X-CSRF-Token` from the `_csrf_token` cookie.
 - **Every write sends `text_format` at the top level**, a sibling of `song`
-  or `album`, because their own POST and PUT helpers merge it in. `apiPut`
-  and `apiPost` (`src/content/genius/geniusApi/`) do this for you.
+  or `album`, because their own POST and PUT helpers merge it in.
+  `geniusWrite` does this for every write.
 - **A rejection puts the only useful line in the body**, not the status:
   `response.errors` for the record, `response.validation_errors` keyed by
   field with `base` for the rest, and `meta.message` as the summary. The
   server names `release_date` where the body key is
-  `release_date_components`. `apiGet`/`apiPut` parse before judging the
+  `release_date_components`. `request.ts` parses before judging the
   status, so an `http` error carries `messages`.
 
 ## Updating songs
