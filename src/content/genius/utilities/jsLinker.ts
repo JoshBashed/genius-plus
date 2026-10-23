@@ -427,12 +427,16 @@ export class JSLinker {
     };
 }
 
+/** Any object can be read key by key, each value as `unknown`. */
+const isNamespace = (value: unknown): value is ModuleNamespace =>
+    typeof value === "object" && value !== null;
+
 const importModule = async (
     url: string,
 ): Promise<Result<ModuleNamespace, BindingError>> => {
     // Must stay a native `import()` of a runtime string.
     const imported = await Result.try(
-        import(/* webpackIgnore: true */ url) as Promise<unknown>,
+        import(/* webpackIgnore: true */ url).then((ns): unknown => ns),
     );
 
     if (imported.isErr()) {
@@ -443,7 +447,7 @@ const importModule = async (
         });
     }
 
-    if (typeof imported.value !== "object" || imported.value === null) {
+    if (!isNamespace(imported.value)) {
         return Result.err({
             kind: "binding",
             target: url,
@@ -451,5 +455,5 @@ const importModule = async (
         });
     }
 
-    return Result.ok(imported.value as ModuleNamespace);
+    return Result.ok(imported.value);
 };

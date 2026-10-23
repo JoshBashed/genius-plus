@@ -1,6 +1,7 @@
 /** Apple's public web player token, which their own site ships in its JS. */
 import { Result } from "@resulted/results";
-import type { DecodeFailure } from "@/utilities/decode";
+import { z } from "zod";
+import { type DecodeFailure, decodeOr } from "@/utilities/decode";
 import type { HttpError, NetworkError } from "@/utilities/http";
 
 const HOME = "https://music.apple.com/";
@@ -25,13 +26,19 @@ interface CachedToken {
 
 let cached: CachedToken | null = null;
 
-const decodeSegment = (segment: string): Record<string, unknown> | null => {
-    const padded = segment.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = Result.trySync(() => JSON.parse(atob(padded)) as unknown);
+/** The two claims read from a JWT: its key id, and when it expires. */
+const claimsSchema = z.object({
+    exp: z.number().optional(),
+    kid: z.string().optional(),
+});
 
-    return decoded.isOk() && typeof decoded.value === "object"
-        ? (decoded.value as Record<string, unknown>)
-        : null;
+const decodeSegment = (
+    segment: string,
+): z.output<typeof claimsSchema> | null => {
+    const padded = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = Result.trySync((): unknown => JSON.parse(atob(padded)));
+
+    return decoded.isOk() ? decodeOr(claimsSchema, decoded.value) : null;
 };
 
 const expiryOf = (token: string): number => {

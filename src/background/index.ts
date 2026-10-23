@@ -88,7 +88,7 @@ onMessage({
         }
 
         const body = await Result.try(
-            response.value.json() as Promise<unknown>,
+            response.value.json().then((json): unknown => json),
         );
 
         return body.isErr()

@@ -275,7 +275,7 @@ export const fetchAppleAlbum = async (
     }
 
     // Apple serves this as `text/javascript`, so it is parsed by hand.
-    const parsed = Result.trySync(() => JSON.parse(text.value) as unknown);
+    const parsed = Result.trySync((): unknown => JSON.parse(text.value));
 
     if (parsed.isErr()) {
         return Result.err({

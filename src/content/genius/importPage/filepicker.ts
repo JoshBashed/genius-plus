@@ -163,7 +163,9 @@ export const uploadImage = async (
         });
     }
 
-    const parsed = await Result.try(response.value.json() as Promise<unknown>);
+    const parsed = await Result.try(
+        response.value.json().then((json): unknown => json),
+    );
 
     if (parsed.isErr()) {
         return Result.err({
