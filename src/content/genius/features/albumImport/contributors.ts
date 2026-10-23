@@ -4,7 +4,7 @@ import type { SelectOption } from "@/bindings";
 import {
     albumCredits,
     type ImportedAlbum,
-} from "@/content/genius/albumImport/importedAlbum";
+} from "@/content/genius/features/albumImport/importedAlbum";
 import type { ReadFailure } from "@/content/genius/utilities/geniusApi";
 import {
     optionLabel,

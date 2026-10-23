@@ -3,24 +3,6 @@
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
 import {
-    describeAlbumTracksFailure,
-    loadAlbumTracks,
-} from "@/content/genius/albumImport/albumTracks";
-import {
-    type ContributorPlan,
-    unmappedCount,
-} from "@/content/genius/albumImport/contributors";
-import type { AlbumCredits } from "@/content/genius/albumImport/credits";
-import {
-    appleAlbumType,
-    type ImportedAlbum,
-} from "@/content/genius/albumImport/importedAlbum";
-import {
-    matchTracks,
-    type TrackMatch,
-    titleAccepted,
-} from "@/content/genius/albumImport/matchTracks";
-import {
     type SongChoice,
     SongSelect,
 } from "@/content/genius/components/albumImport/SongSelect";
@@ -35,13 +17,31 @@ import {
 import { Button } from "@/content/genius/components/genius/Button";
 import { Icon } from "@/content/genius/components/genius/Icon";
 import { Spinner } from "@/content/genius/components/genius/Spinner";
-import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import {
+    describeAlbumTracksFailure,
+    loadAlbumTracks,
+} from "@/content/genius/features/albumImport/albumTracks";
+import {
+    type ContributorPlan,
+    unmappedCount,
+} from "@/content/genius/features/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/features/albumImport/credits";
+import type { GeniusAlbum } from "@/content/genius/features/albumImport/geniusAlbums";
+import {
+    appleAlbumType,
+    type ImportedAlbum,
+} from "@/content/genius/features/albumImport/importedAlbum";
+import {
+    matchTracks,
+    type TrackMatch,
+    titleAccepted,
+} from "@/content/genius/features/albumImport/matchTracks";
 import {
     describeEmptyImport,
     describeImportFailure,
     runImport,
-} from "@/content/genius/importPage/runImport";
-import type { CreditMode } from "@/content/genius/importPage/wizard";
+} from "@/content/genius/features/albumImport/runImport";
+import type { CreditMode } from "@/content/genius/features/albumImport/wizard";
 import { optionLabel, searchSongs } from "@/content/genius/utilities/options";
 import { drain } from "@/content/genius/utilities/pool";
 import { plural } from "@/utilities/plural";

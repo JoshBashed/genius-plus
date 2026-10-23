@@ -9,15 +9,21 @@ import {
 } from "@/content/genius/components/metadataEditor/ColumnEditor";
 import { COLUMNS } from "@/content/genius/components/metadataEditor/columns";
 import type { RowState } from "@/content/genius/components/metadataEditor/rowState";
-import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
-import type { SongMetadata } from "@/content/genius/metadata";
-import { canEdit, permissionsKnown } from "@/content/genius/permissions";
-import type { TrackSeed } from "@/content/genius/utilities/pageState";
+import {
+    FIELD_LABELS,
+    type SongDraft,
+} from "@/content/genius/features/metadataEditor/draft";
+import type { SongMetadata } from "@/content/genius/features/metadataEditor/metadata";
+import {
+    canEdit,
+    permissionsKnown,
+} from "@/content/genius/features/metadataEditor/permissions";
 import {
     type FieldConflict,
     invalidFields,
     type SaveStage,
-} from "@/content/genius/write";
+} from "@/content/genius/features/metadataEditor/write";
+import type { TrackSeed } from "@/content/genius/utilities/pageState";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
 
 /** The last note a row was given, pinned to the edit it was given for. */

@@ -3,7 +3,7 @@ import {
     HIDE_STYLE_ID,
     IMPORT_PATH,
     NOT_FOUND,
-} from "@/content/genius/importRoute";
+} from "@/content/genius/features/albumImport/importRoute";
 
 /**
  * Hides their 404 body before it is painted.

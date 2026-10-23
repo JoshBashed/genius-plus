@@ -4,7 +4,7 @@ import {
     EMPTY_DATE,
     type NamedRef,
     type SongMetadata,
-} from "@/content/genius/metadata";
+} from "@/content/genius/features/metadataEditor/metadata";
 import {
     artistToOption,
     optionLabel,

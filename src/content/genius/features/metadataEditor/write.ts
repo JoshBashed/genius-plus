@@ -9,15 +9,19 @@ import {
     draftFromMetadata,
     FIELD_LABELS,
     type SongDraft,
-} from "@/content/genius/draft";
+} from "@/content/genius/features/metadataEditor/draft";
 import {
     describeMetadataFailure,
     loadSongMetadata,
     type MetadataFailure,
     type SongMetadata,
-} from "@/content/genius/metadata";
-import { canCreate, canEdit, gateFor } from "@/content/genius/permissions";
-import type { SongEdit } from "@/content/genius/saveAdapter";
+} from "@/content/genius/features/metadataEditor/metadata";
+import {
+    canCreate,
+    canEdit,
+    gateFor,
+} from "@/content/genius/features/metadataEditor/permissions";
+import type { SongEdit } from "@/content/genius/features/metadataEditor/saveAdapter";
 import * as geniusApi from "@/content/genius/utilities/geniusApi";
 import { optionToRef } from "@/content/genius/utilities/options";
 import { drain } from "@/content/genius/utilities/pool";

@@ -2,18 +2,6 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import {
-    type ContributorPlan,
-    unmappedCount,
-    withExtraNames,
-} from "@/content/genius/albumImport/contributors";
-import {
-    type AlbumCredits,
-    creditNames,
-    loadAlbumCredits,
-} from "@/content/genius/albumImport/credits";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
-import { genreTagId } from "@/content/genius/albumImport/stage";
 import { AlbumMedia } from "@/content/genius/components/albumImport/AlbumMedia";
 import {
     Actions,
@@ -26,7 +14,19 @@ import { Checkbox } from "@/content/genius/components/genius/Checkbox";
 import { SelectInput } from "@/content/genius/components/genius/SelectInput";
 import { Spinner } from "@/content/genius/components/genius/Spinner";
 import { TextInput } from "@/content/genius/components/genius/TextInput";
-import type { ConfirmedAlbum } from "@/content/genius/importPage/wizard";
+import {
+    type ContributorPlan,
+    unmappedCount,
+    withExtraNames,
+} from "@/content/genius/features/albumImport/contributors";
+import {
+    type AlbumCredits,
+    creditNames,
+    loadAlbumCredits,
+} from "@/content/genius/features/albumImport/credits";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
+import { genreTagId } from "@/content/genius/features/albumImport/stage";
+import type { ConfirmedAlbum } from "@/content/genius/features/albumImport/wizard";
 import { useLanguageOptions } from "@/content/genius/utilities/genius";
 import { loadPrimaryTagOptions } from "@/content/genius/utilities/options";
 import { plural } from "@/utilities/plural";

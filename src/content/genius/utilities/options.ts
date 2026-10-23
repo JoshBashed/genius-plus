@@ -2,7 +2,7 @@
 
 import type { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
-import type { NamedRef } from "@/content/genius/metadata";
+import type { NamedRef } from "@/content/genius/features/metadataEditor/metadata";
 import * as geniusApi from "@/content/genius/utilities/geniusApi";
 
 /** Genius debounces its own autocompletes by this much. Match it. */

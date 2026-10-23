@@ -2,8 +2,6 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
 import { AlbumMedia } from "@/content/genius/components/albumImport/AlbumMedia";
 import { CreateError } from "@/content/genius/components/albumImport/CreateError";
 import {
@@ -18,21 +16,23 @@ import {
 } from "@/content/genius/components/albumImport/styles";
 import { Button } from "@/content/genius/components/genius/Button";
 import { Spinner } from "@/content/genius/components/genius/Spinner";
-import { addSongUrl } from "@/content/genius/importPage/addSong";
+import { addSongUrl } from "@/content/genius/features/albumImport/addSong";
 import {
     attachToNewAlbum,
     describeAttachFailure,
     songAlbums,
-} from "@/content/genius/importPage/attachAlbum";
+} from "@/content/genius/features/albumImport/attachAlbum";
+import type { ContributorPlan } from "@/content/genius/features/albumImport/contributors";
 import {
     type CreateSongFailure,
     createSong,
     createSongFields,
-} from "@/content/genius/importPage/createSong";
+} from "@/content/genius/features/albumImport/createSong";
 import {
     type GeniusAlbum,
     searchGeniusAlbums,
-} from "@/content/genius/importPage/geniusAlbums";
+} from "@/content/genius/features/albumImport/geniusAlbums";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
 import { useGoogleReCaptcha } from "@/content/genius/utilities/genius";
 import {
     loadPrimaryTagOptions,

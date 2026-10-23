@@ -2,13 +2,13 @@
 import { Result } from "@resulted/results";
 import { createElement, type ReactElement } from "react";
 import { resetBindings } from "@/bindings";
-import { loadGeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import { loadGeniusAlbum } from "@/content/genius/features/albumImport/geniusAlbums";
 import {
     HIDE_STYLE_ID,
     IMPORT_PATH,
     NOT_FOUND,
-} from "@/content/genius/importRoute";
-import type { Loader } from "@/content/genius/loaders/mount";
+} from "@/content/genius/features/albumImport/importRoute";
+import type { Loader } from "@/content/genius/features/mount";
 import { log } from "@/utilities/log";
 
 const APP_ID = "application";
@@ -64,7 +64,7 @@ const claimRoot = (): HTMLElement => {
     return mount;
 };
 
-export const importPageLoader: Loader = {
+export const albumImport: Loader = {
     build: async (): Promise<ReactElement> => {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.

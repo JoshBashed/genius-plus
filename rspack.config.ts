@@ -37,12 +37,12 @@ export default defineConfig({
     devtool: isDev ? "cheap-module-source-map" : false,
     entry: {
         background: "./src/background/index.ts",
-        "content/genius": "./src/content/genius/index.ts",
-        "content/genius-main": "./src/content/genius/mainWorld.ts",
+        "content/genius": "./src/content/genius/isolated/index.ts",
+        "content/genius-main": "./src/content/genius/index.ts",
         "content/soundcloud": "./src/content/soundcloud/index.tsx",
         "content/soundcloud-main": "./src/content/soundcloud/mainWorld.ts",
         "content/apple-music": "./src/content/appleMusic/index.tsx",
-        "content/genius-early": "./src/content/genius/early.ts",
+        "content/genius-early": "./src/content/genius/isolated/early.ts",
         popup: "./src/popup/index.tsx",
     },
     output: {

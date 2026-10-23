@@ -3,7 +3,7 @@
 import type { Result } from "@resulted/results";
 import type { ReactElement } from "react";
 import { type ChunkError, describeBindingError } from "@/bindings";
-import { renderTree } from "@/content/genius/loaders/renderTree";
+import { renderTree } from "@/content/genius/features/renderTree";
 import type { Runtime } from "@/content/genius/utilities/install";
 import { log } from "@/utilities/log";
 

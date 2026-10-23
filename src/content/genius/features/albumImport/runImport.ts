@@ -5,19 +5,29 @@ import {
     type AlbumTracksFailure,
     describeAlbumTracksFailure,
     loadAlbumTracks,
-} from "@/content/genius/albumImport/albumTracks";
-import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
-import type { AlbumCredits } from "@/content/genius/albumImport/credits";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+} from "@/content/genius/features/albumImport/albumTracks";
+import type { ContributorPlan } from "@/content/genius/features/albumImport/contributors";
+import {
+    describeCoverArtFailure,
+    uploadCoverArt,
+    wantsCoverArt,
+} from "@/content/genius/features/albumImport/coverArt";
+import type { AlbumCredits } from "@/content/genius/features/albumImport/credits";
+import {
+    describeGeniusAlbumFailure,
+    loadGeniusAlbum,
+} from "@/content/genius/features/albumImport/geniusAlbums";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
+import { EDITOR_HASH } from "@/content/genius/features/albumImport/importRoute";
 import {
     type TrackMatch,
     titleKey,
-} from "@/content/genius/albumImport/matchTracks";
+} from "@/content/genius/features/albumImport/matchTracks";
 import {
     IMPORT_FIELDS,
     type StageRow,
     stageImport,
-} from "@/content/genius/albumImport/stage";
+} from "@/content/genius/features/albumImport/stage";
 import {
     describeTracklistFailure,
     planTracklist,
@@ -25,51 +35,41 @@ import {
     type TracklistAppearance,
     type TracklistFailure,
     type TracklistPlan,
-} from "@/content/genius/albumImport/tracklist";
+} from "@/content/genius/features/albumImport/tracklist";
+import {
+    describeUpdateAlbumFailure,
+    updateAlbum,
+} from "@/content/genius/features/albumImport/updateAlbum";
 import {
     changedFields,
     type DraftField,
     draftFromMetadata,
     fieldsPatch,
     type SongDraft,
-} from "@/content/genius/draft";
+} from "@/content/genius/features/metadataEditor/draft";
 import {
     readStash,
     type StashedRow,
     type StashedTask,
     writeStash,
     writeTasks,
-} from "@/content/genius/draftStash";
-import {
-    describeCoverArtFailure,
-    uploadCoverArt,
-    wantsCoverArt,
-} from "@/content/genius/importPage/coverArt";
-import {
-    describeGeniusAlbumFailure,
-    loadGeniusAlbum,
-} from "@/content/genius/importPage/geniusAlbums";
-import {
-    describeUpdateAlbumFailure,
-    updateAlbum,
-} from "@/content/genius/importPage/updateAlbum";
-import { EDITOR_HASH } from "@/content/genius/importRoute";
+} from "@/content/genius/features/metadataEditor/draftStash";
 import {
     loadAlbumMetadata,
     type SongMetadata,
-} from "@/content/genius/metadata";
-import type { SongEdit } from "@/content/genius/saveAdapter";
-import type { AlbumType, CoverArt } from "@/content/genius/utilities/geniusApi";
-import {
-    loadPrimaryTagOptions,
-    optionLabel,
-} from "@/content/genius/utilities/options";
+} from "@/content/genius/features/metadataEditor/metadata";
+import type { SongEdit } from "@/content/genius/features/metadataEditor/saveAdapter";
 import {
     describeSaveFailure,
     planSave,
     runSave,
     type SaveOutcome,
-} from "@/content/genius/write";
+} from "@/content/genius/features/metadataEditor/write";
+import type { AlbumType, CoverArt } from "@/content/genius/utilities/geniusApi";
+import {
+    loadPrimaryTagOptions,
+    optionLabel,
+} from "@/content/genius/utilities/options";
 import { log } from "@/utilities/log";
 import { plural } from "@/utilities/plural";
 

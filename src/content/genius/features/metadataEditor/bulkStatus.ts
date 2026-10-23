@@ -5,7 +5,7 @@ import {
     DRAFT_FIELDS,
     FIELD_LABELS,
     FIELD_PAYLOAD_KEYS,
-} from "@/content/genius/draft";
+} from "@/content/genius/features/metadataEditor/draft";
 import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
 
 /** Their five task statuses, the last three of which end the task. */

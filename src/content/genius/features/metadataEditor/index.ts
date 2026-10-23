@@ -2,8 +2,8 @@
 import { Result } from "@resulted/results";
 import { createElement, type ReactElement } from "react";
 import { describeMarkers, getPage } from "@/bindings";
-import { legacyNotice } from "@/content/genius/loaders/legacyNotice";
-import type { Loader, PrepareFailure } from "@/content/genius/loaders/mount";
+import { legacyNotice } from "@/content/genius/features/metadataEditor/legacyNotice";
+import type { Loader, PrepareFailure } from "@/content/genius/features/mount";
 import { loadPrimaryTagOptions } from "@/content/genius/utilities/options";
 import {
     describePageError,
@@ -37,7 +37,7 @@ const claimContainer = (): HTMLElement => {
     return created;
 };
 
-export const albumTableLoader: Loader = {
+export const metadataEditor: Loader = {
     build: async (): Promise<ReactElement> => {
         const seed = readAlbumSeed();
 

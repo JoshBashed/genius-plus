@@ -5,7 +5,7 @@ import {
     DRAFT_FIELDS,
     type DraftField,
     type SongDraft,
-} from "@/content/genius/draft";
+} from "@/content/genius/features/metadataEditor/draft";
 import { decodeOr } from "@/utilities/decode";
 
 /** The browser would not keep the stash, which is never worth stopping for. */

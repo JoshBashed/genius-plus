@@ -16,7 +16,10 @@ import {
     type TagColumn,
 } from "@/content/genius/components/metadataEditor/columns";
 import { DateCell } from "@/content/genius/components/metadataEditor/styles";
-import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
+import {
+    FIELD_LABELS,
+    type SongDraft,
+} from "@/content/genius/features/metadataEditor/draft";
 import {
     loadArtistOptions,
     loadTagOptions,

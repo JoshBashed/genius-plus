@@ -1,8 +1,8 @@
 /** The artwork beside a title, which three steps lay out the same way. */
 
 import { type FC, memo, type ReactNode } from "react";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
 import { Media } from "@/content/genius/components/albumImport/styles";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
 import { appleArtwork } from "@/utilities/appleAlbum";
 
 /** Artwork big enough for the panel, asked for by filename. */

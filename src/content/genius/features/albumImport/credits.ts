@@ -24,7 +24,7 @@ const describeCreditsError = (error: CreditsError | DecodeFailure): string => {
     }
 };
 
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
 
 /** One call per track, matching the metadata reads beside it. */
 const CONCURRENCY = 4;

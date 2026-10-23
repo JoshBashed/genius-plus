@@ -5,13 +5,16 @@ import {
     creditOptions,
     nameKey,
     namesOptions,
-} from "@/content/genius/albumImport/contributors";
-import type { AlbumCredits } from "@/content/genius/albumImport/credits";
-import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
-import type { DraftField, SongDraft } from "@/content/genius/draft";
-import { isEmptyField } from "@/content/genius/draft";
-import type { SongMetadata } from "@/content/genius/metadata";
-import { canEdit } from "@/content/genius/permissions";
+} from "@/content/genius/features/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/features/albumImport/credits";
+import type { TrackMatch } from "@/content/genius/features/albumImport/matchTracks";
+import type {
+    DraftField,
+    SongDraft,
+} from "@/content/genius/features/metadataEditor/draft";
+import { isEmptyField } from "@/content/genius/features/metadataEditor/draft";
+import type { SongMetadata } from "@/content/genius/features/metadataEditor/metadata";
+import { canEdit } from "@/content/genius/features/metadataEditor/permissions";
 import { optionLabel, uniqueOptions } from "@/content/genius/utilities/options";
 import type { AppleSongCredits } from "@/utilities/appleCredits";
 

@@ -1,8 +1,8 @@
 /** The assistant's state, shaped so a step cannot lack what it renders. */
-import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
-import type { AlbumCredits } from "@/content/genius/albumImport/credits";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
-import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import type { ContributorPlan } from "@/content/genius/features/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/features/albumImport/credits";
+import type { GeniusAlbum } from "@/content/genius/features/albumImport/geniusAlbums";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
 
 /**
  * What the reader settled in step two, kept outside the walk so coming

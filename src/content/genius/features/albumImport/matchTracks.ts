@@ -1,6 +1,6 @@
 /** Pairs the imported tracks with the album's existing rows. */
 
-import type { ImportedTrack } from "@/content/genius/albumImport/importedAlbum";
+import type { ImportedTrack } from "@/content/genius/features/albumImport/importedAlbum";
 import type { TrackSeed } from "@/content/genius/utilities/pageState";
 
 export interface TrackMatch {

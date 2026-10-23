@@ -1,10 +1,10 @@
 /** The album's covers, which `PUT /albums/:id` takes as a whole set. */
 import { Result } from "@resulted/results";
-import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
 import {
     describeFilepickerFailure,
     uploadImage,
-} from "@/content/genius/importPage/filepicker";
+} from "@/content/genius/features/albumImport/filepicker";
+import type { ImportedAlbum } from "@/content/genius/features/albumImport/importedAlbum";
 import type { CoverArt } from "@/content/genius/utilities/geniusApi";
 import { appleArtwork } from "@/utilities/appleAlbum";
 import {

@@ -5,7 +5,7 @@ import { Steps } from "@/content/genius/components/albumImport/styles";
 import {
     STEP_LABELS,
     type StepNumber,
-} from "@/content/genius/importPage/wizard";
+} from "@/content/genius/features/albumImport/wizard";
 
 interface StepBarProps {
     readonly step: StepNumber;

@@ -9,16 +9,6 @@ import {
     type PageReactDom,
     type SelectOption,
 } from "@/bindings";
-import {
-    type BulkEvent,
-    describeVerdict,
-    isTerminal,
-    pendingLine,
-    progressLine,
-    type SongVerdict,
-    timedOutLine,
-    verdictFor,
-} from "@/content/genius/bulkStatus";
 import { Button, theme } from "@/content/genius/components/genius";
 import { withCurrent } from "@/content/genius/components/metadataEditor/ColumnEditor";
 import {
@@ -61,6 +51,21 @@ import {
     type ToolbarSlot,
 } from "@/content/genius/components/metadataEditor/toolbarSlot";
 import {
+    dropEditorHash,
+    EDITOR_HASH,
+    importUrlFor,
+} from "@/content/genius/features/albumImport/importRoute";
+import {
+    type BulkEvent,
+    describeVerdict,
+    isTerminal,
+    pendingLine,
+    progressLine,
+    type SongVerdict,
+    timedOutLine,
+    verdictFor,
+} from "@/content/genius/features/metadataEditor/bulkStatus";
+import {
     type DraftField,
     EMPTY_DRAFT,
     FIELD_LABELS,
@@ -68,7 +73,7 @@ import {
     isEmptyField,
     patchFields,
     type SongDraft,
-} from "@/content/genius/draft";
+} from "@/content/genius/features/metadataEditor/draft";
 import {
     clearStash,
     guardUnload,
@@ -77,26 +82,18 @@ import {
     type StashedTask,
     takeTasks,
     writeStash,
-} from "@/content/genius/draftStash";
-import {
-    dropEditorHash,
-    EDITOR_HASH,
-    importUrlFor,
-} from "@/content/genius/importRoute";
+} from "@/content/genius/features/metadataEditor/draftStash";
 import {
     describeMetadataFailure,
     loadAlbumMetadata,
     loadSongMetadata,
     type SongMetadata,
-} from "@/content/genius/metadata";
-import { canEdit } from "@/content/genius/permissions";
-import { SAVE_ADAPTERS, type SongEdit } from "@/content/genius/saveAdapter";
+} from "@/content/genius/features/metadataEditor/metadata";
+import { canEdit } from "@/content/genius/features/metadataEditor/permissions";
 import {
-    hasUsePusher,
-    useLanguageOptions,
-} from "@/content/genius/utilities/genius";
-import { optionFor, optionLabel } from "@/content/genius/utilities/options";
-import type { AlbumSeed } from "@/content/genius/utilities/pageState";
+    SAVE_ADAPTERS,
+    type SongEdit,
+} from "@/content/genius/features/metadataEditor/saveAdapter";
 import {
     describeSaveFailure,
     type FieldConflict,
@@ -106,7 +103,13 @@ import {
     type SaveOutcome,
     type SavePlan,
     type SaveStage,
-} from "@/content/genius/write";
+} from "@/content/genius/features/metadataEditor/write";
+import {
+    hasUsePusher,
+    useLanguageOptions,
+} from "@/content/genius/utilities/genius";
+import { optionFor, optionLabel } from "@/content/genius/utilities/options";
+import type { AlbumSeed } from "@/content/genius/utilities/pageState";
 import { log } from "@/utilities/log";
 import { plural } from "@/utilities/plural";
 

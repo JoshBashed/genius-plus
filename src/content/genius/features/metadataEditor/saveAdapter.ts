@@ -8,8 +8,8 @@ import {
     FIELD_PAYLOAD_KEYS,
     payloadValue,
     type SongDraft,
-} from "@/content/genius/draft";
-import type { SongMetadata } from "@/content/genius/metadata";
+} from "@/content/genius/features/metadataEditor/draft";
+import type { SongMetadata } from "@/content/genius/features/metadataEditor/metadata";
 import { plural } from "@/utilities/plural";
 
 /** Nothing to export, or a clipboard the browser would not write to. */

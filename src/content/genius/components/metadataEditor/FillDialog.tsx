@@ -5,7 +5,10 @@ import { ColumnEditor } from "@/content/genius/components/metadataEditor/ColumnE
 import type { FillMode } from "@/content/genius/components/metadataEditor/ColumnMenu";
 import type { ColumnSpec } from "@/content/genius/components/metadataEditor/columns";
 import { Confirm } from "@/content/genius/components/metadataEditor/styles";
-import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
+import {
+    FIELD_LABELS,
+    type SongDraft,
+} from "@/content/genius/features/metadataEditor/draft";
 
 export interface FillDialogProps {
     readonly column: ColumnSpec;

@@ -2,14 +2,6 @@
 
 import { type FC, memo, useState } from "react";
 import {
-    type ContributorPlan,
-    resolveContributors,
-} from "@/content/genius/albumImport/contributors";
-import {
-    type ImportedAlbum,
-    importedAlbum,
-} from "@/content/genius/albumImport/importedAlbum";
-import {
     Actions,
     Note,
     Panel,
@@ -17,6 +9,14 @@ import {
 import { Button } from "@/content/genius/components/genius/Button";
 import { Spinner } from "@/content/genius/components/genius/Spinner";
 import { TextInput } from "@/content/genius/components/genius/TextInput";
+import {
+    type ContributorPlan,
+    resolveContributors,
+} from "@/content/genius/features/albumImport/contributors";
+import {
+    type ImportedAlbum,
+    importedAlbum,
+} from "@/content/genius/features/albumImport/importedAlbum";
 import {
     describeAppleAlbumFailure,
     fetchAppleAlbum,

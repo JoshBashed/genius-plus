@@ -2,7 +2,7 @@
 
 import { type FC, memo } from "react";
 import { Problem } from "@/content/genius/components/albumImport/styles";
-import type { CreateSongFailure } from "@/content/genius/importPage/createSong";
+import type { CreateSongFailure } from "@/content/genius/features/albumImport/createSong";
 
 /** Their key for what belongs to no field in particular. */
 const WHOLE_RECORD = "base";

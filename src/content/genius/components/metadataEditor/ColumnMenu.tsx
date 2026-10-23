@@ -4,7 +4,7 @@ import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { Dropdown, hasDropdown } from "@/content/genius/components/genius";
 import type { ColumnSpec } from "@/content/genius/components/metadataEditor/columns";
 import { MenuPanel } from "@/content/genius/components/metadataEditor/styles";
-import { FIELD_LABELS } from "@/content/genius/draft";
+import { FIELD_LABELS } from "@/content/genius/features/metadataEditor/draft";
 
 /** Genius ships no ellipsis, so the trigger draws its own three dots. */
 const Ellipsis: FC = () => (

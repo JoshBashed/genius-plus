@@ -2,11 +2,6 @@
 
 import { type FC, memo } from "react";
 import type { SelectOption } from "@/bindings";
-import {
-    type Contributor,
-    type ContributorPlan,
-    contributorList,
-} from "@/content/genius/albumImport/contributors";
 import { Rows, Scroller } from "@/content/genius/components/albumImport/styles";
 import { Icon } from "@/content/genius/components/genius/Icon";
 import {
@@ -14,6 +9,11 @@ import {
     PORTAL_PROPS,
 } from "@/content/genius/components/genius/selectProps";
 import { TagInput } from "@/content/genius/components/genius/TagInput";
+import {
+    type Contributor,
+    type ContributorPlan,
+    contributorList,
+} from "@/content/genius/features/albumImport/contributors";
 import { loadArtistOptions } from "@/content/genius/utilities/options";
 
 interface RowProps {

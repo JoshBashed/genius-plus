@@ -1,15 +1,15 @@
-/** Genius, main world: imports the page's modules. No `chrome.*`. */
+/** Every feature on Genius, mounted wherever the page is one it serves. */
 import { resetBindings } from "@/bindings";
-import { albumTableLoader } from "@/content/genius/loaders/albumTable";
-import { importPageLoader } from "@/content/genius/loaders/importPage";
-import { type Mounted, mountLoaders } from "@/content/genius/loaders/mount";
+import { albumImport } from "@/content/genius/features/albumImport";
+import { metadataEditor } from "@/content/genius/features/metadataEditor";
+import { type Mounted, mountLoaders } from "@/content/genius/features/mount";
 import { installEverything } from "@/content/genius/utilities/install";
 import { postStatus, readEnabled } from "@/content/genius/utilities/relay";
 import { observeLocation } from "@/utilities/dom";
 import { log } from "@/utilities/log";
 
-/** Every page this extension puts something on. */
-const LOADERS = [albumTableLoader, importPageLoader];
+/** Every feature, each mounting on the pages it serves. */
+const FEATURES = [metadataEditor, albumImport];
 
 let enabled = false;
 let watching: (() => void) | null = null;
@@ -23,7 +23,7 @@ const stop = (): void => {
 
 const start = async (): Promise<void> => {
     stop();
-    mounted = await mountLoaders(LOADERS, installEverything);
+    mounted = await mountLoaders(FEATURES, installEverything);
 };
 
 /**
@@ -68,13 +68,19 @@ const apply = (next: boolean): void => {
     watching ??= observeLocation(restart);
 };
 
-addEventListener("message", (event) => {
-    const next = readEnabled(event);
+/**
+ * Mounts every feature while the isolated half says they are switched
+ * on, and follows navigation from then on.
+ */
+export const initFeatures = (): void => {
+    addEventListener("message", (event) => {
+        const next = readEnabled(event);
 
-    if (next !== null) {
-        apply(next);
-    }
-});
+        if (next !== null) {
+            apply(next);
+        }
+    });
 
-// The isolated half may have broadcast before this listener existed.
-postStatus("ready");
+    // The isolated half may have broadcast before this listener existed.
+    postStatus("ready");
+};
