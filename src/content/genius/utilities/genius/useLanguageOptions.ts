@@ -1,7 +1,7 @@
 /** Every language Genius accepts, read from their own i18next store. */
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
-import { usePageI18n } from "@/content/genius/geniusHooks/useTranslation";
+import { usePageI18n } from "@/content/genius/utilities/genius/useTranslation";
 import { decodeOr } from "@/utilities/decode";
 
 /**

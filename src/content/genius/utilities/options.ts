@@ -2,8 +2,8 @@
 
 import type { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
-import * as geniusApi from "@/content/genius/geniusApi";
 import type { NamedRef } from "@/content/genius/metadata";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
 
 /** Genius debounces its own autocompletes by this much. Match it. */
 const DEBOUNCE_MS = 150;

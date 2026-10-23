@@ -1,7 +1,7 @@
 /** Uploading art the way Genius's own picker does, through Filestack. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
-import { configString } from "@/content/genius/pageConfig";
+import { configString } from "@/content/genius/utilities/pageConfig";
 import { decode } from "@/utilities/decode";
 
 /** Their store API, of which only the S3 location is ever used. */

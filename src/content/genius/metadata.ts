@@ -1,8 +1,8 @@
 /** The ten editable fields, fetched because the page carries none. */
 import { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
-import * as geniusApi from "@/content/genius/geniusApi";
-import { drain } from "@/content/genius/pool";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
+import { drain } from "@/content/genius/utilities/pool";
 
 /** A credit; `id` is `null` for a value Genius has never seen. */
 export interface NamedRef {

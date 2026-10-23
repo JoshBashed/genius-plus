@@ -6,7 +6,6 @@ import type { ContributorPlan } from "@/content/genius/albumImport/contributors"
 import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
 import { Button } from "@/content/genius/geniusComponents/Button";
 import { Spinner } from "@/content/genius/geniusComponents/Spinner";
-import { useGoogleReCaptcha } from "@/content/genius/geniusHooks";
 import { AlbumMedia } from "@/content/genius/importPage/AlbumMedia";
 import { addSongUrl } from "@/content/genius/importPage/addSong";
 import {
@@ -29,11 +28,12 @@ import {
     SongSelect,
 } from "@/content/genius/importPage/SongSelect";
 import { Actions, Note, Panel, Rows } from "@/content/genius/importPage/styles";
+import { useGoogleReCaptcha } from "@/content/genius/utilities/genius";
 import {
     loadPrimaryTagOptions,
     optionLabel,
     searchSongs,
-} from "@/content/genius/options";
+} from "@/content/genius/utilities/options";
 
 /** How often the album is looked for while their form is open. */
 const WATCH_DELAY_MS = 4000;

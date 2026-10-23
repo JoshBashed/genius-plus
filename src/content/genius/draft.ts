@@ -10,7 +10,7 @@ import {
     optionLabel,
     optionToRef,
     refToOption,
-} from "@/content/genius/options";
+} from "@/content/genius/utilities/options";
 
 export interface SongDraft {
     readonly title: string;

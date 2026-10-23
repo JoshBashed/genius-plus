@@ -1,7 +1,7 @@
 /** Putting a song on a new album, which is how an album gets created. */
 import { Result } from "@resulted/results";
-import * as geniusApi from "@/content/genius/geniusApi";
 import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
 import { describeRequestError } from "@/utilities/http";
 
 /**

@@ -5,9 +5,9 @@ import type { SelectOption } from "@/bindings";
 import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
 import { creditOptions } from "@/content/genius/albumImport/contributors";
 import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
-import * as geniusApi from "@/content/genius/geniusApi";
 import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
-import { optionToRef } from "@/content/genius/options";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
+import { optionToRef } from "@/content/genius/utilities/options";
 import { describeRequestError } from "@/utilities/http";
 import { log } from "@/utilities/log";
 

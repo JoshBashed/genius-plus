@@ -2,12 +2,12 @@
 
 import { IMPORT_PATH } from "@/content/genius/importRoute";
 import { watchNav } from "@/content/genius/navSlot";
+import { serveChunkCache } from "@/content/genius/utilities/chunkCache";
 import {
     postEnabled,
     readStatus,
     serveCreditRequests,
-} from "@/content/genius/relay";
-import { serveChunkCache } from "@/content/genius/utilities/chunkCache";
+} from "@/content/genius/utilities/relay";
 import { log } from "@/utilities/log";
 import {
     readSettings,

@@ -1,7 +1,7 @@
 /** The one way to call Genius's API: its headers, its envelope, a schema. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
-import { configString } from "@/content/genius/pageConfig";
+import { configString } from "@/content/genius/utilities/pageConfig";
 import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
 import type { HttpError, RequestError } from "@/utilities/http";
 

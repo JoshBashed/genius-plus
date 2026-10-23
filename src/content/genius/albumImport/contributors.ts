@@ -5,13 +5,13 @@ import {
     albumCredits,
     type ImportedAlbum,
 } from "@/content/genius/albumImport/importedAlbum";
-import type { ReadFailure } from "@/content/genius/geniusApi";
+import type { ReadFailure } from "@/content/genius/utilities/geniusApi";
 import {
     optionLabel,
     searchArtists,
     uniqueOptions,
-} from "@/content/genius/options";
-import { drain } from "@/content/genius/pool";
+} from "@/content/genius/utilities/options";
+import { drain } from "@/content/genius/utilities/pool";
 import { splitNames } from "@/utilities/creditNames";
 
 /** Four at a time, matching the metadata reads beside it. */

@@ -1,8 +1,8 @@
 /** The album's own tracklist, which is how a song gets created at all. */
 import type { Result } from "@resulted/results";
 import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
-import * as geniusApi from "@/content/genius/geniusApi";
-import type { TrackSeed } from "@/content/genius/pageState";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
+import type { TrackSeed } from "@/content/genius/utilities/pageState";
 import { describeRequestError } from "@/utilities/http";
 
 /**

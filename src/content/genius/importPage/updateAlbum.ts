@@ -1,6 +1,6 @@
 /** The album's own record: its art, its date, its language, its kind. */
 import { Result } from "@resulted/results";
-import * as geniusApi from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
 import { describeRequestError } from "@/utilities/http";
 
 /** Every way updating the album can fail, and nothing more. */

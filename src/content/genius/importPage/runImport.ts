@@ -40,7 +40,6 @@ import {
     writeStash,
     writeTasks,
 } from "@/content/genius/draftStash";
-import type { AlbumType, CoverArt } from "@/content/genius/geniusApi";
 import {
     describeCoverArtFailure,
     uploadCoverArt,
@@ -59,8 +58,12 @@ import {
     loadAlbumMetadata,
     type SongMetadata,
 } from "@/content/genius/metadata";
-import { loadPrimaryTagOptions, optionLabel } from "@/content/genius/options";
 import type { SongEdit } from "@/content/genius/saveAdapter";
+import type { AlbumType, CoverArt } from "@/content/genius/utilities/geniusApi";
+import {
+    loadPrimaryTagOptions,
+    optionLabel,
+} from "@/content/genius/utilities/options";
 import {
     describeSaveFailure,
     planSave,

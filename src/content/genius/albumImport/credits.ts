@@ -1,7 +1,10 @@
 /** Reading Apple's per song credits for a whole album. */
 
-import { drain } from "@/content/genius/pool";
-import { type CreditsError, fetchSongCredits } from "@/content/genius/relay";
+import { drain } from "@/content/genius/utilities/pool";
+import {
+    type CreditsError,
+    fetchSongCredits,
+} from "@/content/genius/utilities/relay";
 import type { AppleSongCredits } from "@/utilities/appleCredits";
 import { readAppleCredits } from "@/utilities/appleCredits";
 import type { DecodeFailure } from "@/utilities/decode";

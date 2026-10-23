@@ -10,8 +10,8 @@ import {
 import { Icon } from "@/content/genius/geniusComponents/Icon";
 import { TagInput } from "@/content/genius/geniusComponents/TagInput";
 import { Rows, Scroller } from "@/content/genius/importPage/styles";
-import { loadArtistOptions } from "@/content/genius/options";
 import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
+import { loadArtistOptions } from "@/content/genius/utilities/options";
 
 interface RowProps {
     readonly entry: Contributor;

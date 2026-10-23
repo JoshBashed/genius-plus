@@ -10,17 +10,17 @@ import {
     FIELD_LABELS,
     type SongDraft,
 } from "@/content/genius/draft";
-import * as geniusApi from "@/content/genius/geniusApi";
 import {
     describeMetadataFailure,
     loadSongMetadata,
     type MetadataFailure,
     type SongMetadata,
 } from "@/content/genius/metadata";
-import { optionToRef } from "@/content/genius/options";
 import { canCreate, canEdit, gateFor } from "@/content/genius/permissions";
-import { drain } from "@/content/genius/pool";
 import type { SongEdit } from "@/content/genius/saveAdapter";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
+import { optionToRef } from "@/content/genius/utilities/options";
+import { drain } from "@/content/genius/utilities/pool";
 import { describeRequestError } from "@/utilities/http";
 import { plural } from "@/utilities/plural";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";

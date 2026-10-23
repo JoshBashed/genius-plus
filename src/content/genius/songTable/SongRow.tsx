@@ -5,7 +5,6 @@ import type { SelectOption } from "@/bindings";
 import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
 import { SmallButton, Spinner } from "@/content/genius/geniusComponents";
 import type { SongMetadata } from "@/content/genius/metadata";
-import type { TrackSeed } from "@/content/genius/pageState";
 import { canEdit, permissionsKnown } from "@/content/genius/permissions";
 import {
     ColumnEditor,
@@ -13,6 +12,7 @@ import {
 } from "@/content/genius/songTable/ColumnEditor";
 import { COLUMNS } from "@/content/genius/songTable/columns";
 import type { RowState } from "@/content/genius/songTable/rowState";
+import type { TrackSeed } from "@/content/genius/utilities/pageState";
 import {
     type FieldConflict,
     invalidFields,

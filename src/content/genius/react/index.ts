@@ -1,6 +1,6 @@
 /** Genius's React, as the named imports any React file would use. */
 import type { PageReact } from "@/bindings";
-import { slot } from "@/content/genius/slot";
+import { slot } from "@/content/genius/utilities/slot";
 
 export const reactSlot = slot<PageReact>("React");
 

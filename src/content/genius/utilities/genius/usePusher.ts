@@ -1,6 +1,6 @@
 /** Genius's Pusher subscription hook, read at the call. */
 import type { UsePusherHook, UsePusherOptions } from "@/bindings";
-import { slot } from "@/content/genius/slot";
+import { slot } from "@/content/genius/utilities/slot";
 
 export const usePusherSlot = slot<UsePusherHook>("Genius's usePusher");
 

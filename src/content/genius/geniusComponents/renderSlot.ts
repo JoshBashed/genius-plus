@@ -1,7 +1,7 @@
 /** A borrowed component, or nothing when this page does not have it. */
 import { createElement, type FC, type ReactElement } from "react";
 import { describeBindingError } from "@/bindings";
-import type { Slot } from "@/content/genius/slot";
+import type { Slot } from "@/content/genius/utilities/slot";
 import { log } from "@/utilities/log";
 
 /** One warning per slot, not one per row that renders it. */

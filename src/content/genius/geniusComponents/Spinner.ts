@@ -3,7 +3,7 @@
 import type { FC } from "react";
 import type { SpinnerProps } from "@/bindings";
 import { renderSlot } from "@/content/genius/geniusComponents/renderSlot";
-import { slot } from "@/content/genius/slot";
+import { slot } from "@/content/genius/utilities/slot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const spinnerSlot = slot<FC<SpinnerProps>>("Genius's Spinner");

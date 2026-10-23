@@ -7,8 +7,8 @@ import {
     geniusWrite,
     type ReadFailure,
     type WriteFailure,
-} from "@/content/genius/geniusApi/request";
-import { dateSchema, rows } from "@/content/genius/geniusApi/schemas";
+} from "@/content/genius/utilities/geniusApi/request";
+import { dateSchema, rows } from "@/content/genius/utilities/geniusApi/schemas";
 
 /** Their album shape, wherever one is returned. */
 const albumSchema = z.object({

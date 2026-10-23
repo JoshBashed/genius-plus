@@ -4,8 +4,8 @@ import { z } from "zod";
 import {
     geniusRead,
     type ReadFailure,
-} from "@/content/genius/geniusApi/request";
-import { rows } from "@/content/genius/geniusApi/schemas";
+} from "@/content/genius/utilities/geniusApi/request";
+import { rows } from "@/content/genius/utilities/geniusApi/schemas";
 
 /** One artist hit, with the "AKA" alternate their own menu shows. */
 const artistSchema = z.object({

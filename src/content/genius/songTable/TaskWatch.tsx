@@ -3,7 +3,7 @@
 import { type FC, useCallback, useEffect } from "react";
 import { type BulkEvent, parseBulkEvent } from "@/content/genius/bulkStatus";
 import type { SongDraft } from "@/content/genius/draft";
-import { usePusher } from "@/content/genius/geniusHooks";
+import { usePusher } from "@/content/genius/utilities/genius";
 import type { BulkTask, FieldConflict } from "@/content/genius/write";
 import { log } from "@/utilities/log";
 

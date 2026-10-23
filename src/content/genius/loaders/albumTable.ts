@@ -4,13 +4,13 @@ import { createElement, type ReactElement } from "react";
 import { describeMarkers, getPage } from "@/bindings";
 import { legacyNotice } from "@/content/genius/loaders/legacyNotice";
 import type { Loader, PrepareFailure } from "@/content/genius/loaders/mount";
-import { loadPrimaryTagOptions } from "@/content/genius/options";
+import { loadPrimaryTagOptions } from "@/content/genius/utilities/options";
 import {
     describePageError,
     isAlbumUrl,
     readAlbumSeed,
-} from "@/content/genius/pageState";
-import { postStatus } from "@/content/genius/relay";
+} from "@/content/genius/utilities/pageState";
+import { postStatus } from "@/content/genius/utilities/relay";
 
 const CONTAINER_ID = "genius-plus-album-table";
 

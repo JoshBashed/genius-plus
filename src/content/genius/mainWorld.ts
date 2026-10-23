@@ -1,10 +1,10 @@
 /** Genius, main world: imports the page's modules. No `chrome.*`. */
 import { resetBindings } from "@/bindings";
-import { installEverything } from "@/content/genius/install";
 import { albumTableLoader } from "@/content/genius/loaders/albumTable";
 import { importPageLoader } from "@/content/genius/loaders/importPage";
 import { type Mounted, mountLoaders } from "@/content/genius/loaders/mount";
-import { postStatus, readEnabled } from "@/content/genius/relay";
+import { installEverything } from "@/content/genius/utilities/install";
+import { postStatus, readEnabled } from "@/content/genius/utilities/relay";
 import { observeLocation } from "@/utilities/dom";
 import { log } from "@/utilities/log";
 

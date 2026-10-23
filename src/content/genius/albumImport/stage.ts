@@ -11,8 +11,8 @@ import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
 import type { DraftField, SongDraft } from "@/content/genius/draft";
 import { isEmptyField } from "@/content/genius/draft";
 import type { SongMetadata } from "@/content/genius/metadata";
-import { optionLabel, uniqueOptions } from "@/content/genius/options";
 import { canEdit } from "@/content/genius/permissions";
+import { optionLabel, uniqueOptions } from "@/content/genius/utilities/options";
 import type { AppleSongCredits } from "@/utilities/appleCredits";
 
 /**

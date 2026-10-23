@@ -7,11 +7,6 @@ import {
     TagInput,
     TextInput,
 } from "@/content/genius/geniusComponents";
-import {
-    loadArtistOptions,
-    loadTagOptions,
-    optionFor,
-} from "@/content/genius/options";
 import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
 import {
     type ColumnSpec,
@@ -19,6 +14,11 @@ import {
     type TagColumn,
 } from "@/content/genius/songTable/columns";
 import { DateCell } from "@/content/genius/songTable/styles";
+import {
+    loadArtistOptions,
+    loadTagOptions,
+    optionFor,
+} from "@/content/genius/utilities/options";
 
 export interface ColumnEditorProps {
     readonly column: ColumnSpec;

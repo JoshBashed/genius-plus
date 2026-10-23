@@ -2,7 +2,7 @@
 
 import { createElement, type FC } from "react";
 import type { IconProps } from "@/bindings";
-import { slot } from "@/content/genius/slot";
+import { slot } from "@/content/genius/utilities/slot";
 import { log } from "@/utilities/log";
 
 /**

@@ -42,8 +42,8 @@ import {
     Scroller,
 } from "@/content/genius/importPage/styles";
 import type { CreditMode } from "@/content/genius/importPage/wizard";
-import { optionLabel, searchSongs } from "@/content/genius/options";
-import { drain } from "@/content/genius/pool";
+import { optionLabel, searchSongs } from "@/content/genius/utilities/options";
+import { drain } from "@/content/genius/utilities/pool";
 import { plural } from "@/utilities/plural";
 
 /** Gentle: this is one search per unmatched track. */

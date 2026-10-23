@@ -2,8 +2,8 @@
 import type { FC } from "react";
 import type { SelectOption } from "@/bindings";
 import { TagInput } from "@/content/genius/geniusComponents/TagInput";
-import { loadSongOptions } from "@/content/genius/options";
 import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
+import { loadSongOptions } from "@/content/genius/utilities/options";
 
 /**
  * Their own props, read off `SearchOrCreateSongInput` in

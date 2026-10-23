@@ -19,7 +19,6 @@ import { Checkbox } from "@/content/genius/geniusComponents/Checkbox";
 import { SelectInput } from "@/content/genius/geniusComponents/SelectInput";
 import { Spinner } from "@/content/genius/geniusComponents/Spinner";
 import { TextInput } from "@/content/genius/geniusComponents/TextInput";
-import { useLanguageOptions } from "@/content/genius/geniusHooks";
 import { AlbumMedia } from "@/content/genius/importPage/AlbumMedia";
 import {
     Actions,
@@ -28,7 +27,8 @@ import {
     Panel,
 } from "@/content/genius/importPage/styles";
 import type { ConfirmedAlbum } from "@/content/genius/importPage/wizard";
-import { loadPrimaryTagOptions } from "@/content/genius/options";
+import { useLanguageOptions } from "@/content/genius/utilities/genius";
+import { loadPrimaryTagOptions } from "@/content/genius/utilities/options";
 import { plural } from "@/utilities/plural";
 
 /** A finished read of their credits pages, and what it widened. */

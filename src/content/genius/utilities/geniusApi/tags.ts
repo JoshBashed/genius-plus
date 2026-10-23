@@ -4,8 +4,8 @@ import { z } from "zod";
 import {
     geniusRead,
     type ReadFailure,
-} from "@/content/genius/geniusApi/request";
-import { rows } from "@/content/genius/geniusApi/schemas";
+} from "@/content/genius/utilities/geniusApi/request";
+import { rows } from "@/content/genius/utilities/geniusApi/schemas";
 
 /** Every tag list they answer with, whatever the endpoint. */
 const tagSchema = z.object({ id: z.number(), name: z.string() });

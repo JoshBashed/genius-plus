@@ -1,7 +1,7 @@
 /** Apple's album, restated in the terms the table's columns use. */
 import type { DateComponents } from "@/bindings";
-import type { AlbumType } from "@/content/genius/geniusApi";
 import { EMPTY_DATE } from "@/content/genius/metadata";
+import type { AlbumType } from "@/content/genius/utilities/geniusApi";
 import type { AppleAlbum, AppleTrack } from "@/utilities/appleAlbum";
 import {
     splitFeatureClauses,

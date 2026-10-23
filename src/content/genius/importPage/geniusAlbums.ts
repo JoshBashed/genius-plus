@@ -1,7 +1,7 @@
 /** Finding the Genius album an Apple album should be imported into. */
 import type { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
-import * as geniusApi from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
 import { describeRequestError } from "@/utilities/http";
 
 /**

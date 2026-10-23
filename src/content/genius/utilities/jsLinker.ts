@@ -10,7 +10,6 @@ import {
 import type { BindingError } from "@/bindings/errors";
 import { findByDisplayName } from "@/bindings/finders";
 import type { ModuleNamespace } from "@/bindings/types";
-import { EXTENSION_HEADERS } from "@/content/genius/geniusApi";
 import {
     type CachedChunks,
     readChunkCache,
@@ -20,6 +19,7 @@ import {
     type ExportIndex,
     indexExports,
 } from "@/content/genius/utilities/exportIndex";
+import { EXTENSION_HEADERS } from "@/content/genius/utilities/geniusApi";
 
 /**
  * About Genius, by id so a renamed slug still redirects to it.

@@ -7,14 +7,14 @@ import {
     geniusWrite,
     type ReadFailure,
     type WriteFailure,
-} from "@/content/genius/geniusApi/request";
+} from "@/content/genius/utilities/geniusApi/request";
 import {
     type AlbumRef,
     albumRefSchema,
     dateSchema,
     refSchema,
     rows,
-} from "@/content/genius/geniusApi/schemas";
+} from "@/content/genius/utilities/geniusApi/schemas";
 
 /** Blank is how their API says absent, so it reads as absent here. */
 const presentString = z

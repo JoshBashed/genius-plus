@@ -95,7 +95,7 @@
             }
         },
         {
-            "includes": ["src/content/genius/geniusApi/**"],
+            "includes": ["src/content/genius/utilities/geniusApi/**"],
             "linter": {
                 "rules": {
                     "style": {

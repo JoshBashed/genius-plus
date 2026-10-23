@@ -1,7 +1,7 @@
 /** The album's tracklist, re-read from Genius after it has been written. */
 import { Result } from "@resulted/results";
-import * as geniusApi from "@/content/genius/geniusApi";
-import type { TrackSeed } from "@/content/genius/pageState";
+import * as geniusApi from "@/content/genius/utilities/geniusApi";
+import type { TrackSeed } from "@/content/genius/utilities/pageState";
 import { describeRequestError } from "@/utilities/http";
 
 /**
