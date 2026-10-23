@@ -10,6 +10,7 @@ import {
 import type { BindingError } from "@/bindings/errors";
 import { findByDisplayName } from "@/bindings/finders";
 import type { ModuleNamespace } from "@/bindings/types";
+import { EXTENSION_HEADERS } from "@/content/genius/api";
 import {
     type CachedChunks,
     readChunkCache,
@@ -93,7 +94,10 @@ const readDonor = async (
     origin: string,
 ): Promise<Result<ChunkIndex, BindingError>> => {
     const response = await Result.try(
-        fetch(DONOR_PATH, { credentials: "same-origin" }),
+        fetch(DONOR_PATH, {
+            credentials: "same-origin",
+            headers: EXTENSION_HEADERS,
+        }),
     );
 
     if (response.isErr() || !response.value.ok) {

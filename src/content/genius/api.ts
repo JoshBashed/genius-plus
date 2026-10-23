@@ -17,6 +17,11 @@ export type ReadFailure = RequestError | DecodeFailure;
 /** A write can also fail before it is sent, for want of a token. */
 export type WriteFailure = AuthError | ReadFailure;
 
+/** Genius asked every extension to name itself on each request it sends. */
+export const EXTENSION_HEADERS = {
+    "X-Genius-Extension-Id": "Genius+",
+} as const;
+
 /** Their own root, which is not always this origin's `/api`. */
 export const apiRootUrl = (): string =>
     configString("apiRootUrl", "api_root_url") ?? `${location.origin}/api`;
@@ -140,7 +145,7 @@ const unwrap = (
     return Result.ok(response as Record<string, unknown>);
 };
 
-/** Cookies authenticate; their helper sets no headers, so nor do we. */
+/** Cookies authenticate; the only header is the one naming us. */
 export const apiGet = async (
     path: string,
     params: Readonly<Record<string, string>> = {},
@@ -153,7 +158,11 @@ export const apiGet = async (
 
     const url = `${apiRootUrl()}${path}?${query.toString()}`;
     const response = await Result.try(
-        fetch(url, { method: "GET", credentials: "same-origin" }),
+        fetch(url, {
+            method: "GET",
+            credentials: "same-origin",
+            headers: EXTENSION_HEADERS,
+        }),
     );
 
     if (response.isErr()) {
@@ -235,6 +244,7 @@ const sendWrite = async (
             method,
             credentials: "same-origin",
             headers: {
+                ...EXTENSION_HEADERS,
                 "Content-Type": "application/json",
                 "X-CSRF-Token": token.value,
             },

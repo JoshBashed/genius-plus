@@ -7,6 +7,10 @@ and record what it said, in this file.
 
 ## Auth and envelopes
 
+- **Every request to Genius sends `X-Genius-Extension-Id: Genius+`**,
+  which their tech team asked extensions to send. It comes from
+  `EXTENSION_HEADERS` in `src/content/genius/api.ts`. Requests to Apple,
+  Filestack, and artwork hosts never send it.
 - Writes need `X-CSRF-Token` from the `_csrf_token` cookie.
 - **Every write sends `text_format` at the top level**, a sibling of `song`
   or `album`, because their own POST and PUT helpers merge it in. `apiPut`
