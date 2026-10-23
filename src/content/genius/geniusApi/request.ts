@@ -313,27 +313,3 @@ export const geniusWrite = async <Body, Schema extends z.ZodType>(
 
     return decode(schema, sent.value, request.what);
 };
-
-/** Any answer at all, for the callers not yet given an endpoint. */
-const anyResponse = z.record(z.string(), z.unknown());
-
-/** `GET`, for the callers not yet given an endpoint. */
-export const apiGet = (
-    path: string,
-    query: Readonly<Record<string, string>> = {},
-): Promise<Result<Record<string, unknown>, ReadFailure>> =>
-    geniusRead({ path, query, what: path }, anyResponse);
-
-/** `POST`, for the callers not yet given an endpoint. */
-export const apiPost = <Body>(
-    path: string,
-    body: Body,
-): Promise<Result<Record<string, unknown>, WriteFailure>> =>
-    geniusWrite({ body, method: "POST", path, what: path }, anyResponse);
-
-/** `PUT`, for the callers not yet given an endpoint. */
-export const apiPut = <Body>(
-    path: string,
-    body: Body,
-): Promise<Result<Record<string, unknown>, WriteFailure>> =>
-    geniusWrite({ body, method: "PUT", path, what: path }, anyResponse);

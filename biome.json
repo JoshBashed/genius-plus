@@ -82,6 +82,30 @@
                                     {
                                         "group": ["./**", "../**"],
                                         "message": "Import by its @/ path, never a relative one."
+                                    },
+                                    {
+                                        "group": ["**/geniusApi/*"],
+                                        "message": "Call Genius's API through an endpoint in geniusApi/, never request.ts or a schema directly."
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["src/content/genius/geniusApi/**"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noRestrictedImports": {
+                            "level": "error",
+                            "options": {
+                                "patterns": [
+                                    {
+                                        "group": ["./**", "../**"],
+                                        "message": "Import by its @/ path, never a relative one."
                                     }
                                 ]
                             }
