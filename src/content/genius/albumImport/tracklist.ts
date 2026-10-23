@@ -1,10 +1,8 @@
 /** The album's own tracklist, which is how a song gets created at all. */
-import { Result } from "@resulted/results";
-import { z } from "zod";
+import type { Result } from "@resulted/results";
 import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
-import { apiPut, type WriteFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import type { TrackSeed } from "@/content/genius/pageState";
-import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 
 /**
@@ -34,7 +32,7 @@ export const describeTracklistFailure = (error: TracklistFailure): string => {
 };
 
 /** Flattens a write failure into what a reader actually needs. */
-const asFailure = (error: WriteFailure): TracklistFailure => {
+const asFailure = (error: geniusApi.WriteFailure): TracklistFailure => {
     switch (error.kind) {
         case "network":
             return { kind: "networkError" };
@@ -47,21 +45,6 @@ const asFailure = (error: WriteFailure): TracklistFailure => {
     }
 };
 
-/**
- * One row of the payload their own tracklist editor sends.
- * A `song_id` that is not a number is a placeholder, and Genius creates
- * the song from `title` rather than moving an existing one.
- */
-export interface TracklistEntry {
-    /** Which disc, counted from one. */
-    readonly disc_number: number;
-    /** The position within that disc, not across the album. */
-    readonly disc_track_number: number;
-    readonly song_id: number | string;
-    readonly title?: string;
-    readonly lyrics_state?: string;
-}
-
 /** What their editor marks a song nobody has transcribed yet. */
 const NEW_STATE = "incomplete";
 
@@ -72,7 +55,7 @@ export interface CreatedTrack {
 
 export interface TracklistPlan {
     /** The whole tracklist, because the endpoint replaces it outright. */
-    readonly entries: readonly TracklistEntry[];
+    readonly entries: readonly geniusApi.TracklistEntry[];
     readonly created: readonly CreatedTrack[];
     /**
      * The Apple track each entry came from, aligned with `entries`.
@@ -106,7 +89,7 @@ export const planTracklist = (
         }
     }
 
-    const entries: TracklistEntry[] = [];
+    const entries: geniusApi.TracklistEntry[] = [];
     const created: CreatedTrack[] = [];
     const keys: (number | null)[] = [];
     /** Counted per disc, because that is what the field means. */
@@ -180,13 +163,6 @@ export interface TracklistAppearance {
     readonly trackNumber: number | null;
 }
 
-const appearanceSchema = z.object({
-    song: z.object({ id: z.number() }),
-    track_number: z.number().nullish(),
-});
-
-const answerSchema = z.object({ album_appearances: z.array(z.unknown()) });
-
 /**
  * Replaces the album's tracklist, creating every placeholder song in it.
  *
@@ -196,51 +172,23 @@ const answerSchema = z.object({ album_appearances: z.array(z.unknown()) });
  */
 export const putTracklist = async (
     albumId: number,
-    entries: readonly TracklistEntry[],
+    entries: readonly geniusApi.TracklistEntry[],
     viewableByRoles: readonly number[] = [],
 ): Promise<Result<readonly TracklistAppearance[], TracklistFailure>> => {
-    const response = await apiPut(`/albums/${albumId}/tracklist`, {
-        // Their React album page sends all three; the legacy page sent a
-        // flat `track_number` that this endpoint ignores.
-        react_album_page: true,
-        tracklist: entries,
-        // Carried through, not emptied: the capture showed `[]` because
-        // that album was unrestricted, and sending it to one that is not
-        // would lift the restriction.
-        viewable_by_roles: viewableByRoles,
-    });
-
-    if (response.isErr()) {
-        return Result.err(asFailure(response.error));
-    }
-
-    const answer = decode(
-        answerSchema,
-        response.value,
-        `album ${albumId} tracklist`,
+    const response = await geniusApi.updateTracklist(
+        albumId,
+        entries,
+        viewableByRoles,
     );
 
-    if (answer.isErr()) {
-        return Result.err({
-            kind: "unreadable",
-            reason: answer.error.reason,
-        });
-    }
-
-    return Result.ok(
-        answer.value.album_appearances.flatMap(
-            (row): readonly TracklistAppearance[] => {
-                const parsed = decodeOr(appearanceSchema, row);
-
-                return parsed === null
-                    ? []
-                    : [
-                          {
-                              songId: parsed.song.id,
-                              trackNumber: parsed.track_number ?? null,
-                          },
-                      ];
-            },
-        ),
-    );
+    return response
+        .map((appearances) =>
+            appearances.map(
+                (appearance): TracklistAppearance => ({
+                    songId: appearance.song.id,
+                    trackNumber: appearance.track_number ?? null,
+                }),
+            ),
+        )
+        .mapErr(asFailure);
 };

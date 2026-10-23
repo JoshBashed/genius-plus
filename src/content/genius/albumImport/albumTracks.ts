@@ -1,9 +1,7 @@
 /** The album's tracklist, re-read from Genius after it has been written. */
 import { Result } from "@resulted/results";
-import { z } from "zod";
-import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import type { TrackSeed } from "@/content/genius/pageState";
-import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 
 /**
@@ -35,7 +33,7 @@ export const describeAlbumTracksFailure = (
 };
 
 /** Flattens a read failure into what a reader actually needs. */
-const asFailure = (error: ReadFailure): AlbumTracksFailure => {
+const asFailure = (error: geniusApi.ReadFailure): AlbumTracksFailure => {
     if (error.kind === "network") {
         return { kind: "networkError" };
     }
@@ -51,27 +49,7 @@ const PER_PAGE = 50;
 /** A ceiling, so a server that always names a next page cannot spin. */
 const MAX_PAGES = 20;
 
-/** One row of their tracklist: the placement, and the song on it. */
-const trackSchema = z.object({
-    disc_number: z.number().nullish(),
-    number: z.number().nullish(),
-    song: z.object({
-        hidden: z.boolean().nullish(),
-        id: z.number(),
-        primary_artists: z
-            .array(z.object({ id: z.number(), name: z.string() }))
-            .default([]),
-        title: z.string(),
-        url: z.string().nullish(),
-    }),
-});
-
-const pageSchema = z.object({
-    next_page: z.number().nullish(),
-    tracks: z.array(z.unknown()),
-});
-
-const asSeed = (row: z.output<typeof trackSchema>): TrackSeed => ({
+const asSeed = (row: geniusApi.Track): TrackSeed => ({
     discNumber: row.disc_number ?? null,
     hidden: row.song.hidden === true,
     primaryArtists: row.song.primary_artists,
@@ -92,38 +70,20 @@ export const loadAlbumTracks = async (
     let page = 1;
 
     for (let visited = 0; visited < MAX_PAGES; visited += 1) {
-        const response = await apiGet(`/albums/${albumId}/tracks`, {
-            page: String(page),
-            per_page: String(PER_PAGE),
-        });
+        const response = await geniusApi.getAlbumTracks(
+            albumId,
+            page,
+            PER_PAGE,
+        );
 
         if (response.isErr()) {
             return Result.err(asFailure(response.error));
         }
 
-        const body = decode(
-            pageSchema,
-            response.value,
-            `album ${albumId} tracks`,
-        );
-
-        if (body.isErr()) {
-            return Result.err({
-                kind: "unreadable",
-                reason: body.error.reason,
-            });
-        }
-
         // A row we cannot read is a track we cannot name, not a failure.
-        for (const row of body.value.tracks) {
-            const track = decodeOr(trackSchema, row);
+        tracks.push(...response.value.tracks.map(asSeed));
 
-            if (track !== null) {
-                tracks.push(asSeed(track));
-            }
-        }
-
-        const next = body.value.next_page;
+        const next = response.value.next_page;
 
         if (next === null || next === undefined) {
             return Result.ok(tracks);

@@ -1,9 +1,7 @@
 /** Finding the Genius album an Apple album should be imported into. */
-import { Result } from "@resulted/results";
-import { z } from "zod";
+import type { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
-import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
-import { decode, decodeOr } from "@/utilities/decode";
+import * as geniusApi from "@/content/genius/geniusApi";
 import { describeRequestError } from "@/utilities/http";
 
 /**
@@ -35,7 +33,7 @@ export const describeGeniusAlbumFailure = (
 };
 
 /** Flattens a read failure into what a reader actually needs. */
-const asFailure = (error: ReadFailure): GeniusAlbumFailure => {
+const asFailure = (error: geniusApi.ReadFailure): GeniusAlbumFailure => {
     if (error.kind === "network") {
         return { kind: "networkError" };
     }
@@ -63,33 +61,7 @@ export interface GeniusAlbum {
     readonly viewableByRoles: readonly number[];
 }
 
-/** Their album shape, wherever one is returned. */
-const albumSchema = z.object({
-    album_type: z.string().nullish(),
-    artist: z.object({ name: z.string() }).nullish(),
-    cover_arts: z
-        .array(z.object({ image_url: z.string().nullish() }))
-        .nullish(),
-    id: z.number(),
-    name: z.string(),
-    release_date_components: z
-        .object({
-            day: z.number().nullish(),
-            month: z.number().nullish(),
-            year: z.number().nullish(),
-        })
-        .nullish(),
-    url: z.string().nullish(),
-    viewable_by_roles: z.array(z.number()).nullish(),
-});
-
-const autocompleteSchema = z.object({
-    albums: z.array(z.unknown()),
-});
-
-const oneAlbumSchema = z.object({ album: z.unknown() });
-
-const asAlbum = (parsed: z.output<typeof albumSchema>): GeniusAlbum => ({
+const asAlbum = (parsed: geniusApi.Album): GeniusAlbum => ({
     albumType: parsed.album_type ?? null,
     artistName: parsed.artist?.name ?? null,
     coverArtUrls: (parsed.cover_arts ?? []).flatMap((art) =>
@@ -116,53 +88,16 @@ const asAlbum = (parsed: z.output<typeof albumSchema>): GeniusAlbum => ({
 export const searchGeniusAlbums = async (
     query: string,
 ): Promise<Result<readonly GeniusAlbum[], GeniusAlbumFailure>> => {
-    const response = await apiGet("/albums/autocomplete", { q: query });
+    const found = await geniusApi.searchAlbums(query);
 
-    if (response.isErr()) {
-        return Result.err(asFailure(response.error));
-    }
-
-    const rows = decode(
-        autocompleteSchema,
-        response.value,
-        "the album autocomplete",
-    );
-
-    if (rows.isErr()) {
-        return Result.err({ kind: "unreadable", reason: rows.error.reason });
-    }
-
-    // A row that does not parse is one we cannot name, not a failure.
-    return Result.ok(
-        rows.value.albums.flatMap((row) => {
-            const album = decodeOr(albumSchema, row);
-            return album === null ? [] : [asAlbum(album)];
-        }),
-    );
+    return found.map((albums) => albums.map(asAlbum)).mapErr(asFailure);
 };
 
 /** `GET /albums/:id`, for the album an editor link already named. */
 export const loadGeniusAlbum = async (
     albumId: number,
 ): Promise<Result<GeniusAlbum, GeniusAlbumFailure>> => {
-    const response = await apiGet(`/albums/${albumId}`);
+    const found = await geniusApi.getAlbum(albumId);
 
-    if (response.isErr()) {
-        return Result.err(asFailure(response.error));
-    }
-
-    const body = decode(oneAlbumSchema, response.value, `album ${albumId}`);
-
-    if (body.isErr()) {
-        return Result.err({ kind: "unreadable", reason: body.error.reason });
-    }
-
-    return decode(albumSchema, body.value.album, `album ${albumId}`)
-        .map(asAlbum)
-        .mapErr(
-            (error): GeniusAlbumFailure => ({
-                kind: "unreadable",
-                reason: error.reason,
-            }),
-        );
+    return found.map(asAlbum).mapErr(asFailure);
 };

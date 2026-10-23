@@ -1,25 +1,7 @@
 /** The album's own record: its art, its date, its language, its kind. */
 import { Result } from "@resulted/results";
-import type { DateComponents } from "@/bindings";
-import { apiPut, type WriteFailure } from "@/content/genius/geniusApi";
+import * as geniusApi from "@/content/genius/geniusApi";
 import { describeRequestError } from "@/utilities/http";
-
-/** Their four kinds, as their own editor offers them. */
-export type AlbumType = "album" | "ep" | "single" | "mixtape";
-
-/** One cover, by the URL whatever hosted it answered with. */
-export interface CoverArt {
-    readonly image_url: string;
-}
-
-/** Everything `PUT /albums/:id` takes that this import ever sets. */
-export interface AlbumFields {
-    readonly cover_arts?: readonly CoverArt[];
-    readonly release_date_components?: DateComponents | null;
-    /** Genius's own code, such as `"zh-Hant"`. */
-    readonly language?: string;
-    readonly album_type?: AlbumType;
-}
 
 /** Every way updating the album can fail, and nothing more. */
 export type UpdateAlbumFailure =
@@ -30,7 +12,7 @@ export type UpdateAlbumFailure =
           readonly message: string;
       };
 
-const asFailure = (error: WriteFailure): UpdateAlbumFailure => {
+const asFailure = (error: geniusApi.WriteFailure): UpdateAlbumFailure => {
     if (error.kind === "network") {
         return { kind: "networkError", url: error.url };
     }
@@ -58,9 +40,9 @@ export const describeUpdateAlbumFailure = (
  */
 export const updateAlbum = async (
     albumId: number,
-    fields: AlbumFields,
+    fields: geniusApi.AlbumFields,
 ): Promise<Result<null, UpdateAlbumFailure>> => {
-    const written = await apiPut(`/albums/${albumId}`, { album: fields });
+    const written = await geniusApi.updateAlbum(albumId, fields);
 
     return written.isErr()
         ? Result.err(asFailure(written.error))

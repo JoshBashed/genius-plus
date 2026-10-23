@@ -1,6 +1,5 @@
 /** The writes: `bulk_update_songs` for the bulk fields, `PUT /songs/:id` else. */
 import { Result } from "@resulted/results";
-import { z } from "zod";
 import type { SelectOption } from "@/bindings";
 import {
     changedFields,
@@ -9,15 +8,9 @@ import {
     displayValue,
     draftFromMetadata,
     FIELD_LABELS,
-    FIELD_PAYLOAD_KEYS,
     type SongDraft,
 } from "@/content/genius/draft";
 import * as geniusApi from "@/content/genius/geniusApi";
-import {
-    apiPut,
-    csrfToken,
-    type WriteFailure,
-} from "@/content/genius/geniusApi";
 import {
     describeMetadataFailure,
     loadSongMetadata,
@@ -28,7 +21,6 @@ import { optionToRef } from "@/content/genius/options";
 import { canCreate, canEdit, gateFor } from "@/content/genius/permissions";
 import { drain } from "@/content/genius/pool";
 import type { SongEdit } from "@/content/genius/saveAdapter";
-import { decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 import { plural } from "@/utilities/plural";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
@@ -64,7 +56,7 @@ export const describeSaveFailure = (error: SaveFailure): string => {
 };
 
 /** Flattens a write failure into what a row actually needs. */
-const asFailure = (error: WriteFailure): SaveFailure => {
+const asFailure = (error: geniusApi.WriteFailure): SaveFailure => {
     switch (error.kind) {
         case "network":
             return { kind: "networkError" };
@@ -76,25 +68,6 @@ const asFailure = (error: WriteFailure): SaveFailure => {
             return { kind: "unreadable" };
     }
 };
-
-/** Whole-set replace, which is what a single-song update always builds. */
-interface ArrayFieldUpdate {
-    readonly values: readonly EntityRef[];
-}
-
-/** Their `Lt`: an existing entity by id, one Genius has never seen by name. */
-type EntityRef = { readonly id: number } | { readonly name: string };
-
-interface ScalarFieldUpdate {
-    readonly value: unknown;
-    readonly replace: boolean;
-}
-
-interface BulkUpdateBody {
-    readonly song_ids: readonly number[];
-    readonly array_field_updates: Readonly<Record<string, ArrayFieldUpdate>>;
-    readonly scalar_field_updates: Readonly<Record<string, ScalarFieldUpdate>>;
-}
 
 /** The five `array_field_updates` keys, in Genius's own descriptor order. */
 const ARRAY_FIELDS = [
@@ -116,33 +89,18 @@ type ScalarField = (typeof SCALAR_FIELDS)[number];
 type SongField = (typeof SONG_FIELDS)[number];
 
 const isArrayField = (field: DraftField): field is ArrayField =>
-    (ARRAY_FIELDS as readonly DraftField[]).includes(field);
+    ARRAY_FIELDS.some((each) => each === field);
 
 const isScalarField = (field: DraftField): field is ScalarField =>
-    (SCALAR_FIELDS as readonly DraftField[]).includes(field);
+    SCALAR_FIELDS.some((each) => each === field);
 
 const isSongField = (field: DraftField): field is SongField =>
-    (SONG_FIELDS as readonly DraftField[]).includes(field);
+    SONG_FIELDS.some((each) => each === field);
 
-const entityRef = (option: SelectOption): EntityRef => {
+const entityRef = (option: SelectOption): geniusApi.EntityRef => {
     const ref = optionToRef(option);
 
     return ref.id === null ? { name: ref.name } : { id: ref.id };
-};
-
-/** A single song can never disagree with itself, so `replace` is always true. */
-const scalarUpdate = (
-    draft: SongDraft,
-    field: ScalarField,
-): ScalarFieldUpdate => {
-    switch (field) {
-        case "releaseDate":
-            return { value: draft.releaseDate, replace: true };
-        case "language":
-            return { value: draft.language, replace: true };
-        case "primaryTagId":
-            return { value: draft.primaryTagId, replace: true };
-    }
 };
 
 /**
@@ -278,41 +236,48 @@ const planSong = (
     };
 };
 
-/** Splits the approved fields into the one body each endpoint wants. */
+/**
+ * Splits the approved fields into the one body each endpoint wants.
+ * A single song can never disagree with itself, so `replace` is true.
+ */
 const buildBodies = (
     write: SongWrite,
     fields: readonly DraftField[],
 ): {
-    readonly bulk: BulkUpdateBody | null;
+    readonly bulk: geniusApi.BulkUpdate | null;
     readonly song: geniusApi.SongUpdate | null;
 } => {
     const { draft } = write;
     const sends = (field: DraftField): boolean => fields.includes(field);
-    const arrayUpdates: Record<string, ArrayFieldUpdate> = {};
-    const scalarUpdates: Record<string, ScalarFieldUpdate> = {};
-
-    for (const field of fields) {
-        const key = FIELD_PAYLOAD_KEYS[field];
-
-        if (isArrayField(field)) {
-            arrayUpdates[key] = { values: write.draft[field].map(entityRef) };
-        } else if (isScalarField(field)) {
-            scalarUpdates[key] = scalarUpdate(write.draft, field);
-        }
-    }
-
-    const bulkCount =
-        Object.keys(arrayUpdates).length + Object.keys(scalarUpdates).length;
+    const list = (field: ArrayField): geniusApi.ListUpdate | undefined =>
+        sends(field) ? { values: draft[field].map(entityRef) } : undefined;
 
     return {
-        bulk:
-            bulkCount === 0
-                ? null
-                : {
-                      song_ids: [write.songId],
-                      array_field_updates: arrayUpdates,
-                      scalar_field_updates: scalarUpdates,
+        bulk: fields.some(
+            (field) => isArrayField(field) || isScalarField(field),
+        )
+            ? {
+                  song_ids: [write.songId],
+                  array_field_updates: {
+                      featured_artists: list("featuredArtists"),
+                      primary_artists: list("primaryArtists"),
+                      producer_artists: list("producerArtists"),
+                      tags: list("tags"),
+                      writer_artists: list("writerArtists"),
                   },
+                  scalar_field_updates: {
+                      language: sends("language")
+                          ? { replace: true, value: draft.language }
+                          : undefined,
+                      primary_tag_id: sends("primaryTagId")
+                          ? { replace: true, value: draft.primaryTagId }
+                          : undefined,
+                      release_date_components: sends("releaseDate")
+                          ? { replace: true, value: draft.releaseDate }
+                          : undefined,
+                  },
+              }
+            : null,
         // Only reached for fields `planSong` approved, so the title is
         // never empty.
         song: fields.some(isSongField)
@@ -445,27 +410,11 @@ export interface SaveOutcome {
 /** Three at a time: quick enough to feel live, gentle on a shared API. */
 const CONCURRENCY = 3;
 
-/** A channel name, or nothing when it is absent or not one. */
-const channelSchema = z.string().min(1).optional().catch(undefined);
-
-/** The accepted task; the channel may sit on it or beside it. */
-const taskSchema = z.object({
-    pusher_channel: channelSchema,
-    task_id: z.union([z.number(), z.string()]),
-});
-
-const bulkAnswerSchema = z.object({
-    bulk_song_update_task: taskSchema.nullish().catch(null),
-    pusher_channel: channelSchema,
-});
-
 /** The accepted task: its id, and the channel its verdict arrives on. */
 const queuedTask = (
-    response: unknown,
+    task: geniusApi.BulkAnswer,
 ): { readonly id: string; readonly channel: string | null } | null => {
-    const task = decodeOr(bulkAnswerSchema, response);
-
-    if (task?.bulk_song_update_task == null) {
+    if (task.bulk_song_update_task == null) {
         return null;
     }
 
@@ -487,10 +436,10 @@ const queuedTask = (
  */
 const putBulk = async (
     albumId: number,
-    body: BulkUpdateBody,
+    body: geniusApi.BulkUpdate,
     fields: readonly DraftField[],
 ): Promise<Result<BulkTask | null, SaveFailure>> => {
-    const response = await apiPut(`/albums/${albumId}/bulk_update_songs`, body);
+    const response = await geniusApi.bulkUpdateSongs(albumId, body);
 
     if (response.isErr()) {
         return Result.err(asFailure(response.error));
@@ -737,7 +686,7 @@ export const runSave = async (
     plan: SavePlan,
     sink: SaveSink,
 ): Promise<Result<SaveOutcome, SaveFailure>> => {
-    const token = csrfToken();
+    const token = geniusApi.csrfToken();
 
     if (token.isErr()) {
         return Result.err(asFailure(token.error));

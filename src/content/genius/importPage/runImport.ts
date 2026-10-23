@@ -40,6 +40,7 @@ import {
     writeStash,
     writeTasks,
 } from "@/content/genius/draftStash";
+import type { AlbumType, CoverArt } from "@/content/genius/geniusApi";
 import {
     describeCoverArtFailure,
     uploadCoverArt,
@@ -49,10 +50,6 @@ import {
     describeGeniusAlbumFailure,
     loadGeniusAlbum,
 } from "@/content/genius/importPage/geniusAlbums";
-import type {
-    AlbumType,
-    CoverArt,
-} from "@/content/genius/importPage/updateAlbum";
 import {
     describeUpdateAlbumFailure,
     updateAlbum,
