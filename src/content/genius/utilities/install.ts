@@ -42,7 +42,7 @@ import {
     tagInputSlot,
     textInputSlot,
     warningIconSlot,
-} from "@/content/genius/geniusComponents";
+} from "@/content/genius/components/genius";
 import { bindReact, reactSlot } from "@/content/genius/react";
 import {
     useGoogleReCaptchaSlot,

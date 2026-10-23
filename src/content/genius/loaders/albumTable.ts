@@ -49,7 +49,7 @@ export const albumTableLoader: Loader = {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.
         const { SongTable } = await import(
-            /* webpackMode: "eager" */ "@/content/genius/songTable"
+            /* webpackMode: "eager" */ "@/content/genius/components/metadataEditor"
         );
 
         postStatus("rendered", `${seed.value.tracks.length} songs`);

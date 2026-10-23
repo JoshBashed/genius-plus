@@ -69,7 +69,7 @@ export const importPageLoader: Loader = {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.
         const { ImportAssistant } = await import(
-            /* webpackMode: "eager" */ "@/content/genius/importPage"
+            /* webpackMode: "eager" */ "@/content/genius/components/albumImport"
         );
 
         const named = new URLSearchParams(location.search).get("album");
