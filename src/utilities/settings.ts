@@ -1,4 +1,6 @@
 import { Result } from "@resulted/results";
+import { z } from "zod";
+import { decodeOr } from "@/utilities/decode";
 
 /** Everything the popup can toggle, held in `chrome.storage.sync`. */
 export interface Settings {
@@ -22,6 +24,14 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const STORAGE_KEY = "settings";
 
+/** Each setting on its own: one unreadable value falls back alone. */
+const storedSchema = z.object({
+    albumSongTable: z.boolean().optional().catch(undefined),
+    artworkDownloads: z.boolean().optional().catch(undefined),
+    cleanAddressBar: z.boolean().optional().catch(undefined),
+    cleanSoundcloudLinks: z.boolean().optional().catch(undefined),
+});
+
 /**
  * Reads the stored settings, merged over the defaults.
  * @returns `DEFAULT_SETTINGS` when storage is unreadable or unset.
@@ -33,14 +43,20 @@ export const readSettings = async (): Promise<Settings> => {
         return DEFAULT_SETTINGS;
     }
 
-    const value = stored.value[STORAGE_KEY];
-
-    if (typeof value !== "object" || value === null) {
-        return DEFAULT_SETTINGS;
-    }
+    const value = decodeOr(storedSchema, stored.value[STORAGE_KEY]);
 
     // Merge, so a new setting picks up its default on an older shape.
-    return { ...DEFAULT_SETTINGS, ...(value as Partial<Settings>) };
+    return {
+        albumSongTable:
+            value?.albumSongTable ?? DEFAULT_SETTINGS.albumSongTable,
+        artworkDownloads:
+            value?.artworkDownloads ?? DEFAULT_SETTINGS.artworkDownloads,
+        cleanAddressBar:
+            value?.cleanAddressBar ?? DEFAULT_SETTINGS.cleanAddressBar,
+        cleanSoundcloudLinks:
+            value?.cleanSoundcloudLinks ??
+            DEFAULT_SETTINGS.cleanSoundcloudLinks,
+    };
 };
 
 /** The tail of the write chain, so no read-modify-write interleaves. */

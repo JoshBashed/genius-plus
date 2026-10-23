@@ -1,6 +1,12 @@
 /** Staged edits live in memory, so a stray navigation loses them all. */
 import { Result } from "@resulted/results";
-import type { DraftField, SongDraft } from "@/content/genius/draft";
+import { z } from "zod";
+import {
+    DRAFT_FIELDS,
+    type DraftField,
+    type SongDraft,
+} from "@/content/genius/draft";
+import { decodeOr } from "@/utilities/decode";
 
 /** The browser would not keep the stash, which is never worth stopping for. */
 export interface StashError {
@@ -39,32 +45,72 @@ const keyFor = (albumId: number): string => `${KEY}${albumId}`;
 const failed = (reason: string): Result<void, StashError> =>
     Result.err({ kind: "unsupported", reason });
 
-const isObject = (value: unknown): boolean =>
-    typeof value === "object" && value !== null;
+/** A chip as react-select holds it, label in any of its three shapes. */
+const optionSchema = z.object({
+    __isNew__: z.boolean().optional(),
+    label: z.union([
+        z.string(),
+        z.number(),
+        z.object({
+            primary: z.string(),
+            secondary: z.string().optional(),
+            secondaryPrefix: z.string().optional(),
+        }),
+    ]),
+    value: z.union([z.string(), z.number()]),
+});
 
-/** A version bump covers our own writes; this covers anything else. */
-const usableRow = (value: unknown): boolean => {
-    if (!isObject(value)) {
-        return false;
-    }
+const draftSchema = z.object({
+    featuredArtists: z.array(optionSchema),
+    language: z.string().nullable(),
+    primaryArtists: z.array(optionSchema),
+    primaryTagId: z.number().nullable(),
+    producerArtists: z.array(optionSchema),
+    releaseDate: z.object({
+        day: z.number().nullable(),
+        month: z.number().nullable(),
+        year: z.number().nullable(),
+    }),
+    soundcloudUrl: z.string().nullable(),
+    tags: z.array(optionSchema),
+    title: z.string(),
+    writerArtists: z.array(optionSchema),
+    youtubeUrl: z.string().nullable(),
+});
 
-    const row = value as Partial<StashedRow>;
+const rowSchema = z.object({
+    baseline: draftSchema,
+    patch: draftSchema.partial(),
+});
 
-    return isObject(row.baseline) && isObject(row.patch);
-};
+/** A version bump covers our own writes; the schema covers anything else. */
+const stashSchema = z.object({
+    rows: z.record(z.string(), z.unknown()),
+    savedAt: z.number(),
+    version: z.literal(VERSION),
+});
 
+/** A row that will not parse is one edit lost, not the whole stash. */
 const usableRows = (
-    rows: Readonly<Record<number, StashedRow>>,
+    rows: Readonly<Record<string, unknown>>,
 ): Readonly<Record<number, StashedRow>> => {
     const kept: Record<number, StashedRow> = {};
 
-    for (const [songId, row] of Object.entries(rows)) {
-        if (usableRow(row)) {
+    for (const [songId, raw] of Object.entries(rows)) {
+        const row = decodeOr(rowSchema, raw);
+
+        if (row !== null) {
             kept[Number(songId)] = row;
         }
     }
 
     return kept;
+};
+
+/** Parses a stored string, which may be anything another script wrote. */
+const parseStored = (raw: string): unknown => {
+    const parsed = Result.trySync((): unknown => JSON.parse(raw));
+    return parsed.isOk() ? parsed.value : null;
 };
 
 /**
@@ -78,20 +124,11 @@ export const readStash = (albumId: number): Stash | null => {
         return null;
     }
 
-    const parsed = Result.trySync(() => JSON.parse(raw.value ?? "") as Stash);
+    const stash = decodeOr(stashSchema, parseStored(raw.value));
 
-    if (parsed.isErr()) {
-        return null;
-    }
-
-    const stash = parsed.value;
-    const usable =
-        stash?.version === VERSION &&
-        typeof stash.savedAt === "number" &&
-        Date.now() - stash.savedAt < MAX_AGE_MS &&
-        isObject(stash.rows);
-
-    return usable ? { ...stash, rows: usableRows(stash.rows) } : null;
+    return stash !== null && Date.now() - stash.savedAt < MAX_AGE_MS
+        ? { ...stash, rows: usableRows(stash.rows) }
+        : null;
 };
 
 /**
@@ -156,19 +193,19 @@ interface TaskStash {
     readonly tasks: readonly StashedTask[];
 }
 
-const usableTask = (value: unknown): boolean => {
-    if (!isObject(value)) {
-        return false;
-    }
+const taskSchema = z.object({
+    channel: z.string(),
+    fields: z.array(z.enum(DRAFT_FIELDS)),
+    queued: z.string(),
+    songIds: z.array(z.number()),
+    taskId: z.string(),
+});
 
-    const task = value as Partial<StashedTask>;
-
-    return (
-        typeof task.taskId === "string" &&
-        typeof task.channel === "string" &&
-        Array.isArray(task.songIds)
-    );
-};
+const taskStashSchema = z.object({
+    savedAt: z.number(),
+    tasks: z.array(z.unknown()),
+    version: z.literal(VERSION),
+});
 
 /** Leaves queued tasks for the page that can subscribe to them. */
 export const writeTasks = (
@@ -209,22 +246,16 @@ export const takeTasks = (albumId: number): readonly StashedTask[] => {
         localStorage.removeItem(taskKeyFor(albumId));
     });
 
-    const parsed = Result.trySync(
-        () => JSON.parse(raw.value ?? "") as TaskStash,
-    );
+    const stash = decodeOr(taskStashSchema, parseStored(raw.value));
 
-    if (parsed.isErr()) {
+    if (stash === null || Date.now() - stash.savedAt >= MAX_AGE_MS) {
         return [];
     }
 
-    const stash = parsed.value;
-    const usable =
-        stash?.version === VERSION &&
-        typeof stash.savedAt === "number" &&
-        Date.now() - stash.savedAt < MAX_AGE_MS &&
-        Array.isArray(stash.tasks);
-
-    return usable ? stash.tasks.filter(usableTask) : [];
+    return stash.tasks.flatMap((row): readonly StashedTask[] => {
+        const task = decodeOr(taskSchema, row);
+        return task === null ? [] : [task];
+    });
 };
 
 /**
