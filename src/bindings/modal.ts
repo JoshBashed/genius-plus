@@ -2,12 +2,12 @@
  * Genius's `Modal`.
  */
 
-import { Result } from "@resulted/results";
+import type { Result } from "@resulted/results";
 import type { FC, ReactNode } from "react";
 import type { BindingError } from "@/bindings/errors";
 import { readProperty, selectExport } from "@/bindings/finders";
 import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
-import { asPageValue, type ModuleNamespace } from "@/bindings/types";
+import { borrowComponent, type ModuleNamespace } from "@/bindings/types";
 
 /** Rollup named this chunk after an unrelated hook it also contains. */
 const MODAL_CHUNK = "useAnnotationTracking";
@@ -52,11 +52,9 @@ const bindModal = memoBinding<FC<ModalProps>>(async () => {
 
     const found = findDevicePair(ns.value);
 
-    if (found.isErr()) {
-        return found;
-    }
-
-    return Result.ok(asPageValue<FC<ModalProps>>(found.value));
+    return found.isOk()
+        ? borrowComponent<ModalProps>(found.value, "Modal")
+        : found;
 });
 
 /**

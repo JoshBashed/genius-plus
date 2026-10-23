@@ -1,31 +1,36 @@
 /** Genius's React, as the named imports any React file would use. */
-import { asPageValue, type PageReact } from "@/bindings";
+import type { PageReact } from "@/bindings";
 import { slot } from "@/content/genius/slot";
 
 export const reactSlot = slot<PageReact>("React");
 
-/** Their function of that name, read from the slot when it is called. */
-const late = <Key extends keyof PageReact>(key: Key): PageReact[Key] =>
-    asPageValue<PageReact[Key]>((...args: readonly unknown[]) =>
-        asPageValue<(...args: readonly unknown[]) => unknown>(
-            reactSlot.get()[key],
-        )(...args),
-    );
+// Assigned by `bindReact` when the page's React is installed. Module
+// bindings are live, so a file that imported these before then calls
+// the page's own, under React's own types.
+export let createElement: PageReact["createElement"];
+export let cloneElement: PageReact["cloneElement"];
+export let memo: PageReact["memo"];
+export let useState: PageReact["useState"];
+export let useEffect: PageReact["useEffect"];
+export let useMemo: PageReact["useMemo"];
+export let useCallback: PageReact["useCallback"];
+export let useRef: PageReact["useRef"];
+export let useContext: PageReact["useContext"];
+export let Fragment: PageReact["Fragment"];
 
-export const createElement = late("createElement");
-export const cloneElement = late("cloneElement");
-export const memo = late("memo");
-export const useState = late("useState");
-export const useEffect = late("useEffect");
-export const useMemo = late("useMemo");
-export const useCallback = late("useCallback");
-export const useRef = late("useRef");
-export const useContext = late("useContext");
-
-/** The registered symbol every React copy renders a fragment for. */
-export const Fragment = asPageValue<PageReact["Fragment"]>(
-    Symbol.for("react.fragment"),
-);
+/** Points every export above at the page's React. */
+export const bindReact = (react: PageReact): void => {
+    createElement = react.createElement;
+    cloneElement = react.cloneElement;
+    memo = react.memo;
+    useState = react.useState;
+    useEffect = react.useEffect;
+    useMemo = react.useMemo;
+    useCallback = react.useCallback;
+    useRef = react.useRef;
+    useContext = react.useContext;
+    Fragment = react.Fragment;
+};
 
 /**
  * What compiled JSX calls, built on their `createElement`.
@@ -40,19 +45,3 @@ export const jsx = (
 
 export const jsxs = jsx;
 export const jsxDEV = jsx;
-
-/** The same, for code that would rather write `React.createElement`. */
-const React = {
-    cloneElement,
-    createElement,
-    Fragment,
-    memo,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-};
-
-export default React;

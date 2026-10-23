@@ -53,7 +53,7 @@ import {
     capturePageContexts,
     pageTheme,
 } from "@/content/genius/pageContext";
-import { reactSlot } from "@/content/genius/react";
+import { bindReact, reactSlot } from "@/content/genius/react";
 import { installAll, installOptional, installs } from "@/content/genius/slot";
 
 /** What a page still has to hold, because it renders with it directly. */
@@ -79,6 +79,8 @@ export const installRuntime = async (): Promise<
     if (react.isErr()) {
         return react;
     }
+
+    bindReact(reactSlot.get());
 
     const dom = await getReactDomClient();
 

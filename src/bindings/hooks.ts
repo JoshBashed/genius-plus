@@ -1,10 +1,13 @@
 import { Result } from "@resulted/results";
 import { findHook, selectExport } from "@/bindings/finders";
 import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
-import { asPageValue } from "@/bindings/types";
+import { borrowFunction } from "@/bindings/types";
+
+/** Any hook's signature, which each binding narrows to its own. */
+type Hook = (...args: never[]) => unknown;
 
 /** Borrowed hooks; callable only inside the page's own React tree. */
-const bindHook = <Fn>(chunk: string): Binding<Fn> =>
+const bindHook = <Fn extends Hook>(chunk: string): Binding<Fn> =>
     memoBinding(async () => {
         const ns = await loadChunk(chunk);
 
@@ -14,15 +17,11 @@ const bindHook = <Fn>(chunk: string): Binding<Fn> =>
 
         const found = findHook(ns.value, chunk);
 
-        if (found.isErr()) {
-            return found;
-        }
-
-        return Result.ok(asPageValue<Fn>(found.value));
+        return found.isOk() ? borrowFunction<Fn>(found.value, chunk) : found;
     });
 
 /** Borrowed hooks; callable only inside the page's own React tree. */
-const bindWith = <Fn>(
+const bindWith = <Fn extends Hook>(
     chunk: string,
     target: string,
     predicate: (value: unknown) => boolean,
@@ -36,7 +35,7 @@ const bindWith = <Fn>(
 
         const found = selectExport(ns.value, target, predicate);
 
-        return found.isErr() ? found : Result.ok(asPageValue<Fn>(found.value));
+        return found.isOk() ? borrowFunction<Fn>(found.value, target) : found;
     });
 
 /** What `useGoogleReCaptcha` hands back to a component. */

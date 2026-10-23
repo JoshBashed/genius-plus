@@ -1,6 +1,7 @@
 import { Result } from "@resulted/results";
 import type { BindingError } from "@/bindings/errors";
 import type { ModuleNamespace } from "@/bindings/types";
+import { isRecord } from "@/utilities/record";
 
 /** Structural export finders; nothing here looks an export up by name. */
 
@@ -14,20 +15,16 @@ const bindingError = (target: string, reason: string): BindingError => ({
     reason,
 });
 
-const isObjectLike = (value: unknown): boolean =>
-    (typeof value === "object" && value !== null) ||
-    typeof value === "function";
-
 /**
  * A property read that survives proxies and throwing getters.
  * @returns `undefined` when the read throws or `value` is primitive.
  */
 export const readProperty = (value: unknown, key: string): unknown => {
-    if (!isObjectLike(value)) {
+    if (!isRecord(value)) {
         return undefined;
     }
 
-    const got = Result.trySync(() => (value as Record<string, unknown>)[key]);
+    const got = Result.trySync((): unknown => Reflect.get(value, key));
     return got.isOk() ? got.value : undefined;
 };
 
@@ -194,11 +191,11 @@ export const findByStyledNamespace = (
     selectExport(ns, `${file} (styled statics named ${file}__*)`, (value) => {
         const owner = unwrapMemo(value);
 
-        if (!isObjectLike(owner)) {
+        if (!isRecord(owner)) {
             return false;
         }
 
-        return Object.values(owner as Record<string, unknown>).some(
+        return Object.values(owner).some(
             (statik) =>
                 isStyled(statik) &&
                 typeof readProperty(statik, "displayName") === "string" &&
@@ -272,7 +269,7 @@ export const findByKeys = (
     forbidden: readonly string[] = [],
 ): Result<unknown, BindingError> =>
     selectExport(ns, `${target} (${required.join("+")})`, (value) => {
-        if (!isObjectLike(value)) {
+        if (!isRecord(value)) {
             return false;
         }
 

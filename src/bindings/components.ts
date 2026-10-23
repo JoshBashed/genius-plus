@@ -1,9 +1,10 @@
-import { Result } from "@resulted/results";
+import type { Result } from "@resulted/results";
 import type { FC, ReactNode, SyntheticEvent } from "react";
 import type { BindingError } from "@/bindings/errors";
 import {
     findByDisplayName,
     findByStyledNamespace,
+    readProperty,
     selectExport,
 } from "@/bindings/finders";
 import {
@@ -12,7 +13,7 @@ import {
     loadChunkExporting,
     memoBinding,
 } from "@/bindings/loader";
-import { asPageValue, type ModuleNamespace } from "@/bindings/types";
+import { borrowComponent, type ModuleNamespace } from "@/bindings/types";
 
 /** One accessor per borrowed component. Prop names read from chunks. */
 
@@ -31,11 +32,9 @@ const bind = <Props>(
 
         const found = find(ns.value);
 
-        if (found.isErr()) {
-            return found;
-        }
-
-        return Result.ok(asPageValue<FC<Props>>(found.value));
+        return found.isOk()
+            ? borrowComponent<Props>(found.value, chunk)
+            : found;
     });
 
 /**
@@ -52,9 +51,7 @@ const bindNamed = <Props>(name: string, own?: string): Bind<Props> =>
 
         const found = findByDisplayName(ns.value, name);
 
-        return found.isOk()
-            ? Result.ok(asPageValue<FC<Props>>(found.value))
-            : found;
+        return found.isOk() ? borrowComponent<Props>(found.value, name) : found;
     });
 
 /** Props every borrowed component forwards to its underlying element. */
@@ -103,8 +100,7 @@ const FORWARD_REF = Symbol.for("react.forward_ref");
 
 const isIcon = (value: unknown): boolean =>
     typeof value === "object" &&
-    value !== null &&
-    (value as { $$typeof?: unknown }).$$typeof === FORWARD_REF;
+    readProperty(value, "$$typeof") === FORWARD_REF;
 
 /**
  * One of their own icons, each its own chunk exporting one component.

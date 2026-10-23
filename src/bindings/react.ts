@@ -1,10 +1,10 @@
-import { Result } from "@resulted/results";
+import type { Result } from "@resulted/results";
 import type * as React from "react";
 import type { ReactElement, ReactNode } from "react";
-import type { BindingError, ChunkError } from "@/bindings/errors";
-import { findByKeys, missingKeys } from "@/bindings/finders";
+import type { ChunkError } from "@/bindings/errors";
+import { findByKeys } from "@/bindings/finders";
 import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
-import { asPageValue, type ModuleNamespace } from "@/bindings/types";
+import { borrowModule, type ModuleNamespace } from "@/bindings/types";
 
 /**
  * The page's own React, in React's own types. Two Reacts share no hooks
@@ -54,24 +54,6 @@ const REACT_KEYS = [
     "memo",
 ] as const;
 
-const complete = <T>(
-    value: unknown,
-    target: string,
-    keys: readonly string[],
-): Result<T, BindingError> => {
-    const missing = missingKeys(value, keys);
-
-    if (missing.length > 0) {
-        return Result.err({
-            kind: "binding",
-            target,
-            reason: `found the module but it is missing ${missing.join(", ")}`,
-        });
-    }
-
-    return Result.ok(asPageValue<T>(value));
-};
-
 /**
  * The page's own React instance (cached).
  * @returns The module, or a `binding` error if the chunk moved.
@@ -92,7 +74,7 @@ export const getReact: Binding<PageReact> = memoBinding(async () => {
     );
 
     return found.isOk()
-        ? complete<PageReact>(found.value, "React", REACT_KEYS)
+        ? borrowModule<PageReact>(found.value, "React", REACT_KEYS)
         : found;
 });
 
@@ -115,7 +97,7 @@ export const getReactDom: Binding<PageReactDom> = memoBinding(async () => {
     );
 
     return found.isOk()
-        ? complete<PageReactDom>(found.value, "react-dom", [
+        ? borrowModule<PageReactDom>(found.value, "react-dom", [
               "createPortal",
               "flushSync",
           ])
@@ -143,9 +125,11 @@ export const getReactDomClient: Binding<PageReactDomClient> = memoBinding(
         );
 
         return found.isOk()
-            ? complete<PageReactDomClient>(found.value, "react-dom/client", [
-                  "createRoot",
-              ])
+            ? borrowModule<PageReactDomClient>(
+                  found.value,
+                  "react-dom/client",
+                  ["createRoot"],
+              )
             : found;
     },
 );

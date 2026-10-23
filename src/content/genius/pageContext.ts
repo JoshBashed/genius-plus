@@ -1,7 +1,7 @@
 /** Borrows the page's context values off the live fiber tree. */
 import { Result } from "@resulted/results";
 import { type Context, createElement, type ReactElement } from "react";
-import { asPageValue, type BindingError, type GeniusTheme } from "@/bindings";
+import { type BindingError, borrowContext, type GeniusTheme } from "@/bindings";
 import { isRecord } from "@/utilities/record";
 
 const PROVIDER = Symbol.for("react.provider");
@@ -109,22 +109,22 @@ export const capturePageContexts = (): readonly CapturedContext[] => {
 
         visited += 1;
 
-        const context = contextOf(fiber.type);
+        const context = borrowContext<unknown>(
+            contextOf(fiber.type),
+            "a page context",
+        );
         const props = fiber.memoizedProps;
 
         // A consumer's type is the context too; only `value` marks a
         // provider, and only a capture marks the context seen.
         if (
-            context !== null &&
-            !seen.has(context) &&
+            context.isOk() &&
+            !seen.has(context.value) &&
             isRecord(props) &&
             "value" in props
         ) {
-            seen.add(context);
-            captured.push({
-                context: asPageValue<Context<unknown>>(context),
-                value: props.value,
-            });
+            seen.add(context.value);
+            captured.push({ context: context.value, value: props.value });
         }
 
         if (isRecord(fiber.child)) {

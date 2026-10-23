@@ -12,7 +12,11 @@ import {
     loadChunkMatching,
     memoBinding,
 } from "@/bindings/loader";
-import { asPageValue } from "@/bindings/types";
+import {
+    borrowComponent,
+    borrowContext,
+    borrowFunction,
+} from "@/bindings/types";
 
 /** Genius's styled-components: `styled`, `ThemeProvider`, and `ThemeContext`. */
 
@@ -156,14 +160,33 @@ export const getStyledComponents: Binding<PageStyledComponents> = memoBinding(
             return themeProvider;
         }
 
+        const factory = borrowFunction<PageStyledFactory>(
+            styled.value,
+            "styled",
+        );
+        const provider = borrowComponent<ThemeProviderProps>(
+            themeProvider.value,
+            "ThemeProvider",
+        );
+        const context = borrowContext<GeniusTheme | undefined>(
+            themeContext.value,
+            "ThemeContext",
+        );
+
+        if (factory.isErr()) {
+            return factory;
+        }
+        if (provider.isErr()) {
+            return provider;
+        }
+        if (context.isErr()) {
+            return context;
+        }
+
         return Result.ok({
-            styled: asPageValue<PageStyledFactory>(styled.value),
-            ThemeProvider: asPageValue<FC<ThemeProviderProps>>(
-                themeProvider.value,
-            ),
-            ThemeContext: asPageValue<Context<GeniusTheme | undefined>>(
-                themeContext.value,
-            ),
+            styled: factory.value,
+            ThemeContext: context.value,
+            ThemeProvider: provider.value,
         });
     },
 );

@@ -60,6 +60,9 @@ export {
     type ThemeProviderProps,
 } from "@/bindings/styled";
 export {
-    asPageValue,
+    borrowComponent,
+    borrowContext,
+    borrowFunction,
+    borrowModule,
     type ModuleNamespace,
 } from "@/bindings/types";
