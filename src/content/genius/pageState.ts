@@ -187,7 +187,7 @@ const staleFor = (state: State): string | null => {
 export const readAlbumSeed = (): Result<AlbumSeed, PageError> => {
     const state = decodeOr(
         stateSchema,
-        (window as { __PRELOADED_STATE__?: unknown }).__PRELOADED_STATE__,
+        Reflect.get(window, "__PRELOADED_STATE__"),
     );
 
     if (state === null) {

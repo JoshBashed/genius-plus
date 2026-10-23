@@ -2,17 +2,16 @@
 import { Result } from "@resulted/results";
 import { type Context, createElement, type ReactElement } from "react";
 import { asPageValue, type BindingError, type GeniusTheme } from "@/bindings";
+import { isRecord } from "@/utilities/record";
 
 const PROVIDER = Symbol.for("react.provider");
 const CONTEXT = Symbol.for("react.context");
 
-/** Only the four fields we walk; a fiber has dozens. */
-interface Fiber {
-    readonly child: Fiber | null;
-    readonly sibling: Fiber | null;
-    readonly type: unknown;
-    readonly memoizedProps: unknown;
-}
+/**
+ * A fiber, read only through `child`, `sibling`, `type`, and
+ * `memoizedProps`; React's own type for it is not ours to import.
+ */
+type Fiber = Readonly<Record<string, unknown>>;
 
 export interface CapturedContext {
     readonly context: Context<unknown>;
@@ -22,13 +21,9 @@ export interface CapturedContext {
 /** Deep enough to clear the app shell, bounded so a big tree cannot hang. */
 const NODE_BUDGET = 6000;
 
-const objectLike = (value: unknown): value is Record<string, unknown> =>
-    (typeof value === "object" && value !== null) ||
-    typeof value === "function";
-
 /** React 18 wraps a provider's type; React 19 does not. Accept both. */
 const contextOf = (type: unknown): unknown => {
-    if (!objectLike(type)) {
+    if (!isRecord(type)) {
         return null;
     }
 
@@ -49,8 +44,8 @@ const fiberOf = (container: Element): Fiber | null => {
         return null;
     }
 
-    const found = (container as unknown as Record<string, unknown>)[key];
-    return objectLike(found) ? (found as unknown as Fiber) : null;
+    const found: unknown = Reflect.get(container, key);
+    return isRecord(found) ? found : null;
 };
 
 /** A page with no app root still has one, so the scan is bounded. */
@@ -122,7 +117,7 @@ export const capturePageContexts = (): readonly CapturedContext[] => {
         if (
             context !== null &&
             !seen.has(context) &&
-            objectLike(props) &&
+            isRecord(props) &&
             "value" in props
         ) {
             seen.add(context);
@@ -132,11 +127,11 @@ export const capturePageContexts = (): readonly CapturedContext[] => {
             });
         }
 
-        if (fiber.child !== null) {
+        if (isRecord(fiber.child)) {
             queue.push(fiber.child);
         }
 
-        if (fiber.sibling !== null) {
+        if (isRecord(fiber.sibling)) {
             queue.push(fiber.sibling);
         }
     }
@@ -145,7 +140,7 @@ export const capturePageContexts = (): readonly CapturedContext[] => {
 };
 
 const isTheme = (value: unknown): value is GeniusTheme => {
-    if (!objectLike(value)) {
+    if (!isRecord(value)) {
         return false;
     }
 
@@ -153,9 +148,9 @@ const isTheme = (value: unknown): value is GeniusTheme => {
     const color = value.color;
 
     return (
-        objectLike(space) &&
+        isRecord(space) &&
         typeof space.half === "string" &&
-        objectLike(color) &&
+        isRecord(color) &&
         typeof value.inputActive === "function"
     );
 };

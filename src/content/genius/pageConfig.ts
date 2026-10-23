@@ -1,16 +1,12 @@
 /** The config Genius renders into the page, under either spelling. */
+import { isRecord } from "@/utilities/record";
 
 /** The raw globals are snake_case; the camel spelling is post-merge. */
-const sources = (): readonly Record<string, unknown>[] => {
-    const globals = window as {
-        __APP_CONFIG__?: unknown;
-        __PRELOADED_STATE__?: { config?: unknown };
-    };
+const sources = (): readonly Readonly<Record<string, unknown>>[] => {
+    const state: unknown = Reflect.get(window, "__PRELOADED_STATE__");
+    const app: unknown = Reflect.get(window, "__APP_CONFIG__");
 
-    return [globals.__PRELOADED_STATE__?.config, globals.__APP_CONFIG__].filter(
-        (source): source is Record<string, unknown> =>
-            typeof source === "object" && source !== null,
-    );
+    return [isRecord(state) ? state.config : null, app].filter(isRecord);
 };
 
 /**
