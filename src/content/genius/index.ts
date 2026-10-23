@@ -1,14 +1,19 @@
 /** Genius, isolated world: the half that has `chrome.*`. */
+
+import { IMPORT_PATH } from "@/content/genius/importRoute";
+import { watchNav } from "@/content/genius/navSlot";
+import {
+    postEnabled,
+    readStatus,
+    serveCreditRequests,
+} from "@/content/genius/relay";
+import { serveChunkCache } from "@/content/genius/utilities/chunkCache";
 import { log } from "@/utilities/log";
 import {
     readSettings,
     type Settings,
     watchSettings,
 } from "@/utilities/settings";
-import { IMPORT_PATH } from "./importRoute";
-import { watchNav } from "./navSlot";
-import { postEnabled, readStatus, serveCreditRequests } from "./relay";
-import { serveChunkCache } from "./utilities/chunkCache";
 
 let current: Settings | null = null;
 

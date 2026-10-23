@@ -1,10 +1,10 @@
 /** The album's tracklist, re-read from Genius after it has been written. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
+import { apiGet, type ReadFailure } from "@/content/genius/api";
+import type { TrackSeed } from "@/content/genius/pageState";
 import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
-import { apiGet, type ReadFailure } from "../api";
-import type { TrackSeed } from "../pageState";
 
 /**
  * Every way reading an album's tracklist fails.

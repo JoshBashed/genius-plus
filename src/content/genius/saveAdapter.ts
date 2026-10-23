@@ -1,6 +1,5 @@
 /** The clipboard exports, kept beside the real write as secondary actions. */
 import { Result } from "@resulted/results";
-import { plural } from "@/utilities/plural";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -9,8 +8,9 @@ import {
     FIELD_PAYLOAD_KEYS,
     payloadValue,
     type SongDraft,
-} from "./draft";
-import type { SongMetadata } from "./metadata";
+} from "@/content/genius/draft";
+import type { SongMetadata } from "@/content/genius/metadata";
+import { plural } from "@/utilities/plural";
 
 /** Nothing to export, or a clipboard the browser would not write to. */
 export interface ExportError {

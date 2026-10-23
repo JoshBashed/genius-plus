@@ -2,8 +2,8 @@
 
 import { createElement, type ReactElement } from "react";
 import type { PageRoot } from "@/bindings";
-import type { Runtime } from "../install";
-import { withPageContexts } from "../pageContext";
+import type { Runtime } from "@/content/genius/install";
+import { withPageContexts } from "@/content/genius/pageContext";
 
 export interface MountedTree {
     readonly unmount: () => void;

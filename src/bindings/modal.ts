@@ -4,10 +4,10 @@
 
 import { Result } from "@resulted/results";
 import type { FC, ReactNode } from "react";
-import type { BindingError } from "./errors";
-import { readProperty, selectExport } from "./finders";
-import { type Binding, loadChunk, memoBinding } from "./loader";
-import { asPageValue, type ModuleNamespace } from "./types";
+import type { BindingError } from "@/bindings/errors";
+import { readProperty, selectExport } from "@/bindings/finders";
+import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
+import { asPageValue, type ModuleNamespace } from "@/bindings/types";
 
 /** Rollup named this chunk after an unrelated hook it also contains. */
 const MODAL_CHUNK = "useAnnotationTracking";

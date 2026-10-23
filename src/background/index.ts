@@ -1,9 +1,9 @@
 import { Result } from "@resulted/results";
+import { claimAppleOrigin } from "@/background/appleOrigin";
+import { appleToken } from "@/background/appleToken";
 import { IMAGE_CDN_MATCHES } from "@/manifest";
 import { ampSongUrl } from "@/utilities/appleCredits";
 import { onMessage } from "@/utilities/messaging";
-import { claimAppleOrigin } from "./appleOrigin";
-import { appleToken } from "./appleToken";
 
 /** The image CDNs only. The worker is not an open proxy. */
 const ALLOWED_HOSTS = /^(?:[a-z0-9-]+\.)?(mzstatic|sndcdn)\.com$/i;

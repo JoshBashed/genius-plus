@@ -2,10 +2,10 @@
 
 import { type FC, memo } from "react";
 import type { SelectOption } from "@/bindings";
-import type { ContributorPlan } from "../../albumImport/contributors";
-import { Button } from "../../geniusComponents/Button";
-import { ContributorMap } from "../ContributorMap";
-import { Actions, Panel } from "../styles";
+import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
+import { Button } from "@/content/genius/geniusComponents/Button";
+import { ContributorMap } from "@/content/genius/importPage/ContributorMap";
+import { Actions, Panel } from "@/content/genius/importPage/styles";
 
 export interface MapArtistsStepProps {
     readonly artists: ContributorPlan;

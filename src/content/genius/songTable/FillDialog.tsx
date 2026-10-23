@@ -1,11 +1,11 @@
 /** The column menu's dialog: the column's own editor, and nothing else. */
 import type { FC } from "react";
 import type { SelectOption } from "@/bindings";
-import { FIELD_LABELS, type SongDraft } from "../draft";
-import { ColumnEditor } from "./ColumnEditor";
-import type { FillMode } from "./ColumnMenu";
-import type { ColumnSpec } from "./columns";
-import { Confirm } from "./styles";
+import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
+import { ColumnEditor } from "@/content/genius/songTable/ColumnEditor";
+import type { FillMode } from "@/content/genius/songTable/ColumnMenu";
+import type { ColumnSpec } from "@/content/genius/songTable/columns";
+import { Confirm } from "@/content/genius/songTable/styles";
 
 export interface FillDialogProps {
     readonly column: ColumnSpec;

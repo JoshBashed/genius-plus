@@ -3,9 +3,9 @@
 import type { Result } from "@resulted/results";
 import type { ReactElement } from "react";
 import { type ChunkError, describeBindingError } from "@/bindings";
+import type { Runtime } from "@/content/genius/install";
+import { renderTree } from "@/content/genius/loaders/renderTree";
 import { log } from "@/utilities/log";
-import type { Runtime } from "../install";
-import { renderTree } from "./renderTree";
 
 /**
  * Why a loader took no place on the page.

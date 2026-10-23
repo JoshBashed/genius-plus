@@ -1,8 +1,11 @@
 /** The stepped progress bar, one segment per step. */
 
 import { type FC, memo } from "react";
-import { Steps } from "./styles";
-import { STEP_LABELS, type StepNumber } from "./wizard";
+import { Steps } from "@/content/genius/importPage/styles";
+import {
+    STEP_LABELS,
+    type StepNumber,
+} from "@/content/genius/importPage/wizard";
 
 interface StepBarProps {
     readonly step: StepNumber;

@@ -1,8 +1,8 @@
 /** A borrowed component, or nothing when this page does not have it. */
 import { createElement, type FC, type ReactElement } from "react";
 import { describeBindingError } from "@/bindings";
+import type { Slot } from "@/content/genius/slot";
 import { log } from "@/utilities/log";
-import type { Slot } from "../slot";
 
 /** One warning per slot, not one per row that renders it. */
 const warned = new WeakSet<object>();

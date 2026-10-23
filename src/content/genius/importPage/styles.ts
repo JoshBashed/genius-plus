@@ -2,7 +2,7 @@
 // allowed is a zero that neutralises a default someone else set.
 /** The assistant's styled parts. Every theme read happens at render time. */
 import type { PageStyledValue } from "@/bindings";
-import { styled } from "../geniusComponents/styled";
+import { styled } from "@/content/genius/geniusComponents/styled";
 
 const softBorder: PageStyledValue = ({ theme }) =>
     `color-mix(in srgb, ${theme.color.border.adaptive} 40%, transparent)`;

@@ -1,19 +1,19 @@
 /** Turns matched tracks into the patches the table stages for them. */
 import type { SelectOption } from "@/bindings";
-import type { AppleSongCredits } from "@/utilities/appleCredits";
-import type { DraftField, SongDraft } from "../draft";
-import { isEmptyField } from "../draft";
-import type { SongMetadata } from "../metadata";
-import { optionLabel, uniqueOptions } from "../options";
-import { canEdit } from "../permissions";
 import {
     type ContributorPlan,
     creditOptions,
     nameKey,
     namesOptions,
-} from "./contributors";
-import type { AlbumCredits } from "./credits";
-import type { TrackMatch } from "./matchTracks";
+} from "@/content/genius/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/albumImport/credits";
+import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
+import type { DraftField, SongDraft } from "@/content/genius/draft";
+import { isEmptyField } from "@/content/genius/draft";
+import type { SongMetadata } from "@/content/genius/metadata";
+import { optionLabel, uniqueOptions } from "@/content/genius/options";
+import { canEdit } from "@/content/genius/permissions";
+import type { AppleSongCredits } from "@/utilities/appleCredits";
 
 /**
  * The fields Apple carries a value for.

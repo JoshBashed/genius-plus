@@ -2,9 +2,9 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { DateComponents } from "@/bindings";
+import { apiGet, type ReadFailure } from "@/content/genius/api";
+import { drain } from "@/content/genius/pool";
 import { decode, decodeOr } from "@/utilities/decode";
-import { apiGet, type ReadFailure } from "./api";
-import { drain } from "./pool";
 
 /** A credit; `id` is `null` for a value Genius has never seen. */
 export interface NamedRef {

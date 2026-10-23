@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
+import { App } from "@/popup/App";
 import tailwind from "@/styles/tailwind.css";
-import { App } from "./App";
 
 const style = document.createElement("style");
 style.textContent = tailwind;

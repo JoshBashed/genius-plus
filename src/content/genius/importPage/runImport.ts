@@ -1,22 +1,23 @@
 /** The import itself: create what is missing, then stage the rest. */
 import { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
-import { log } from "@/utilities/log";
-import { plural } from "@/utilities/plural";
 import {
     type AlbumTracksFailure,
     describeAlbumTracksFailure,
     loadAlbumTracks,
-} from "../albumImport/albumTracks";
-import type { ContributorPlan } from "../albumImport/contributors";
-import type { AlbumCredits } from "../albumImport/credits";
-import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import { type TrackMatch, titleKey } from "../albumImport/matchTracks";
+} from "@/content/genius/albumImport/albumTracks";
+import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/albumImport/credits";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import {
+    type TrackMatch,
+    titleKey,
+} from "@/content/genius/albumImport/matchTracks";
 import {
     IMPORT_FIELDS,
     type StageRow,
     stageImport,
-} from "../albumImport/stage";
+} from "@/content/genius/albumImport/stage";
 import {
     describeTracklistFailure,
     planTracklist,
@@ -24,39 +25,53 @@ import {
     type TracklistAppearance,
     type TracklistFailure,
     type TracklistPlan,
-} from "../albumImport/tracklist";
+} from "@/content/genius/albumImport/tracklist";
 import {
     changedFields,
     type DraftField,
     draftFromMetadata,
     fieldsPatch,
     type SongDraft,
-} from "../draft";
+} from "@/content/genius/draft";
 import {
     readStash,
     type StashedRow,
     type StashedTask,
     writeStash,
     writeTasks,
-} from "../draftStash";
-import { EDITOR_HASH } from "../importRoute";
-import { loadAlbumMetadata, type SongMetadata } from "../metadata";
-import { loadPrimaryTagOptions, optionLabel } from "../options";
-import type { SongEdit } from "../saveAdapter";
+} from "@/content/genius/draftStash";
+import {
+    describeCoverArtFailure,
+    uploadCoverArt,
+    wantsCoverArt,
+} from "@/content/genius/importPage/coverArt";
+import {
+    describeGeniusAlbumFailure,
+    loadGeniusAlbum,
+} from "@/content/genius/importPage/geniusAlbums";
+import type {
+    AlbumType,
+    CoverArt,
+} from "@/content/genius/importPage/updateAlbum";
+import {
+    describeUpdateAlbumFailure,
+    updateAlbum,
+} from "@/content/genius/importPage/updateAlbum";
+import { EDITOR_HASH } from "@/content/genius/importRoute";
+import {
+    loadAlbumMetadata,
+    type SongMetadata,
+} from "@/content/genius/metadata";
+import { loadPrimaryTagOptions, optionLabel } from "@/content/genius/options";
+import type { SongEdit } from "@/content/genius/saveAdapter";
 import {
     describeSaveFailure,
     planSave,
     runSave,
     type SaveOutcome,
-} from "../write";
-import {
-    describeCoverArtFailure,
-    uploadCoverArt,
-    wantsCoverArt,
-} from "./coverArt";
-import { describeGeniusAlbumFailure, loadGeniusAlbum } from "./geniusAlbums";
-import type { AlbumType, CoverArt } from "./updateAlbum";
-import { describeUpdateAlbumFailure, updateAlbum } from "./updateAlbum";
+} from "@/content/genius/write";
+import { log } from "@/utilities/log";
+import { plural } from "@/utilities/plural";
 
 /**
  * Every way an import stops: the reads, the tracklist write, the stash.

@@ -3,14 +3,14 @@
 export {
     useGoogleReCaptcha,
     useGoogleReCaptchaSlot,
-} from "./useGoogleReCaptcha";
-export { useLanguageOptions } from "./useLanguageOptions";
+} from "@/content/genius/geniusHooks/useGoogleReCaptcha";
+export { useLanguageOptions } from "@/content/genius/geniusHooks/useLanguageOptions";
 export {
     hasUsePusher,
     usePusher,
     usePusherSlot,
-} from "./usePusher";
+} from "@/content/genius/geniusHooks/usePusher";
 export {
     useTranslation,
     useTranslationSlot,
-} from "./useTranslation";
+} from "@/content/genius/geniusHooks/useTranslation";

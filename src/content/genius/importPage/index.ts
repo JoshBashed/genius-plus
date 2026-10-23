@@ -1,1 +1,1 @@
-export { ImportAssistant } from "./ImportAssistant";
+export { ImportAssistant } from "@/content/genius/importPage/ImportAssistant";

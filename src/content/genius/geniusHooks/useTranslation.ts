@@ -1,6 +1,6 @@
 /** react-i18next's own hook, as Genius's bundle re-exports it. */
 import type { UseTranslationResult } from "@/bindings";
-import { slot } from "../slot";
+import { slot } from "@/content/genius/slot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const useTranslationSlot = slot<() => UseTranslationResult>(

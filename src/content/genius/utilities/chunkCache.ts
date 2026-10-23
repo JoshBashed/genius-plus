@@ -1,8 +1,8 @@
 /** The donor page's chunk URLs, kept in extension storage between pages. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
+import { GENIUS_CHANNEL } from "@/content/genius/relay";
 import { decodeOr } from "@/utilities/decode";
-import { GENIUS_CHANNEL } from "../relay";
 
 const STORAGE_KEY = "geniusChunks";
 

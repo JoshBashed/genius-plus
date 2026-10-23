@@ -1,7 +1,7 @@
 /** Genius's `styled-components` factory, and the theme it renders with. */
 import type { ComponentProps, ElementType } from "react";
 import type { GeniusTheme, PageStyledFactory, PageStyledTag } from "@/bindings";
-import { slot } from "../slot";
+import { slot } from "@/content/genius/slot";
 
 export const styledSlot = slot<PageStyledFactory>("styled-components");
 

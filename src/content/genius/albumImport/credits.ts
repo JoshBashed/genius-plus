@@ -1,10 +1,11 @@
 /** Reading Apple's per song credits for a whole album. */
+
+import { drain } from "@/content/genius/pool";
+import { type CreditsError, fetchSongCredits } from "@/content/genius/relay";
 import type { AppleSongCredits } from "@/utilities/appleCredits";
 import { readAppleCredits } from "@/utilities/appleCredits";
 import type { DecodeFailure } from "@/utilities/decode";
 import { log } from "@/utilities/log";
-import { drain } from "../pool";
-import { type CreditsError, fetchSongCredits } from "../relay";
 
 /** One line for whatever stopped a track's credits arriving. */
 const describeCreditsError = (error: CreditsError | DecodeFailure): string => {
@@ -20,7 +21,7 @@ const describeCreditsError = (error: CreditsError | DecodeFailure): string => {
     }
 };
 
-import type { ImportedAlbum } from "./importedAlbum";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
 
 /** One call per track, matching the metadata reads beside it. */
 const CONCURRENCY = 4;

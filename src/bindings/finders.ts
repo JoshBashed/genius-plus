@@ -1,6 +1,6 @@
 import { Result } from "@resulted/results";
-import type { BindingError } from "./errors";
-import type { ModuleNamespace } from "./types";
+import type { BindingError } from "@/bindings/errors";
+import type { ModuleNamespace } from "@/bindings/types";
 
 /** Structural export finders; nothing here looks an export up by name. */
 

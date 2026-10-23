@@ -1,6 +1,6 @@
 /** Per song, per field edit gates, mirroring the song page's own form. */
-import type { DraftField } from "./draft";
-import type { SongMetadata } from "./metadata";
+import type { DraftField } from "@/content/genius/draft";
+import type { SongMetadata } from "@/content/genius/metadata";
 
 /**
  * The gate each column reads, taken from `reactSongClient`'s `disabled` props.

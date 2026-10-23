@@ -1,7 +1,7 @@
 /** Apple's per song credits, which their album lookup does not carry. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
-import { type DecodeFailure, decode, decodeOr } from "./decode";
+import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
 
 /** Their catalogue API, which answers with credits when asked. */
 export const ampSongUrl = (storefront: string, trackId: number): string => {

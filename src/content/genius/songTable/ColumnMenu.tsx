@@ -1,10 +1,10 @@
 /** The header menu that stages one value across a whole column. */
 
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { FIELD_LABELS } from "../draft";
-import { Dropdown, hasDropdown } from "../geniusComponents";
-import type { ColumnSpec } from "./columns";
-import { MenuPanel } from "./styles";
+import { FIELD_LABELS } from "@/content/genius/draft";
+import { Dropdown, hasDropdown } from "@/content/genius/geniusComponents";
+import type { ColumnSpec } from "@/content/genius/songTable/columns";
+import { MenuPanel } from "@/content/genius/songTable/styles";
 
 /** Genius ships no ellipsis, so the trigger draws its own three dots. */
 const Ellipsis: FC = () => (

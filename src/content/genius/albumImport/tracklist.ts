@@ -1,11 +1,11 @@
 /** The album's own tracklist, which is how a song gets created at all. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
+import type { TrackMatch } from "@/content/genius/albumImport/matchTracks";
+import { apiPut, type WriteFailure } from "@/content/genius/api";
+import type { TrackSeed } from "@/content/genius/pageState";
 import { decode, decodeOr } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
-import { apiPut, type WriteFailure } from "../api";
-import type { TrackSeed } from "../pageState";
-import type { TrackMatch } from "./matchTracks";
 
 /**
  * Every way writing an album's tracklist fails.

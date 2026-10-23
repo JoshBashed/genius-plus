@@ -1,12 +1,12 @@
 /** Genius, main world: imports the page's modules. No `chrome.*`. */
 import { resetBindings } from "@/bindings";
+import { installEverything } from "@/content/genius/install";
+import { albumTableLoader } from "@/content/genius/loaders/albumTable";
+import { importPageLoader } from "@/content/genius/loaders/importPage";
+import { type Mounted, mountLoaders } from "@/content/genius/loaders/mount";
+import { postStatus, readEnabled } from "@/content/genius/relay";
 import { observeLocation } from "@/utilities/dom";
 import { log } from "@/utilities/log";
-import { installEverything } from "./install";
-import { albumTableLoader } from "./loaders/albumTable";
-import { importPageLoader } from "./loaders/importPage";
-import { type Mounted, mountLoaders } from "./loaders/mount";
-import { postStatus, readEnabled } from "./relay";
 
 /** Every page this extension puts something on. */
 const LOADERS = [albumTableLoader, importPageLoader];

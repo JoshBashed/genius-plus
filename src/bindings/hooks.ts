@@ -1,7 +1,7 @@
 import { Result } from "@resulted/results";
-import { findHook, selectExport } from "./finders";
-import { type Binding, loadChunk, memoBinding } from "./loader";
-import { asPageValue } from "./types";
+import { findHook, selectExport } from "@/bindings/finders";
+import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
+import { asPageValue } from "@/bindings/types";
 
 /** Borrowed hooks; callable only inside the page's own React tree. */
 const bindHook = <Fn>(chunk: string): Binding<Fn> =>

@@ -3,9 +3,9 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
+import { apiGet, type ReadFailure } from "@/content/genius/api";
+import type { NamedRef } from "@/content/genius/metadata";
 import { decode, decodeOr } from "@/utilities/decode";
-import { apiGet, type ReadFailure } from "./api";
-import type { NamedRef } from "./metadata";
 
 /** Genius debounces its own autocompletes by this much. Match it. */
 const DEBOUNCE_MS = 150;

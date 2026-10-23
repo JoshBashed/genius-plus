@@ -1,8 +1,8 @@
+import { ArtworkOverlay } from "@/content/shared/ArtworkOverlay";
+import { type ArtworkSite, createArtworkHover } from "@/content/shared/hover";
+import { mountOverlay } from "@/content/shared/mount";
 import tailwind from "@/styles/tailwind.css";
 import { readSettings, watchSettings } from "@/utilities/settings";
-import { ArtworkOverlay } from "./ArtworkOverlay";
-import { type ArtworkSite, createArtworkHover } from "./hover";
-import { mountOverlay } from "./mount";
 
 /**
  * Wires hover tracking to the download button, tracking the setting.

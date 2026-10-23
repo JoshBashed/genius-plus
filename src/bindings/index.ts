@@ -1,6 +1,6 @@
 /** Typed handles on Genius's bundle; MAIN world only, no `chrome.*`. */
 
-export * from "./components";
+export * from "@/bindings/components";
 export {
     type ChunkIndex,
     describeMarkers,
@@ -10,13 +10,13 @@ export {
     readChunkIndex,
     resolveChunk,
     resolveChunkMatching,
-} from "./discovery";
+} from "@/bindings/discovery";
 export {
     type BindingError,
     type ChunkError,
     describeBindingError,
     type UnsupportedPageError,
-} from "./errors";
+} from "@/bindings/errors";
 export {
     displayNameOf,
     findByDisplayName,
@@ -30,8 +30,8 @@ export {
     normaliseDisplayName,
     selectExport,
     unwrapMemo,
-} from "./finders";
-export * from "./hooks";
+} from "@/bindings/finders";
+export * from "@/bindings/hooks";
 export {
     type Binding,
     getPage,
@@ -39,8 +39,8 @@ export {
     loadChunkExporting,
     loadChunkMatching,
     resetBindings,
-} from "./loader";
-export { getModal, type ModalProps } from "./modal";
+} from "@/bindings/loader";
+export { getModal, type ModalProps } from "@/bindings/modal";
 export {
     getReact,
     getReactDom,
@@ -49,7 +49,7 @@ export {
     type PageReactDom,
     type PageReactDomClient,
     type PageRoot,
-} from "./react";
+} from "@/bindings/react";
 export {
     type GeniusTheme,
     getStyledComponents,
@@ -58,8 +58,8 @@ export {
     type PageStyledTag,
     type PageStyledValue,
     type ThemeProviderProps,
-} from "./styled";
+} from "@/bindings/styled";
 export {
     asPageValue,
     type ModuleNamespace,
-} from "./types";
+} from "@/bindings/types";

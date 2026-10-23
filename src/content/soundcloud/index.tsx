@@ -1,10 +1,10 @@
+import { startArtworkDownloads } from "@/content/shared/artworkFeature";
+import { findImageUrl } from "@/content/shared/imageSource";
+import { joinLabel, nearestText, pageTitle } from "@/content/shared/labels";
+import { startCleanLinks } from "@/content/soundcloud/cleanLinks";
 import { soundcloudCandidates } from "@/utilities/artwork";
 import { log } from "@/utilities/log";
 import type { ArtworkTarget } from "@/utilities/types";
-import { startArtworkDownloads } from "../shared/artworkFeature";
-import { findImageUrl } from "../shared/imageSource";
-import { joinLabel, nearestText, pageTitle } from "../shared/labels";
-import { startCleanLinks } from "./cleanLinks";
 
 /** SoundCloud paints artwork as a background image on a `span`. */
 const ARTWORK_SELECTORS = [

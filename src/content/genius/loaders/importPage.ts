@@ -2,10 +2,14 @@
 import { Result } from "@resulted/results";
 import { createElement, type ReactElement } from "react";
 import { resetBindings } from "@/bindings";
+import { loadGeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import {
+    HIDE_STYLE_ID,
+    IMPORT_PATH,
+    NOT_FOUND,
+} from "@/content/genius/importRoute";
+import type { Loader } from "@/content/genius/loaders/mount";
 import { log } from "@/utilities/log";
-import { loadGeniusAlbum } from "../importPage/geniusAlbums";
-import { HIDE_STYLE_ID, IMPORT_PATH, NOT_FOUND } from "../importRoute";
-import type { Loader } from "./mount";
 
 const APP_ID = "application";
 
@@ -65,7 +69,7 @@ export const importPageLoader: Loader = {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.
         const { ImportAssistant } = await import(
-            /* webpackMode: "eager" */ "../importPage"
+            /* webpackMode: "eager" */ "@/content/genius/importPage"
         );
 
         const named = new URLSearchParams(location.search).get("album");

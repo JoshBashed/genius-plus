@@ -42,19 +42,19 @@ import {
     tagInputSlot,
     textInputSlot,
     warningIconSlot,
-} from "./geniusComponents";
+} from "@/content/genius/geniusComponents";
 import {
     useGoogleReCaptchaSlot,
     usePusherSlot,
     useTranslationSlot,
-} from "./geniusHooks";
+} from "@/content/genius/geniusHooks";
 import {
     type CapturedContext,
     capturePageContexts,
     pageTheme,
-} from "./pageContext";
-import { reactSlot } from "./react";
-import { installAll, installOptional, installs } from "./slot";
+} from "@/content/genius/pageContext";
+import { reactSlot } from "@/content/genius/react";
+import { installAll, installOptional, installs } from "@/content/genius/slot";
 
 /** What a page still has to hold, because it renders with it directly. */
 export interface Runtime {

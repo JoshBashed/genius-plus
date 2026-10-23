@@ -2,7 +2,7 @@
 // allowed is a zero that neutralises a default someone else set.
 /** The table's styled parts. Every theme read happens at render time. */
 import type { PageStyledValue } from "@/bindings";
-import { DateInput, styled } from "../geniusComponents";
+import { DateInput, styled } from "@/content/genius/geniusComponents";
 
 /** The two pinned columns, whose widths the sticky offsets depend on. */
 const TRACK_WIDTH = "3.5rem";

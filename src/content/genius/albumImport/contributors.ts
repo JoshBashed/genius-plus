@@ -1,11 +1,18 @@
 /** Every name the import found, and the Genius artist each one maps to. */
 import type { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
+import {
+    albumCredits,
+    type ImportedAlbum,
+} from "@/content/genius/albumImport/importedAlbum";
+import type { ReadFailure } from "@/content/genius/api";
+import {
+    optionLabel,
+    searchArtists,
+    uniqueOptions,
+} from "@/content/genius/options";
+import { drain } from "@/content/genius/pool";
 import { splitNames } from "@/utilities/creditNames";
-import type { ReadFailure } from "../api";
-import { optionLabel, searchArtists, uniqueOptions } from "../options";
-import { drain } from "../pool";
-import { albumCredits, type ImportedAlbum } from "./importedAlbum";
 
 /** Four at a time, matching the metadata reads beside it. */
 const CONCURRENCY = 4;

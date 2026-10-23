@@ -5,7 +5,7 @@ import {
     type GlassProfile,
     type GlassSpec,
     glassImages,
-} from "./liquidGlass";
+} from "@/components/liquidGlass";
 
 /** Appearance of a panel of glass, independent of what sits on it. */
 export interface GlassOptions {

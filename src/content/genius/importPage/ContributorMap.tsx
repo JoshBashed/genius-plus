@@ -6,12 +6,12 @@ import {
     type Contributor,
     type ContributorPlan,
     contributorList,
-} from "../albumImport/contributors";
-import { Icon } from "../geniusComponents/Icon";
-import { TagInput } from "../geniusComponents/TagInput";
-import { loadArtistOptions } from "../options";
-import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
-import { Rows, Scroller } from "./styles";
+} from "@/content/genius/albumImport/contributors";
+import { Icon } from "@/content/genius/geniusComponents/Icon";
+import { TagInput } from "@/content/genius/geniusComponents/TagInput";
+import { Rows, Scroller } from "@/content/genius/importPage/styles";
+import { loadArtistOptions } from "@/content/genius/options";
+import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
 
 interface RowProps {
     readonly entry: Contributor;

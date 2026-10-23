@@ -2,11 +2,7 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
-import { decodeOr } from "@/utilities/decode";
-import { describeRequestError } from "@/utilities/http";
-import { plural } from "@/utilities/plural";
-import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
-import { apiPut, csrfToken, type WriteFailure } from "./api";
+import { apiPut, csrfToken, type WriteFailure } from "@/content/genius/api";
 import {
     changedFields,
     DRAFT_FIELDS,
@@ -16,17 +12,21 @@ import {
     FIELD_LABELS,
     FIELD_PAYLOAD_KEYS,
     type SongDraft,
-} from "./draft";
+} from "@/content/genius/draft";
 import {
     describeMetadataFailure,
     loadSongMetadata,
     type MetadataFailure,
     type SongMetadata,
-} from "./metadata";
-import { optionToRef } from "./options";
-import { canCreate, canEdit, gateFor } from "./permissions";
-import { drain } from "./pool";
-import type { SongEdit } from "./saveAdapter";
+} from "@/content/genius/metadata";
+import { optionToRef } from "@/content/genius/options";
+import { canCreate, canEdit, gateFor } from "@/content/genius/permissions";
+import { drain } from "@/content/genius/pool";
+import type { SongEdit } from "@/content/genius/saveAdapter";
+import { decodeOr } from "@/utilities/decode";
+import { describeRequestError } from "@/utilities/http";
+import { plural } from "@/utilities/plural";
+import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
 
 /**
  * Every way a save stops, whether at one row or before the run starts.

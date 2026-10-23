@@ -1,6 +1,6 @@
 import { Result, type ResultBase } from "@resulted/results";
-import type { DecodeFailure } from "./decode";
-import type { HttpError, NetworkError } from "./http";
+import type { DecodeFailure } from "@/utilities/decode";
+import type { HttpError, NetworkError } from "@/utilities/http";
 
 /** Rebuilds a `Result` that lost its prototype crossing a boundary. */
 export const reviveResult = <Ok, Err>(

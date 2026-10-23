@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { type GlassOptions, GlassSurface } from "@/components/GlassSurface";
 import { usePressGlass } from "@/components/usePressGlass";
 import { type SpringChannel, useSpring } from "@/components/useSpring";
+import type { HoverTarget } from "@/content/shared/hover";
 import {
     describeImageError,
     resolveArtwork,
@@ -9,7 +10,6 @@ import {
     saveBlob,
 } from "@/utilities/artwork";
 import type { Store } from "@/utilities/store";
-import type { HoverTarget } from "./hover";
 
 type Status =
     | { readonly kind: "idle" }

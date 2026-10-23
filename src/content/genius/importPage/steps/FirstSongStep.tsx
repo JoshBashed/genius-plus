@@ -2,28 +2,38 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import type { ContributorPlan } from "../../albumImport/contributors";
-import type { ImportedAlbum } from "../../albumImport/importedAlbum";
-import { Button } from "../../geniusComponents/Button";
-import { Spinner } from "../../geniusComponents/Spinner";
-import { useGoogleReCaptcha } from "../../geniusHooks";
-import { loadPrimaryTagOptions, optionLabel, searchSongs } from "../../options";
-import { AlbumMedia } from "../AlbumMedia";
-import { addSongUrl } from "../addSong";
+import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import { Button } from "@/content/genius/geniusComponents/Button";
+import { Spinner } from "@/content/genius/geniusComponents/Spinner";
+import { useGoogleReCaptcha } from "@/content/genius/geniusHooks";
+import { AlbumMedia } from "@/content/genius/importPage/AlbumMedia";
+import { addSongUrl } from "@/content/genius/importPage/addSong";
 import {
     attachToNewAlbum,
     describeAttachFailure,
     songAlbums,
-} from "../attachAlbum";
-import { CreateError } from "../CreateError";
+} from "@/content/genius/importPage/attachAlbum";
+import { CreateError } from "@/content/genius/importPage/CreateError";
 import {
     type CreateSongFailure,
     createSong,
     createSongFields,
-} from "../createSong";
-import { type GeniusAlbum, searchGeniusAlbums } from "../geniusAlbums";
-import { type SongChoice, SongSelect } from "../SongSelect";
-import { Actions, Note, Panel, Rows } from "../styles";
+} from "@/content/genius/importPage/createSong";
+import {
+    type GeniusAlbum,
+    searchGeniusAlbums,
+} from "@/content/genius/importPage/geniusAlbums";
+import {
+    type SongChoice,
+    SongSelect,
+} from "@/content/genius/importPage/SongSelect";
+import { Actions, Note, Panel, Rows } from "@/content/genius/importPage/styles";
+import {
+    loadPrimaryTagOptions,
+    optionLabel,
+    searchSongs,
+} from "@/content/genius/options";
 
 /** How often the album is looked for while their form is open. */
 const WATCH_DELAY_MS = 4000;

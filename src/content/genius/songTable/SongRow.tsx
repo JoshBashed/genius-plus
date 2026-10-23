@@ -2,16 +2,23 @@
 
 import { type FC, memo, type ReactElement, useCallback, useMemo } from "react";
 import type { SelectOption } from "@/bindings";
+import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
+import { SmallButton, Spinner } from "@/content/genius/geniusComponents";
+import type { SongMetadata } from "@/content/genius/metadata";
+import type { TrackSeed } from "@/content/genius/pageState";
+import { canEdit, permissionsKnown } from "@/content/genius/permissions";
+import {
+    ColumnEditor,
+    withCurrent,
+} from "@/content/genius/songTable/ColumnEditor";
+import { COLUMNS } from "@/content/genius/songTable/columns";
+import type { RowState } from "@/content/genius/songTable/rowState";
+import {
+    type FieldConflict,
+    invalidFields,
+    type SaveStage,
+} from "@/content/genius/write";
 import { cleanSoundcloudUrl } from "@/utilities/soundcloudUrl";
-import { FIELD_LABELS, type SongDraft } from "../draft";
-import { SmallButton, Spinner } from "../geniusComponents";
-import type { SongMetadata } from "../metadata";
-import type { TrackSeed } from "../pageState";
-import { canEdit, permissionsKnown } from "../permissions";
-import { type FieldConflict, invalidFields, type SaveStage } from "../write";
-import { ColumnEditor, withCurrent } from "./ColumnEditor";
-import { COLUMNS } from "./columns";
-import type { RowState } from "./rowState";
 
 /** The last note a row was given, pinned to the edit it was given for. */
 export interface RowSave {

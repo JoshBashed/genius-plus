@@ -1,5 +1,5 @@
 import { Result } from "@resulted/results";
-import type { BindingError, UnsupportedPageError } from "./errors";
+import type { BindingError, UnsupportedPageError } from "@/bindings/errors";
 
 /** Chunk URLs are read from the live `<head>`; every hash changes daily. */
 

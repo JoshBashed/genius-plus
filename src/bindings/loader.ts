@@ -1,13 +1,13 @@
 import { Result } from "@resulted/results";
-import { JSLinker } from "@/content/genius/utilities/jsLinker";
 import {
     type ChunkIndex,
     describeMarkers,
     detectPage,
     type GeniusPage,
-} from "./discovery";
-import type { ChunkError, UnsupportedPageError } from "./errors";
-import type { ModuleNamespace } from "./types";
+} from "@/bindings/discovery";
+import type { ChunkError, UnsupportedPageError } from "@/bindings/errors";
+import type { ModuleNamespace } from "@/bindings/types";
+import { JSLinker } from "@/content/genius/utilities/jsLinker";
 
 /** A memoised lookup of one borrowed value, and how it can fail. */
 export type Binding<Value> = () => Promise<Result<Value, ChunkError>>;

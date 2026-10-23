@@ -1,7 +1,7 @@
 /** Apple's album catalogue, read through the public iTunes lookup. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
-import { decode, decodeOr } from "./decode";
+import { decode, decodeOr } from "@/utilities/decode";
 
 /** Apple's own host for the lookup, which answers with `ACAO: *`. */
 const LOOKUP_URL = "https://itunes.apple.com/lookup";

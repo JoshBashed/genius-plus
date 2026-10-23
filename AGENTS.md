@@ -61,6 +61,9 @@ body shape, and record what it said.
 
 - 80 columns, 4 space indent, double quotes, semicolons, trailing commas.
 - **Arrow functions only.** The `function` keyword is a lint error.
+- **Imports use the `@/` path, never a relative one**:
+  `@/content/genius/geniusApi`, not `../geniusApi` or `./geniusApi`. The
+  lint refuses `./` and `../` anywhere under `src/`.
 - Strict TS: `verbatimModuleSyntax`, `noUncheckedIndexedAccess` (which is
   why `styled("div")` is required over `styled.div`), no `any`, no
   non-null assertions.

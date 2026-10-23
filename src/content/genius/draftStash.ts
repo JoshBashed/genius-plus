@@ -1,6 +1,6 @@
 /** Staged edits live in memory, so a stray navigation loses them all. */
 import { Result } from "@resulted/results";
-import type { DraftField, SongDraft } from "./draft";
+import type { DraftField, SongDraft } from "@/content/genius/draft";
 
 /** The browser would not keep the stash, which is never worth stopping for. */
 export interface StashError {

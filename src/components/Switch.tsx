@@ -1,8 +1,8 @@
 import type { PointerEvent } from "react";
 import { useRef, useState } from "react";
-import { type GlassOptions, GlassSurface } from "./GlassSurface";
-import { usePressGlass } from "./usePressGlass";
-import { useSwitchMotion } from "./useSwitchMotion";
+import { type GlassOptions, GlassSurface } from "@/components/GlassSurface";
+import { usePressGlass } from "@/components/usePressGlass";
+import { useSwitchMotion } from "@/components/useSwitchMotion";
 
 /** The measured reference control, in its own pixels. */
 const REFERENCE = {

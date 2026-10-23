@@ -1,11 +1,11 @@
 /** One queued bulk task's Pusher subscription. It renders nothing. */
 
 import { type FC, useCallback, useEffect } from "react";
+import { type BulkEvent, parseBulkEvent } from "@/content/genius/bulkStatus";
+import type { SongDraft } from "@/content/genius/draft";
+import { usePusher } from "@/content/genius/geniusHooks";
+import type { BulkTask, FieldConflict } from "@/content/genius/write";
 import { log } from "@/utilities/log";
-import { type BulkEvent, parseBulkEvent } from "../bulkStatus";
-import type { SongDraft } from "../draft";
-import { usePusher } from "../geniusHooks";
-import type { BulkTask, FieldConflict } from "../write";
 
 /** Their event name for every bulk update task's status. */
 const EVENT_NAME = "bulk-song-update-status";

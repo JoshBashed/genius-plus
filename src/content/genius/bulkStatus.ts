@@ -1,8 +1,12 @@
 /** Genius's `bulk-song-update-status` payload: the only word on a task. */
 import type { Result } from "@resulted/results";
 import { z } from "zod";
+import {
+    DRAFT_FIELDS,
+    FIELD_LABELS,
+    FIELD_PAYLOAD_KEYS,
+} from "@/content/genius/draft";
 import { type DecodeFailure, decode, decodeOr } from "@/utilities/decode";
-import { DRAFT_FIELDS, FIELD_LABELS, FIELD_PAYLOAD_KEYS } from "./draft";
 
 /** Their five task statuses, the last three of which end the task. */
 export type BulkStatus =

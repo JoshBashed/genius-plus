@@ -5,7 +5,7 @@ import {
     type SpringChannel,
     SUBSTEP,
     settled,
-} from "./useSpring";
+} from "@/components/useSpring";
 
 /**
  * Damping ratio 1.265, overdamped, so the thumb arrives without a bounce.

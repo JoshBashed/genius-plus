@@ -1,2 +1,5 @@
 /** The album table, imported only once `primeReactHost` has run. */
-export { SongTable, type SongTableProps } from "./SongTable";
+export {
+    SongTable,
+    type SongTableProps,
+} from "@/content/genius/songTable/SongTable";

@@ -1,9 +1,9 @@
+import { startArtworkDownloads } from "@/content/shared/artworkFeature";
+import { findImageUrl } from "@/content/shared/imageSource";
+import { joinLabel, nearestText, pageTitle } from "@/content/shared/labels";
 import { appleMusicCandidates } from "@/utilities/artwork";
 import { log } from "@/utilities/log";
 import type { ArtworkTarget } from "@/utilities/types";
-import { startArtworkDownloads } from "../shared/artworkFeature";
-import { findImageUrl } from "../shared/imageSource";
-import { joinLabel, nearestText, pageTitle } from "../shared/labels";
 
 /** Apple Music renders artwork inside web components' shadow roots. */
 const ARTWORK_SELECTORS = [

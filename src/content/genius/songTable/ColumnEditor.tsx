@@ -1,12 +1,24 @@
 /** One column's editor, shared by the table's cells and the fill dialog. */
 import type { FC } from "react";
 import type { SelectOption } from "@/bindings";
-import { FIELD_LABELS, type SongDraft } from "../draft";
-import { SelectInput, TagInput, TextInput } from "../geniusComponents";
-import { loadArtistOptions, loadTagOptions, optionFor } from "../options";
-import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
-import { type ColumnSpec, isSortable, type TagColumn } from "./columns";
-import { DateCell } from "./styles";
+import { FIELD_LABELS, type SongDraft } from "@/content/genius/draft";
+import {
+    SelectInput,
+    TagInput,
+    TextInput,
+} from "@/content/genius/geniusComponents";
+import {
+    loadArtistOptions,
+    loadTagOptions,
+    optionFor,
+} from "@/content/genius/options";
+import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
+import {
+    type ColumnSpec,
+    isSortable,
+    type TagColumn,
+} from "@/content/genius/songTable/columns";
+import { DateCell } from "@/content/genius/songTable/styles";
 
 export interface ColumnEditorProps {
     readonly column: ColumnSpec;

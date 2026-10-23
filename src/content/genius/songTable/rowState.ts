@@ -7,9 +7,9 @@ import {
     fieldsPatch,
     type SongDraft,
     withoutFields,
-} from "../draft";
-import type { StashedRow } from "../draftStash";
-import type { SongMetadata } from "../metadata";
+} from "@/content/genius/draft";
+import type { StashedRow } from "@/content/genius/draftStash";
+import type { SongMetadata } from "@/content/genius/metadata";
 
 export interface RowState {
     /** The record the baseline came from; its identity says it is current. */

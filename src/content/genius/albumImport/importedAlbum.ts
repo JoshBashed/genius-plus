@@ -1,12 +1,12 @@
 /** Apple's album, restated in the terms the table's columns use. */
 import type { DateComponents } from "@/bindings";
+import type { AlbumType } from "@/content/genius/importPage/updateAlbum";
+import { EMPTY_DATE } from "@/content/genius/metadata";
 import type { AppleAlbum, AppleTrack } from "@/utilities/appleAlbum";
 import {
     splitFeatureClauses,
     splitFeatureSuffix,
 } from "@/utilities/creditNames";
-import type { AlbumType } from "../importPage/updateAlbum";
-import { EMPTY_DATE } from "../metadata";
 
 export interface ImportedTrack {
     /** Apple's track id, which keys this row through every step. */

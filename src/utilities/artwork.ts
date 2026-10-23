@@ -1,7 +1,10 @@
 import { Result } from "@resulted/results";
-import { describeRequestError, type RequestError } from "./http";
-import type { ForbiddenHostError, NoReceiverError } from "./messaging";
-import { sendMessage } from "./messaging";
+import { describeRequestError, type RequestError } from "@/utilities/http";
+import type {
+    ForbiddenHostError,
+    NoReceiverError,
+} from "@/utilities/messaging";
+import { sendMessage } from "@/utilities/messaging";
 
 /** The bytes arrived, and no decoder in the browser would take them. */
 export interface ImageDecodeError {

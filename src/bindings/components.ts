@@ -1,18 +1,18 @@
 import { Result } from "@resulted/results";
 import type { FC, ReactNode, SyntheticEvent } from "react";
-import type { BindingError } from "./errors";
+import type { BindingError } from "@/bindings/errors";
 import {
     findByDisplayName,
     findByStyledNamespace,
     selectExport,
-} from "./finders";
+} from "@/bindings/finders";
 import {
     type Binding,
     loadChunk,
     loadChunkExporting,
     memoBinding,
-} from "./loader";
-import { asPageValue, type ModuleNamespace } from "./types";
+} from "@/bindings/loader";
+import { asPageValue, type ModuleNamespace } from "@/bindings/types";
 
 /** One accessor per borrowed component. Prop names read from chunks. */
 

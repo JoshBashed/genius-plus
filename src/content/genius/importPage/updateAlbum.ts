@@ -1,8 +1,8 @@
 /** The album's own record: its art, its date, its language, its kind. */
 import { Result } from "@resulted/results";
 import type { DateComponents } from "@/bindings";
+import { apiPut, type WriteFailure } from "@/content/genius/api";
 import { describeRequestError } from "@/utilities/http";
-import { apiPut, type WriteFailure } from "../api";
 
 /** Their four kinds, as their own editor offers them. */
 export type AlbumType = "album" | "ep" | "single" | "mixtape";

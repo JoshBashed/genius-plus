@@ -2,8 +2,8 @@
 
 import { createElement, type FC } from "react";
 import type { IconProps } from "@/bindings";
+import { slot } from "@/content/genius/slot";
 import { log } from "@/utilities/log";
-import { slot } from "../slot";
 
 /**
  * The ones this extension asks for.

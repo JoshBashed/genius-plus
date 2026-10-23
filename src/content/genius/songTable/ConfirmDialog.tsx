@@ -1,8 +1,8 @@
 /** What a save would send, shown before anything reaches Genius. */
 import type { FC } from "react";
-import { type DraftField, FIELD_LABELS } from "../draft";
-import { describePlan, type SavePlan } from "../write";
-import { Confirm } from "./styles";
+import { type DraftField, FIELD_LABELS } from "@/content/genius/draft";
+import { Confirm } from "@/content/genius/songTable/styles";
+import { describePlan, type SavePlan } from "@/content/genius/write";
 
 const fieldNames = (fields: readonly DraftField[]): string =>
     fields.map((field) => FIELD_LABELS[field]).join(", ");

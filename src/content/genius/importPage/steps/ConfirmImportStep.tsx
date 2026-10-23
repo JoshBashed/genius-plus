@@ -2,39 +2,49 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { plural } from "@/utilities/plural";
 import {
     describeAlbumTracksFailure,
     loadAlbumTracks,
-} from "../../albumImport/albumTracks";
+} from "@/content/genius/albumImport/albumTracks";
 import {
     type ContributorPlan,
     unmappedCount,
-} from "../../albumImport/contributors";
-import type { AlbumCredits } from "../../albumImport/credits";
+} from "@/content/genius/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/albumImport/credits";
 import {
     appleAlbumType,
     type ImportedAlbum,
-} from "../../albumImport/importedAlbum";
+} from "@/content/genius/albumImport/importedAlbum";
 import {
     matchTracks,
     type TrackMatch,
     titleAccepted,
-} from "../../albumImport/matchTracks";
-import { Button } from "../../geniusComponents/Button";
-import { Icon } from "../../geniusComponents/Icon";
-import { Spinner } from "../../geniusComponents/Spinner";
-import { optionLabel, searchSongs } from "../../options";
-import { drain } from "../../pool";
-import type { GeniusAlbum } from "../geniusAlbums";
+} from "@/content/genius/albumImport/matchTracks";
+import { Button } from "@/content/genius/geniusComponents/Button";
+import { Icon } from "@/content/genius/geniusComponents/Icon";
+import { Spinner } from "@/content/genius/geniusComponents/Spinner";
+import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
 import {
     describeEmptyImport,
     describeImportFailure,
     runImport,
-} from "../runImport";
-import { type SongChoice, SongSelect } from "../SongSelect";
-import { Actions, Note, Panel, Problem, Rows, Scroller } from "../styles";
-import type { CreditMode } from "../wizard";
+} from "@/content/genius/importPage/runImport";
+import {
+    type SongChoice,
+    SongSelect,
+} from "@/content/genius/importPage/SongSelect";
+import {
+    Actions,
+    Note,
+    Panel,
+    Problem,
+    Rows,
+    Scroller,
+} from "@/content/genius/importPage/styles";
+import type { CreditMode } from "@/content/genius/importPage/wizard";
+import { optionLabel, searchSongs } from "@/content/genius/options";
+import { drain } from "@/content/genius/pool";
+import { plural } from "@/utilities/plural";
 
 /** Gentle: this is one search per unmatched track. */
 const SEARCH_CONCURRENCY = 4;

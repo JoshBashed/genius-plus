@@ -2,18 +2,24 @@
 
 import { type FC, type ReactElement, useCallback, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { type ContributorPlan, withMapping } from "../albumImport/contributors";
-import type { AlbumCredits } from "../albumImport/credits";
-import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import type { GeniusAlbum } from "./geniusAlbums";
-import { StepBar } from "./StepBar";
-import { AlbumStep } from "./steps/AlbumStep";
-import { ConfirmAlbumStep } from "./steps/ConfirmAlbumStep";
-import { ConfirmImportStep } from "./steps/ConfirmImportStep";
-import { FirstSongStep } from "./steps/FirstSongStep";
-import { MapArtistsStep } from "./steps/MapArtistsStep";
-import { Page } from "./styles";
-import type { ConfirmedAlbum, Wizard } from "./wizard";
+import {
+    type ContributorPlan,
+    withMapping,
+} from "@/content/genius/albumImport/contributors";
+import type { AlbumCredits } from "@/content/genius/albumImport/credits";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import { StepBar } from "@/content/genius/importPage/StepBar";
+import { AlbumStep } from "@/content/genius/importPage/steps/AlbumStep";
+import { ConfirmAlbumStep } from "@/content/genius/importPage/steps/ConfirmAlbumStep";
+import { ConfirmImportStep } from "@/content/genius/importPage/steps/ConfirmImportStep";
+import { FirstSongStep } from "@/content/genius/importPage/steps/FirstSongStep";
+import { MapArtistsStep } from "@/content/genius/importPage/steps/MapArtistsStep";
+import { Page } from "@/content/genius/importPage/styles";
+import type {
+    ConfirmedAlbum,
+    Wizard,
+} from "@/content/genius/importPage/wizard";
 
 export interface ImportAssistantProps {
     /** An album the editor's own link already named, if it named one. */

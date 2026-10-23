@@ -1,5 +1,11 @@
 /** The album's covers, which `PUT /albums/:id` takes as a whole set. */
 import { Result } from "@resulted/results";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import {
+    describeFilepickerFailure,
+    uploadImage,
+} from "@/content/genius/importPage/filepicker";
+import type { CoverArt } from "@/content/genius/importPage/updateAlbum";
 import { appleArtwork } from "@/utilities/appleAlbum";
 import {
     appleMusicCandidates,
@@ -7,9 +13,6 @@ import {
     resolveArtwork,
     sanitizeFilename,
 } from "@/utilities/artwork";
-import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import { describeFilepickerFailure, uploadImage } from "./filepicker";
-import type { CoverArt } from "./updateAlbum";
 
 /** Apple upscales rather than clamping, so this is asked for, not forced. */
 const ARTWORK_SIZE = 1000;

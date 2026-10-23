@@ -1,5 +1,9 @@
 /** Runs before their 404 paints, and does nothing else. */
-import { HIDE_STYLE_ID, IMPORT_PATH, NOT_FOUND } from "./importRoute";
+import {
+    HIDE_STYLE_ID,
+    IMPORT_PATH,
+    NOT_FOUND,
+} from "@/content/genius/importRoute";
 
 /**
  * Hides their 404 body before it is painted.

@@ -4,13 +4,20 @@
 // nothing until something renders it, so importing one name no longer
 // evaluates a binding that this page never installed.
 
-export { Button, buttonSlot } from "./Button";
-export { Checkbox, checkboxSlot } from "./Checkbox";
+export { Button, buttonSlot } from "@/content/genius/geniusComponents/Button";
+export {
+    Checkbox,
+    checkboxSlot,
+} from "@/content/genius/geniusComponents/Checkbox";
 export {
     DateInput,
     dateInputSlot,
-} from "./DateInput";
-export { Dropdown, dropdownSlot, hasDropdown } from "./Dropdown";
+} from "@/content/genius/geniusComponents/DateInput";
+export {
+    Dropdown,
+    dropdownSlot,
+    hasDropdown,
+} from "@/content/genius/geniusComponents/Dropdown";
 export {
     alertIconSlot,
     checkIconSlot,
@@ -18,16 +25,19 @@ export {
     type IconName,
     plusIconSlot,
     warningIconSlot,
-} from "./Icon";
+} from "@/content/genius/geniusComponents/Icon";
 export {
     SelectInput,
     selectInputSlot,
-} from "./SelectInput";
+} from "@/content/genius/geniusComponents/SelectInput";
 export {
     SmallButton,
     smallButtonSlot,
-} from "./SmallButton";
-export { Spinner, spinnerSlot } from "./Spinner";
+} from "@/content/genius/geniusComponents/SmallButton";
+export {
+    Spinner,
+    spinnerSlot,
+} from "@/content/genius/geniusComponents/Spinner";
 export {
     setStyled,
     setTheme,
@@ -35,9 +45,12 @@ export {
     styledSlot,
     theme,
     themeSlot,
-} from "./styled";
-export { TagInput, tagInputSlot } from "./TagInput";
+} from "@/content/genius/geniusComponents/styled";
+export {
+    TagInput,
+    tagInputSlot,
+} from "@/content/genius/geniusComponents/TagInput";
 export {
     TextInput,
     textInputSlot,
-} from "./TextInput";
+} from "@/content/genius/geniusComponents/TextInput";

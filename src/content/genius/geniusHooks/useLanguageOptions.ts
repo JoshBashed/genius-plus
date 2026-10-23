@@ -1,8 +1,8 @@
 /** Every language Genius accepts, read from their own i18next store. */
 import { z } from "zod";
 import type { SelectOption } from "@/bindings";
+import { usePageI18n } from "@/content/genius/geniusHooks/useTranslation";
 import { decodeOr } from "@/utilities/decode";
-import { usePageI18n } from "./useTranslation";
 
 /**
  * The path their own hook reads: `store.data.<language>.translation`.

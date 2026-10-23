@@ -15,8 +15,11 @@ import {
     type CachedChunks,
     readChunkCache,
     writeChunkCache,
-} from "./chunkCache";
-import { type ExportIndex, indexExports } from "./exportIndex";
+} from "@/content/genius/utilities/chunkCache";
+import {
+    type ExportIndex,
+    indexExports,
+} from "@/content/genius/utilities/exportIndex";
 
 /**
  * About Genius, by id so a renamed slug still redirects to it.

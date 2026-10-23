@@ -9,8 +9,6 @@ import {
     type PageReactDom,
     type SelectOption,
 } from "@/bindings";
-import { log } from "@/utilities/log";
-import { plural } from "@/utilities/plural";
 import {
     type BulkEvent,
     describeVerdict,
@@ -20,7 +18,7 @@ import {
     type SongVerdict,
     timedOutLine,
     verdictFor,
-} from "../bulkStatus";
+} from "@/content/genius/bulkStatus";
 import {
     type DraftField,
     EMPTY_DRAFT,
@@ -29,7 +27,7 @@ import {
     isEmptyField,
     patchFields,
     type SongDraft,
-} from "../draft";
+} from "@/content/genius/draft";
 import {
     clearStash,
     guardUnload,
@@ -38,36 +36,32 @@ import {
     type StashedTask,
     takeTasks,
     writeStash,
-} from "../draftStash";
-import { Button, theme } from "../geniusComponents";
-import { hasUsePusher, useLanguageOptions } from "../geniusHooks";
-import { dropEditorHash, EDITOR_HASH, importUrlFor } from "../importRoute";
+} from "@/content/genius/draftStash";
+import { Button, theme } from "@/content/genius/geniusComponents";
+import { hasUsePusher, useLanguageOptions } from "@/content/genius/geniusHooks";
+import {
+    dropEditorHash,
+    EDITOR_HASH,
+    importUrlFor,
+} from "@/content/genius/importRoute";
 import {
     describeMetadataFailure,
     loadAlbumMetadata,
     loadSongMetadata,
     type SongMetadata,
-} from "../metadata";
-import { optionFor, optionLabel } from "../options";
-import type { AlbumSeed } from "../pageState";
-import { canEdit } from "../permissions";
-import { SAVE_ADAPTERS, type SongEdit } from "../saveAdapter";
-import { observeToolbarSlot, type ToolbarSlot } from "../toolbarSlot";
+} from "@/content/genius/metadata";
+import { optionFor, optionLabel } from "@/content/genius/options";
+import type { AlbumSeed } from "@/content/genius/pageState";
+import { canEdit } from "@/content/genius/permissions";
+import { SAVE_ADAPTERS, type SongEdit } from "@/content/genius/saveAdapter";
+import { withCurrent } from "@/content/genius/songTable/ColumnEditor";
 import {
-    describeSaveFailure,
-    type FieldConflict,
-    planSave,
-    restoreConflicts,
-    runSave,
-    type SaveOutcome,
-    type SavePlan,
-    type SaveStage,
-} from "../write";
-import { withCurrent } from "./ColumnEditor";
-import { ColumnMenu, type FillMode } from "./ColumnMenu";
-import { ConfirmDialog } from "./ConfirmDialog";
-import { COLUMNS, type ColumnSpec } from "./columns";
-import { FillDialog } from "./FillDialog";
+    ColumnMenu,
+    type FillMode,
+} from "@/content/genius/songTable/ColumnMenu";
+import { ConfirmDialog } from "@/content/genius/songTable/ConfirmDialog";
+import { COLUMNS, type ColumnSpec } from "@/content/genius/songTable/columns";
+import { FillDialog } from "@/content/genius/songTable/FillDialog";
 import {
     droppedRow,
     openedRow,
@@ -77,15 +71,35 @@ import {
     revertedRow,
     savedRow,
     stashedRowOf,
-} from "./rowState";
-import { type RowLoad, type RowSave, SongRow } from "./SongRow";
-import { Launch, Root } from "./styles";
+} from "@/content/genius/songTable/rowState";
+import {
+    type RowLoad,
+    type RowSave,
+    SongRow,
+} from "@/content/genius/songTable/SongRow";
+import { Launch, Root } from "@/content/genius/songTable/styles";
 import {
     type PendingSong,
     type PendingTask,
     TASK_TIMEOUT_MS,
     TaskWatch,
-} from "./TaskWatch";
+} from "@/content/genius/songTable/TaskWatch";
+import {
+    observeToolbarSlot,
+    type ToolbarSlot,
+} from "@/content/genius/toolbarSlot";
+import {
+    describeSaveFailure,
+    type FieldConflict,
+    planSave,
+    restoreConflicts,
+    runSave,
+    type SaveOutcome,
+    type SavePlan,
+    type SaveStage,
+} from "@/content/genius/write";
+import { log } from "@/utilities/log";
+import { plural } from "@/utilities/plural";
 
 export interface SongTableProps {
     readonly album: AlbumSeed;

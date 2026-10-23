@@ -2,11 +2,15 @@
 import { Result } from "@resulted/results";
 import { createElement, type ReactElement } from "react";
 import { describeMarkers, getPage } from "@/bindings";
-import { loadPrimaryTagOptions } from "../options";
-import { describePageError, isAlbumUrl, readAlbumSeed } from "../pageState";
-import { postStatus } from "../relay";
-import { legacyNotice } from "./legacyNotice";
-import type { Loader, PrepareFailure } from "./mount";
+import { legacyNotice } from "@/content/genius/loaders/legacyNotice";
+import type { Loader, PrepareFailure } from "@/content/genius/loaders/mount";
+import { loadPrimaryTagOptions } from "@/content/genius/options";
+import {
+    describePageError,
+    isAlbumUrl,
+    readAlbumSeed,
+} from "@/content/genius/pageState";
+import { postStatus } from "@/content/genius/relay";
 
 const CONTAINER_ID = "genius-plus-album-table";
 
@@ -45,7 +49,7 @@ export const albumTableLoader: Loader = {
         // Eager, so it stays in this bundle but evaluates only once the
         // styles under it have a `styled` to build with.
         const { SongTable } = await import(
-            /* webpackMode: "eager" */ "../songTable"
+            /* webpackMode: "eager" */ "@/content/genius/songTable"
         );
 
         postStatus("rendered", `${seed.value.tracks.length} songs`);

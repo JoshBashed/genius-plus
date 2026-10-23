@@ -1,9 +1,9 @@
 /** Genius's own "search or create a song" control, rebuilt. */
 import type { FC } from "react";
 import type { SelectOption } from "@/bindings";
-import { TagInput } from "../geniusComponents/TagInput";
-import { loadSongOptions } from "../options";
-import { MENU_STYLES, PORTAL_PROPS } from "../selectProps";
+import { TagInput } from "@/content/genius/geniusComponents/TagInput";
+import { loadSongOptions } from "@/content/genius/options";
+import { MENU_STYLES, PORTAL_PROPS } from "@/content/genius/selectProps";
 
 /**
  * Their own props, read off `SearchOrCreateSongInput` in

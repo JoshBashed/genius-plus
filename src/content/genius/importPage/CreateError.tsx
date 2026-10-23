@@ -1,8 +1,8 @@
 /** What Genius said when it would not create the song. */
 
 import { type FC, memo } from "react";
-import type { CreateSongFailure } from "./createSong";
-import { Problem } from "./styles";
+import type { CreateSongFailure } from "@/content/genius/importPage/createSong";
+import { Problem } from "@/content/genius/importPage/styles";
 
 /** Their key for what belongs to no field in particular. */
 const WHOLE_RECORD = "base";

@@ -2,8 +2,8 @@
 
 import type { FC } from "react";
 import type { SmallButtonProps } from "@/bindings";
-import { slot } from "../slot";
-import { renderSlot } from "./renderSlot";
+import { renderSlot } from "@/content/genius/geniusComponents/renderSlot";
+import { slot } from "@/content/genius/slot";
 
 /** Exported whole so an install can record why a lookup failed. */
 export const smallButtonSlot = slot<FC<SmallButtonProps>>(

@@ -1,12 +1,16 @@
 /** Staged edits. A draft against its baseline is what makes a row dirty. */
 import type { DateComponents, SelectOption } from "@/bindings";
-import { EMPTY_DATE, type NamedRef, type SongMetadata } from "./metadata";
+import {
+    EMPTY_DATE,
+    type NamedRef,
+    type SongMetadata,
+} from "@/content/genius/metadata";
 import {
     artistToOption,
     optionLabel,
     optionToRef,
     refToOption,
-} from "./options";
+} from "@/content/genius/options";
 
 export interface SongDraft {
     readonly title: string;

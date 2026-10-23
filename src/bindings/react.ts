@@ -1,10 +1,10 @@
 import { Result } from "@resulted/results";
 import type * as React from "react";
 import type { ReactElement, ReactNode } from "react";
-import type { BindingError, ChunkError } from "./errors";
-import { findByKeys, missingKeys } from "./finders";
-import { type Binding, loadChunk, memoBinding } from "./loader";
-import { asPageValue, type ModuleNamespace } from "./types";
+import type { BindingError, ChunkError } from "@/bindings/errors";
+import { findByKeys, missingKeys } from "@/bindings/finders";
+import { type Binding, loadChunk, memoBinding } from "@/bindings/loader";
+import { asPageValue, type ModuleNamespace } from "@/bindings/types";
 
 /**
  * The page's own React, in React's own types. Two Reacts share no hooks

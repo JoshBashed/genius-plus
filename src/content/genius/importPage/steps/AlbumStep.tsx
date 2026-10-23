@@ -2,22 +2,22 @@
 
 import { type FC, memo, useState } from "react";
 import {
+    type ContributorPlan,
+    resolveContributors,
+} from "@/content/genius/albumImport/contributors";
+import {
+    type ImportedAlbum,
+    importedAlbum,
+} from "@/content/genius/albumImport/importedAlbum";
+import { Button } from "@/content/genius/geniusComponents/Button";
+import { Spinner } from "@/content/genius/geniusComponents/Spinner";
+import { TextInput } from "@/content/genius/geniusComponents/TextInput";
+import { Actions, Note, Panel } from "@/content/genius/importPage/styles";
+import {
     describeAppleAlbumFailure,
     fetchAppleAlbum,
     parseAppleAlbumUrl,
 } from "@/utilities/appleAlbum";
-import {
-    type ContributorPlan,
-    resolveContributors,
-} from "../../albumImport/contributors";
-import {
-    type ImportedAlbum,
-    importedAlbum,
-} from "../../albumImport/importedAlbum";
-import { Button } from "../../geniusComponents/Button";
-import { Spinner } from "../../geniusComponents/Spinner";
-import { TextInput } from "../../geniusComponents/TextInput";
-import { Actions, Note, Panel } from "../styles";
 
 export interface AlbumStepProps {
     /** Called once the album and its credits have both been read. */

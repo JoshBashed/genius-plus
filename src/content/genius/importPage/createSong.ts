@@ -3,17 +3,16 @@
 import { Result } from "@resulted/results";
 import { z } from "zod";
 import type { DateComponents, SelectOption } from "@/bindings";
+import type { ContributorPlan } from "@/content/genius/albumImport/contributors";
+import { creditOptions } from "@/content/genius/albumImport/contributors";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import type { ValidationErrors } from "@/content/genius/api";
+import { apiPost, type WriteFailure } from "@/content/genius/api";
+import type { GeniusAlbum } from "@/content/genius/importPage/geniusAlbums";
+import { optionToRef } from "@/content/genius/options";
 import { type DecodeFailure, decode } from "@/utilities/decode";
 import { describeRequestError } from "@/utilities/http";
 import { log } from "@/utilities/log";
-
-import type { ContributorPlan } from "../albumImport/contributors";
-import { creditOptions } from "../albumImport/contributors";
-import type { ImportedAlbum } from "../albumImport/importedAlbum";
-import type { ValidationErrors } from "../api";
-import { apiPost, type WriteFailure } from "../api";
-import { optionToRef } from "../options";
-import type { GeniusAlbum } from "./geniusAlbums";
 
 /** The three states their editor can create a song in. */
 export type LyricsState = "complete" | "incomplete" | "unreleased";

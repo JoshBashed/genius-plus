@@ -6,9 +6,13 @@ import type {
     FC,
     ReactNode,
 } from "react";
-import { findContext, readProperty, selectExport } from "./finders";
-import { type Binding, loadChunkMatching, memoBinding } from "./loader";
-import { asPageValue } from "./types";
+import { findContext, readProperty, selectExport } from "@/bindings/finders";
+import {
+    type Binding,
+    loadChunkMatching,
+    memoBinding,
+} from "@/bindings/loader";
+import { asPageValue } from "@/bindings/types";
 
 /** Genius's styled-components: `styled`, `ThemeProvider`, and `ThemeContext`. */
 

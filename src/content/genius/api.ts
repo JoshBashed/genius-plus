@@ -1,9 +1,9 @@
 /** Genius's own API calls: `GET` unauthenticated, `PUT` with its CSRF header. */
 import { Result } from "@resulted/results";
 import { z } from "zod";
+import { configString } from "@/content/genius/pageConfig";
 import { type DecodeFailure, decodeOr } from "@/utilities/decode";
 import type { HttpError, RequestError } from "@/utilities/http";
-import { configString } from "./pageConfig";
 
 /** Genius would reject the write: no usable CSRF token. */
 export interface AuthError {

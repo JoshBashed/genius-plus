@@ -2,29 +2,34 @@
 
 import { type FC, memo, useEffect, useState } from "react";
 import type { SelectOption } from "@/bindings";
-import { plural } from "@/utilities/plural";
 import {
     type ContributorPlan,
     unmappedCount,
     withExtraNames,
-} from "../../albumImport/contributors";
+} from "@/content/genius/albumImport/contributors";
 import {
     type AlbumCredits,
     creditNames,
     loadAlbumCredits,
-} from "../../albumImport/credits";
-import type { ImportedAlbum } from "../../albumImport/importedAlbum";
-import { genreTagId } from "../../albumImport/stage";
-import { Button } from "../../geniusComponents/Button";
-import { Checkbox } from "../../geniusComponents/Checkbox";
-import { SelectInput } from "../../geniusComponents/SelectInput";
-import { Spinner } from "../../geniusComponents/Spinner";
-import { TextInput } from "../../geniusComponents/TextInput";
-import { useLanguageOptions } from "../../geniusHooks";
-import { loadPrimaryTagOptions } from "../../options";
-import { AlbumMedia } from "../AlbumMedia";
-import { Actions, Choice, Note, Panel } from "../styles";
-import type { ConfirmedAlbum } from "../wizard";
+} from "@/content/genius/albumImport/credits";
+import type { ImportedAlbum } from "@/content/genius/albumImport/importedAlbum";
+import { genreTagId } from "@/content/genius/albumImport/stage";
+import { Button } from "@/content/genius/geniusComponents/Button";
+import { Checkbox } from "@/content/genius/geniusComponents/Checkbox";
+import { SelectInput } from "@/content/genius/geniusComponents/SelectInput";
+import { Spinner } from "@/content/genius/geniusComponents/Spinner";
+import { TextInput } from "@/content/genius/geniusComponents/TextInput";
+import { useLanguageOptions } from "@/content/genius/geniusHooks";
+import { AlbumMedia } from "@/content/genius/importPage/AlbumMedia";
+import {
+    Actions,
+    Choice,
+    Note,
+    Panel,
+} from "@/content/genius/importPage/styles";
+import type { ConfirmedAlbum } from "@/content/genius/importPage/wizard";
+import { loadPrimaryTagOptions } from "@/content/genius/options";
+import { plural } from "@/utilities/plural";
 
 /** A finished read of their credits pages, and what it widened. */
 interface CreditsRead {
