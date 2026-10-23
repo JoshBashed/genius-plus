@@ -7,8 +7,9 @@ and record what it said, in this file.
 
 ## Auth and envelopes
 
-- **Every endpoint is a function in `src/content/genius/geniusApi/`**,
-  grouped by resource: `songs.ts`, `albums.ts`, `artists.ts`, `tags.ts`.
+- **Every endpoint is a function in
+  `src/content/genius/utilities/geniusApi/`**, grouped by resource:
+  `songs.ts`, `albums.ts`, `artists.ts`, `tags.ts`.
   Each one sends through `geniusRead` or `geniusWrite` in `request.ts`,
   typed with its own request body, and reads its answer with its own
   schema, so the shapes below live beside the call that sends them.
@@ -20,8 +21,8 @@ and record what it said, in this file.
   endpoint's schema describes `response` alone.
 - **Every request to Genius sends `X-Genius-Extension-Id: Genius+`**,
   which their tech team asked extensions to send. It comes from
-  `EXTENSION_HEADERS` in `src/content/genius/geniusApi/`. Requests to
-  Apple, Filestack, and artwork hosts never send it.
+  `EXTENSION_HEADERS` in `src/content/genius/utilities/geniusApi/`.
+  Requests to Apple, Filestack, and artwork hosts never send it.
 - Writes need `X-CSRF-Token` from the `_csrf_token` cookie.
 - **Every write sends `text_format` at the top level**, a sibling of `song`
   or `album`, because their own POST and PUT helpers merge it in.
@@ -42,8 +43,8 @@ and record what it said, in this file.
 - Media and title go through `PUT /songs/:id` with `{song: {...}}`.
 - Bulk writes are asynchronous. A 2xx means queued, not saved. Verdicts
   arrive over Pusher as `bulk-song-update-status` events naming the task:
-  `src/content/genius/bulkStatus.ts` parses them and
-  `songTable/TaskWatch.tsx` subscribes per task. Until a `completed`
+  `features/metadataEditor/bulkStatus.ts` parses them and
+  `components/metadataEditor/TaskWatch.tsx` subscribes per task. Until a `completed`
   event lists a song in `updated_song_ids`, say "queued", never "saved".
 - Permissions are a string array on the song record. An **empty** array
   means unknown, not denied; only the per-song record populates it.
@@ -114,8 +115,9 @@ and record what it said, in this file.
 - **The upload is one call, not the captured four.** Their dialog does a
   multipart start / part / end because it streams a file the reader
   picked; `POST https://www.filepicker.io/api/store/S3` takes the whole
-  blob at once with the same credentials. `importPage/filepicker.ts`
-  sends `?key&policy&signature&path&access=private&plugin=js_lib` with
+  blob at once with the same credentials.
+  `features/albumImport/filepicker.ts` sends
+  `?key&policy&signature&path&access=private&plugin=js_lib` with
   the blob under the form field **`fileUpload`**, which is the name their
   own `filestack.js` posts under (`api.filestackapi.com/filestack.js`,
   `constructStoreUrl` and the `FormData` beside it). No cookies: the

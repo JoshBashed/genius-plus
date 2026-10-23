@@ -62,8 +62,8 @@ body shape, and record what it said.
 - 80 columns, 4 space indent, double quotes, semicolons, trailing commas.
 - **Arrow functions only.** The `function` keyword is a lint error.
 - **Imports use the `@/` path, never a relative one**:
-  `@/content/genius/geniusApi`, not `../geniusApi` or `./geniusApi`. The
-  lint refuses `./` and `../` anywhere under `src/`.
+  `@/content/genius/utilities/geniusApi`, not `../geniusApi`. The lint
+  refuses `./` and `../` anywhere under `src/`.
 - Strict TS: `verbatimModuleSyntax`, `noUncheckedIndexedAccess` (which is
   why `styled("div")` is required over `styled.div`), no `any`, no
   non-null assertions.
@@ -88,7 +88,7 @@ body shape, and record what it said.
   arms. `Result<Album, RequestError | DecodeFailure>`, never a catch-all.
 - **An error type lives beside whatever produces it**, not in a shared
   bag. The current map is in `docs/architecture.md`; `CreateSongFailure`
-  in `importPage/createSong.ts` is the shape to copy.
+  in `features/albumImport/createSong.ts` is the shape to copy.
 - A module may name one union for **its own** domain, as `geniusApi/`
   does. That is per module and stays there; it is not a new global.
 - **There is no `AppError`, `AppResult`, or `describeError`.** They were
@@ -124,8 +124,8 @@ body shape, and record what it said.
 - Files exporting a **React component** are PascalCase: `SongRow.tsx`,
   `TagInput.ts`.
 - Everything else is camelCase: `draftStash.ts`, `pageState.ts`.
-- Directories are camelCase, including `songTable/`, which contains
-  `SongTable.tsx`.
+- Directories are camelCase, including `metadataEditor/`, which
+  contains `SongTable.tsx`.
 
 ## Comments
 
@@ -398,16 +398,18 @@ the build or the page when violated.
   it, and on any React of ours in those bundles. JSX there compiles
   to `react/jsx-runtime`, which resolves to `react/index.ts`.
 - **Borrowed components and hooks are slot-backed.** Import them like
-  ordinary React from `geniusComponents/` and `geniusHooks/`; the slots
-  are filled at mount. `styled` alone requires its importer to load
-  after install, which is why each loader uses an eager dynamic import.
+  ordinary React from `components/genius/` and `utilities/genius/`; the
+  slots are filled at mount. `styled` alone requires its importer to
+  load after install, which is why each feature's loader uses an eager
+  dynamic import.
 - `theme()` is a call, never a stored value.
 - Chunk URLs are read from About Genius (`/songs/474187`), a song page
   that loads every bundle we use, through `utilities/jsLinker.ts`. Never
   hardcode a hash, a chunk URL, or a minified export letter.
 - Genius chunks are imported with `/* webpackIgnore: true */` so rspack
   leaves them alone.
-- **Genius's API is called only through an endpoint in `geniusApi/`.**
+- **Genius's API is called only through an endpoint in
+  `utilities/geniusApi/`.**
   A new call is a new function there, with a type for what it sends and
   a schema for what it reads. `request.ts` adds the
   `X-Genius-Extension-Id` header Genius asked for, and the lint refuses

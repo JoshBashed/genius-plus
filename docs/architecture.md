@@ -23,20 +23,17 @@ Inside `src/content/genius/`:
 
 | Path | What it is |
 | --- | --- |
-| `index.ts` / `mainWorld.ts` | Isolated-world and MAIN-world entries |
-| `relay.ts` | `postMessage` bridge between the two worlds |
-| `install.ts` | Finds everything borrowed and fills its slot, at startup |
-| `slot.ts` | `slot()`, a value that is bound after its module loads |
-| `loaders/` | One loader per page kind, and `mount.ts`, which runs them |
+| `index.ts` | The MAIN-world entry, which only calls `initFeatures()` |
+| `isolated/` | The isolated-world entry, and `early.ts`, which runs first |
 | `react/` | The page's React, and the jsx runtime ours compiles to |
-| `geniusComponents/`, `geniusHooks/` | Slot-backed borrowed bindings |
-| `songTable/` | The album metadata editor table |
-| `importPage/`, `albumImport/` | The Apple import assistant, its pipeline |
-| `geniusApi/` | One function per Genius endpoint, each with its schema |
-| `write.ts` | The save path |
-| `draft.ts`, `draftStash.ts` | Row drafts, and their localStorage stash |
-| `bulkStatus.ts` | Parses Pusher `bulk-song-update-status` events |
-| `pageState.ts`, `pageConfig.ts`, `pageContext.ts` | Page-state reads |
+| `features/` | `initFeatures`, `mount.ts`, and one folder per feature |
+| `features/metadataEditor/` | The album table: its loader, drafts, saves, and reads |
+| `features/albumImport/` | The Apple import: its loader and its pipeline |
+| `components/genius/` | Slot-backed borrowed components |
+| `components/metadataEditor/`, `components/albumImport/` | Each feature's UI |
+| `utilities/genius/` | Slot-backed borrowed hooks |
+| `utilities/geniusApi/` | One function per Genius endpoint, each with its schema |
+| `utilities/` | The rest of the plumbing: `install.ts`, `slot.ts`, `relay.ts`, the bundle linker, and page-state reads |
 
 ## Two Reacts, and the slot pattern
 
@@ -50,21 +47,22 @@ Inside `src/content/genius/`:
   build if React's own code reaches a Genius bundle.
 - JSX there compiles to `react/jsx-runtime` as usual, which the same
   rule resolves to `react/index.ts`, where `jsx` is built on their
-  `createElement`. The directory's own `tsconfig.json` is why
+  `createElement`. Its exports are live `let` bindings that `bindReact`
+  assigns at install, so they carry React's own overloaded types. The directory's own `tsconfig.json` is why
   `pnpm typecheck` runs two projects.
 - **Borrowed things live in slots, read at the call.** Each module in
-  `geniusComponents/` and `geniusHooks/` holds a `slot()` and exports a
+  `components/genius/` and `utilities/genius/` holds a `slot()` and exports a
   `setX` beside a wrapper that reads it when something renders or calls
   it. So they import like ordinary React (`import { TagInput }`,
   `import { usePusher }`), the barrel is safe, import order does not
   matter, and a re-prime reaches modules that were already imported.
-- `install.ts` fills the slots with `installAll([installs(getX, xSlot)])`,
+- `utilities/install.ts` fills the slots with `installAll([installs(getX, xSlot)])`,
   and `installOptional` for the ones a page can do without.
 - **`styled` is the exception.** `styled("div")` has to return a
   component at module evaluation, so a styles module still has to be
   imported after the binding is installed. That is the only reason
-  `loaders/albumTable.ts` reaches the table through
-  `import(/* webpackMode: "eager" */ "../songTable")`.
+  `features/metadataEditor/index.ts` reaches the table through an eager
+  `import()` of `components/metadataEditor`.
 - `theme()` is a call, never a stored value: `deviceType` changes on a
   resize and a re-prime replaces it without re-evaluating a module.
 
@@ -157,12 +155,13 @@ never in a shared bag. The current map:
 - `utilities/artwork.ts`: `ImageError`
 - `bindings/errors.ts`: `BindingError`, `UnsupportedPageError`,
   `ChunkError`
-- `content/genius/geniusApi/`: `AuthError`, `ReadFailure`,
+- `content/genius/utilities/geniusApi/`: `AuthError`, `ReadFailure`,
   `WriteFailure`
-- `content/genius/pageState.ts`: `PageError`
+- `content/genius/utilities/pageState.ts`: `PageError`
 - and so on, per module. `CreateSongFailure` in
-  `importPage/createSong.ts` is the shape to copy: a private `asFailure`
-  flattens the layer below, and a `describeX` sits beside it.
+  `features/albumImport/createSong.ts` is the shape to copy: a private
+  `asFailure` flattens the layer below, and a `describeX` sits beside
+  it.
 
 ## Import assistant decisions
 

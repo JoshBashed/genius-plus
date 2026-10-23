@@ -46,6 +46,6 @@ record new findings in this file.
 
 ## Resolving names against Genius
 
-- `loadArtistOptions` (`src/content/genius/options.ts`) is debounced and
-  settles every waiting caller on the last one's answer. Resolving many
-  names at once needs `searchArtists`.
+- `loadArtistOptions` (`src/content/genius/utilities/options.ts`) is
+  debounced and settles every waiting caller on the last one's answer.
+  Resolving many names at once needs `searchArtists`.
