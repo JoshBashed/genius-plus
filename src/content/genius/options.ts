@@ -1,44 +1,16 @@
 /** Option sources. An artist label is an object, a tag label a string. */
 
-import { Result } from "@resulted/results";
-import { z } from "zod";
+import type { Result } from "@resulted/results";
 import type { SelectOption } from "@/bindings";
 import * as geniusApi from "@/content/genius/geniusApi";
-import { apiGet, type ReadFailure } from "@/content/genius/geniusApi";
 import type { NamedRef } from "@/content/genius/metadata";
-import { decodeOr } from "@/utilities/decode";
 
 /** Genius debounces its own autocompletes by this much. Match it. */
 const DEBOUNCE_MS = 150;
 
-/** One artist hit, with the "AKA" alternate their own menu shows. */
-const artistSchema = z.object({
-    id: z.number(),
-    match_metadata: z
-        .object({ alternate_name: z.string().nullish() })
-        .nullish(),
-    name: z.string(),
-});
-
-const artistsSchema = z.object({
-    artists: z.array(z.unknown()).default([]),
-});
-
-/** Every tag list they answer with, whatever the endpoint. */
-const tagSchema = z.object({ id: z.number(), name: z.string() });
-
-const tagsSchema = z.object({ tags: z.array(z.unknown()).default([]) });
-
-/** A row that will not parse is one option missing, not a failed menu. */
-const tagOptions = (body: unknown): readonly SelectOption[] => {
-    const parsed = decodeOr(tagsSchema, body);
-
-    return (parsed?.tags ?? []).flatMap((row): readonly SelectOption[] => {
-        const tag = decodeOr(tagSchema, row);
-
-        return tag === null ? [] : [{ label: tag.name, value: tag.id }];
-    });
-};
+/** Tag labels are plain strings. */
+const tagOptions = (tags: readonly geniusApi.Tag[]): readonly SelectOption[] =>
+    tags.map((tag) => ({ label: tag.name, value: tag.id }));
 
 /** Debounce that resolves a superseded call with the newer answer. */
 const debounced = (
@@ -80,42 +52,24 @@ const debounced = (
  */
 export const searchArtists = async (
     input: string,
-): Promise<Result<readonly SelectOption[], ReadFailure>> => {
-    const response = await apiGet("/artists/autocomplete", { q: input });
+): Promise<Result<readonly SelectOption[], geniusApi.ReadFailure>> => {
+    const found = await geniusApi.searchArtists(input);
 
-    if (response.isErr()) {
-        return Result.err(response.error);
-    }
-
-    const parsed = decodeOr(artistsSchema, response.value);
-    const options = (parsed?.artists ?? []).flatMap(
-        (row): readonly SelectOption[] => {
-            const artist = decodeOr(artistSchema, row);
-
-            if (artist === null) {
-                return [];
-            }
-
+    return found.map((artists) =>
+        artists.map((artist): SelectOption => {
             const alternate = artist.match_metadata?.alternate_name;
 
-            return [
-                {
-                    value: artist.id,
-                    label: {
-                        primary: artist.name,
-                        ...(alternate == null
-                            ? {}
-                            : {
-                                  secondary: alternate,
-                                  secondaryPrefix: "AKA",
-                              }),
-                    },
+            return {
+                value: artist.id,
+                label: {
+                    primary: artist.name,
+                    ...(alternate == null
+                        ? {}
+                        : { secondary: alternate, secondaryPrefix: "AKA" }),
                 },
-            ];
-        },
+            };
+        }),
     );
-
-    return Result.ok(options);
 };
 
 /** The same search, paced for a field the user is typing into. */
@@ -131,7 +85,7 @@ export const loadArtistOptions = debounced(async (input: string) => {
  */
 export const searchSongs = async (
     input: string,
-): Promise<Result<readonly SelectOption[], ReadFailure>> => {
+): Promise<Result<readonly SelectOption[], geniusApi.ReadFailure>> => {
     const found = await geniusApi.searchSongs(input);
 
     return found.map((hits) =>
@@ -163,18 +117,18 @@ export const loadSongOptions = debounced(async (input: string) => {
 
 /** `GET /tags/autocomplete?q=`. Tag labels are plain strings. */
 export const loadTagOptions = debounced(async (input: string) => {
-    const response = await apiGet("/tags/autocomplete", { q: input });
+    const found = await geniusApi.searchTags(input);
 
-    return response.isErr() ? [] : tagOptions(response.value);
+    return found.isErr() ? [] : tagOptions(found.value);
 });
 
 /** `GET /tags/home`, a closed list. Empty is survivable. */
 export const loadPrimaryTagOptions = async (): Promise<
     readonly SelectOption[]
 > => {
-    const response = await apiGet("/tags/home");
+    const found = await geniusApi.getPrimaryTags();
 
-    return response.isErr() ? [] : tagOptions(response.value);
+    return found.isErr() ? [] : tagOptions(found.value);
 };
 
 /** A stored credit, as a chip. Mirrors their `transformForInput`. */
